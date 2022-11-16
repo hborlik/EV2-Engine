@@ -11,7 +11,19 @@ namespace ev2::renderer {
 
 class Terrain {
 public:
-    Terrain();
+    // Terrain();
+
+    void init();
+
+    bool load_textures();
+
+    bool load_buffers();
+
+    bool load_vaos();
+
+    bool load_programs();
+
+    bool load_queries();
 };
 
 }
