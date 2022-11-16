@@ -29,3 +29,11 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CMAKE_CURRENT_SOURCE_DIR}/asset $<TARGET_FILE_DIR:3d_tree_ex>/asset
 )
+
+# still need to install shaders!
+# copy shaders to build directory
+add_custom_command(
+    TARGET 3d_tree_ex PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:3d_tree_ex>/shaders
+)

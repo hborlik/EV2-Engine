@@ -8,11 +8,17 @@
 #ifndef EV2_DEBUG_RENDERER_H
 #define EV2_DEBUG_RENDERER_H
 
-namespace ev2::debug {
+#include <renderer/ev_gl.h>
+#include <renderer/camera.h>
+
+namespace ev2::renderer {
 
 class DebugRenderer {
 public:
-    void draw_debug();
+
+    void init();
+
+    void draw_bounding_box(const Camera& camera, const glm::vec3& bmin, const glm::vec3& bmax);
 };
 
 }
