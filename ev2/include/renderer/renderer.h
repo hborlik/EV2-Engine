@@ -19,7 +19,7 @@
 #include <renderer/texture.h>
 #include <renderer/camera.h>
 #include <renderer/material.h>
-
+#include <renderer/debug_renderer.h>
 
 namespace ev2::renderer {
 
@@ -297,6 +297,7 @@ public:
     void render(const Camera &camera);
 
     void set_wireframe(bool enable);
+    void set_debug_draw(bool enable);
 
     void set_resolution(uint32_t width, uint32_t height);
     float get_aspect_ratio() const noexcept {return width / (float)height;}
@@ -437,6 +438,7 @@ private:
 
     uint32_t width, height;
     bool wireframe = false;
+    bool draw_bounding_boxes = false;
 
     float point_light_geom_base_scale;
     std::shared_ptr<Drawable> point_light_drawable;

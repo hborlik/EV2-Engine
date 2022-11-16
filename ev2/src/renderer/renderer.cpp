@@ -282,7 +282,7 @@ void Renderer::init() {
 
     // set up programs
 
-    ShaderPreprocessor prep{ResourceManager::get_singleton().asset_path / "shader"};
+    ShaderPreprocessor prep{"shaders"};
 
 
     geometry_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry.glsl.vert", prep);

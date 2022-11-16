@@ -39,4 +39,3 @@ message(STATUS "GLFW3 link ${GLFW3_LIBRARY}")
 
 message(STATUS "OPENGL include ${OPENGL_INCLUDE_DIRS}")
 message(STATUS "OPENGL link ${OPENGL_LIBRARY}")
-
