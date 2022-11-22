@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream& os, const Program& input) {
     }
     os << "Program uniform blocks:" << std::endl;
     for(auto& v : input.uniformBlocks) {
-        os << "    UB: " << v.first << " at " << v.second.location << " size: " << v.second.block_size << " bytes" << std::endl;
+        os << "    UB: " << v.first << " at " << v.second.location_index << " size: " << v.second.block_size << " bytes" << std::endl;
         for(auto& l : v.second.layouts) {
             os << "       U: " << l.first << " offset " << l.second.Offset << " len " <<l.second.ArraySize << " stride " << l.second.ArrayStride << std::endl;
         }
@@ -73,10 +73,11 @@ std::string ShaderPreprocessor::preprocess(const std::string& input_source) cons
             if (s == string::npos || e == string::npos) {
                 throw shader_error{"Preprocessor", std::to_string(line_num)};
             }
-            string filename = line.substr(s, e - s);
+            std::filesystem::path filename{line.substr(s, e - s)};
+            filename = shader_include_dir / filename;
 
             // do not process any includes in the header files
-            result << load_shader(filename, true);
+            result << load_shader_content(filename);
         } else {
             result << line << std::endl;
         }
@@ -85,45 +86,16 @@ std::string ShaderPreprocessor::preprocess(const std::string& input_source) cons
     return result.str();
 }
 
-// void ShaderPreprocessor::load_includes() {
-    // namespace fs = std::filesystem;
-    // for (const auto& entry : fs::directory_iterator(shader_include_dir)) {
-    //     const auto filenameStr = entry.path().filename().string();
-    //     if (entry.is_directory()) {
-    //         continue;
-    //     }
-    //     else if (entry.is_regular_file()) {
-    //         if (entry.path().extension() == ".glslinc") {
-    //             auto path = entry.path();
-    //             std::ifstream in{path};
-    //             // make sure the file exists
-    //             EV2_CHECK_THROW(in.is_open(), "Shader Include File failed to open at " + path.generic_string());
-    //             // copy out file contents
-    //             std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
-    //             in.close();
-
-    //             shader_includes.insert_or_assign(entry.path().filename().generic_string(), content);
-    //         }
-    //     }
-    //     else
-    //         continue;
-    // }
-// }
-
-std::string ShaderPreprocessor::load_shader(const std::filesystem::path& source_path, bool source_only) const {
-    auto input_path = get_shader_dir() / source_path;
-    std::ifstream in{input_path};
+std::string load_shader_content(const std::filesystem::path& source_path) {
+    std::ifstream in{source_path};
 
     if (!in.is_open()) {
-        throw shader_error{"Preprocessor", "Shader File not found at " + input_path.generic_string()};
+        throw shader_error{"Preprocessor", "Shader File not found at " + source_path.generic_string()};
     }
     // copy out file contents
     std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
     in.close();
     content += '\n';
-
-    if (!source_only)
-        content = preprocess(content);
 
     return content;
 }
@@ -142,14 +114,19 @@ Shader::~Shader() {
         glDeleteShader(gl_reference);
 }
 
-void Shader::add_source(const std::filesystem::path& path, const ShaderPreprocessor& pre) {
+void Shader::push_source_file(const std::filesystem::path& path) {
     this->path = path;
 
-    source += pre.load_shader(path);
+    source += load_shader_content(path);
 }
 
-bool Shader::compile(bool delete_source) {
-    const GLchar* codeArray = source.c_str();
+void Shader::push_source_string(const std::string& source_string) {
+    source += source_string;
+}
+
+bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
+    std::string final_source = pre.preprocess(source);
+    const GLchar* codeArray = final_source.c_str();
     glShaderSource(gl_reference, 1, &codeArray, nullptr);
     glCompileShader(gl_reference);
 
@@ -179,6 +156,56 @@ bool Shader::compile(bool delete_source) {
     return result == GL_TRUE;
 }
 
+// UbiquitousShader
+
+void UbiquitousShader::push_source_file(const std::filesystem::path &path) {
+    source += load_shader_content(path);
+}
+
+void UbiquitousShader::push_source_string(const std::string& source_string) {
+    source += source_string;
+}
+
+std::unique_ptr<Shader> create_shader_stage(const std::string& stage_define, const std::string& source, gl::GLSLShaderType type, int version) {
+    auto out = std::make_unique<Shader>(type);
+    out->push_source_string("#version " + std::to_string(version) + "\n");
+    out->push_source_string("#define " + source + "\n");
+    out->push_source_string(source);
+    
+    return out;
+}
+
+std::vector<std::unique_ptr<Shader>> UbiquitousShader::get_shader_stages(int version) {
+    std::vector<std::unique_ptr<Shader>> output_shaders{};
+    GLSLShaderTypeFlag stages{};
+    if (source.find("VERTEX_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::VERTEX_SHADER;
+        output_shaders.push_back(create_shader_stage("VERTEX_SHADER", source, gl::GLSLShaderType::VERTEX_SHADER, version));
+    }
+    if (source.find("FRAGMENT_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::FRAGMENT_SHADER;
+        output_shaders.push_back(create_shader_stage("FRAGMENT_SHADER", source, gl::GLSLShaderType::FRAGMENT_SHADER, version));
+    }
+    if (source.find("GEOMETRY_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::GEOMETRY_SHADER;
+        output_shaders.push_back(create_shader_stage("GEOMETRY_SHADER", source, gl::GLSLShaderType::GEOMETRY_SHADER, version));
+    }
+    if (source.find("TESS_CONTROL_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::TESS_CONTROL_SHADER;
+        output_shaders.push_back(create_shader_stage("TESS_CONTROL_SHADER", source, gl::GLSLShaderType::TESS_CONTROL_SHADER, version));
+    }
+    if (source.find("TESS_EVALUATION_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::TESS_EVALUATION_SHADER;
+        output_shaders.push_back(create_shader_stage("TESS_EVALUATION_SHADER", source, gl::GLSLShaderType::TESS_EVALUATION_SHADER, version));
+    }
+    if (source.find("COMPUTE_SHADER") != std::string::npos) {
+        stages.v |= GLSLShaderTypeFlag::COMPUTE_SHADER;
+        output_shaders.push_back(create_shader_stage("COMPUTE_SHADER", source, gl::GLSLShaderType::COMPUTE_SHADER, version));
+    }
+    
+    return output_shaders;
+}
+
 // ShaderProgram
 
 Program::Program() {
@@ -201,7 +228,7 @@ Program::~Program() {
         glDeleteProgram(gl_reference);
 }
 
-void Program::setShader(gl::GLSLShaderType type, std::shared_ptr<Shader> shader) {
+void Program::attachShader(const Shader* shader) {
     if (!(shader && shader->IsCompiled() && attach_shader(shader->getHandle())))
         throw shader_error{ProgramName, "Shader could not be attached"};
 }
@@ -209,8 +236,8 @@ void Program::setShader(gl::GLSLShaderType type, std::shared_ptr<Shader> shader)
 void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor) {
     std::shared_ptr<Shader> s = std::make_shared<Shader>(type);
 
-    s->add_source(path, preprocessor);
-    s->compile();
+    s->push_source_file(EngineConfig::get_config().shader_path / path);
+    s->compile(preprocessor);
     auto suc = attach_shader(s->getHandle());
     if (!suc)
         throw shader_error{ProgramName, "Loaded shader could not be attached " + path.generic_string()};
@@ -272,7 +299,7 @@ bool Program::isLinked() const {
 }
 
 bool Program::setUniformBlockBinding(const std::string& uniformName, uint32_t location) {
-    int loc = getUniformBlockInfo(uniformName).location;
+    int loc = getUniformBlockInfo(uniformName).location_index;
     if(loc != -1) {
         glUniformBlockBinding(gl_reference, loc, location);
         return true;
@@ -386,7 +413,7 @@ void Program::updateProgramUniformBlockInfo() {
         blockName.erase(std::find(blockName.begin(), blockName.end(), '\0'), blockName.end());
 
         ProgramUniformBlockDescription& pubd = uniformBlocks[blockName];
-        pubd.location = binding;
+        pubd.location_index = binding;
         pubd.block_size = blockSize;
 
         std::vector<GLuint> unifIndices(numActiveVars); // array of active variable indices associated with an active uniform block

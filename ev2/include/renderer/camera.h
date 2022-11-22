@@ -18,6 +18,12 @@
 
 namespace ev2 {
 
+enum class CameraProjection {
+    ORTHOGRAPHIC, // no perspective
+    RECTILINEAR,  // preserves straight lines (OpenGL / DirectX)
+    FISHEYE       // conformal (stereographic projection)
+};
+
 class Camera {
 public:
     Frustum extract_frustum() const noexcept {
@@ -121,13 +127,14 @@ public:
     glm::vec3 get_position() const {return position;}
     glm::quat get_rotation() const {return rotation;}
 
-    void set_projection(float _fov, float _aspect, float _near, float _far) {
+    void set_perspective(float _fov, float _aspect, float _near, float _far) {
         fov = _fov;
         aspect = _aspect;
         m_near = _near;
         m_far = _far;
         projection = glm::perspective(glm::radians(fov), aspect, m_near, m_far);
         dirty = true;
+        projection_mode = CameraProjection::RECTILINEAR;
     }
 
     void set_position(const glm::vec3& p) {
@@ -177,11 +184,16 @@ public:
         return Ray{c_pos, glm::vec3(pos) - c_pos};
     }
 
+    CameraProjection get_projection_mode() const noexcept {return projection_mode;}
+
+    float get_fov() const noexcept {return fov;}
+
 private:
     glm::vec3 position{};
     glm::quat rotation = glm::identity<glm::quat>();
 
     glm::mat4 projection = glm::identity<glm::mat4>();
+    CameraProjection projection_mode = CameraProjection::RECTILINEAR;
 
     mutable glm::mat4 view = glm::identity<glm::mat4>();
     mutable glm::mat4 viewInv = glm::identity<glm::mat4>();

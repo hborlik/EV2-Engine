@@ -86,9 +86,9 @@ public:
      * @param width 
      * @param height 
      */
-    void set_data2D(gl::TextureInternalFormat internalFormat, uint32_t width, uint32_t height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data);
+    void set_data2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data);
 
-    void set_data3D(gl::TextureInternalFormat internalFormat, uint32_t width, uint32_t height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side);
+    void set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side);
 
 protected:
     const gl::TextureType texture_type;
@@ -147,20 +147,27 @@ public:
     }
 
     ~FBO() {
-        if (gl_reference != 0)
+        if (glIsFramebuffer(gl_reference))
             glDeleteFramebuffers(1, &gl_reference);
     }
 
     FBO(FBO&& o) {
-        std::swap(gl_reference, o.gl_reference);
+        *this = std::move(o);
+    }
+
+    FBO& operator=(FBO&& o) {
         std::swap(target, o.target);
+        std::swap(gl_reference, o.gl_reference);
+        std::swap(width, o.width);
+        std::swap(height, o.height);
+        std::swap(attachments, o.attachments);
+        std::swap(rb_attachments, o.rb_attachments);
     }
 
     FBO(const FBO& o) = delete;
     FBO& operator=(const FBO&) = delete;
-    FBO& operator=(FBO&&) = delete;
 
-    void resize_all(uint32_t width, uint32_t height);
+    void resize_all(GLsizei width, GLsizei height);
 
     /**
      * @brief Set the bind target. Do not change while framebuffer is bound
@@ -193,9 +200,24 @@ public:
 
     void detach(gl::FBOAttachment attachment_point);
 
+    /**
+     * @brief Get the pixel width of the framebuffer attachments
+     * 
+     * @return GLsizei 
+     */
+    GLsizei get_width() const noexcept {return width;}
+
+    /**
+     * @brief Get the pixel height of the framebuffer attachments
+     * 
+     * @return GLsizei 
+     */
+    GLsizei get_height() const noexcept {return height;}
+
 private:
     gl::FBOTarget target;
     GLuint gl_reference = 0;
+    GLuint width = 0, height = 0;
 
     struct AttachmentBinding {
         int location = -1;

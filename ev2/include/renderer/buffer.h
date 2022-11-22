@@ -106,11 +106,12 @@ public:
      * @param size  amount of data that should be available to read (from the offset) while the buffer is bound to this index
      * @param offset offset into buffer
      */
-    void bind_range(GLuint index, GLuint size, GLint offset = 0) {
+    void bind_range(GLuint index, size_t size = std::numeric_limits<size_t>::max(), GLint offset = 0) {
         // offset can be positive or negative
         int buf_offset = ((offset % capacity) + capacity) % capacity;
-        assert(buf_offset + size < capacity);
-        glBindBufferRange((GLenum)target, index, gl_reference, buf_offset, size);
+        size_t buf_size = std::min(size, capacity);
+        assert(buf_offset + buf_size <= capacity);
+        glBindBufferRange((GLenum)target, index, gl_reference, buf_offset, buf_size);
     }
 
     /**

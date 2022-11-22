@@ -98,9 +98,30 @@ const std::string ShaderUniformBlockName = "ShaderData";
 
 } // mat_spec
 
+struct GLSLShaderTypeFlag {
+    enum : uint8_t {
+        VERTEX_SHADER           = 1 << 0,
+        FRAGMENT_SHADER         = 1 << 1,
+        GEOMETRY_SHADER         = 1 << 2,
+        TESS_EVALUATION_SHADER  = 1 << 3,
+        TESS_CONTROL_SHADER     = 1 << 4,
+        COMPUTE_SHADER          = 1 << 5
+    };
+    uint8_t v;
+};
+
+
+/**
+ * @brief load a shader
+ * 
+ * @param source_path 
+ * @return std::string 
+ */
+std::string load_shader_content(const std::filesystem::path& source_path);
+
 class ShaderPreprocessor {
 public:
-    explicit ShaderPreprocessor(const std::filesystem::path& shader_include_dir) : shader_include_dir{shader_include_dir} {}
+    explicit ShaderPreprocessor(const std::filesystem::path& shader_include_dir = "shaders") : shader_include_dir{shader_include_dir} {}
 
     /**
      * @brief Simple text replacement for loading include files. Note this will ignore all other preprocessor directives
@@ -109,15 +130,6 @@ public:
      * @return std::string 
      */
     std::string preprocess(const std::string& input_source) const;
-
-    /**
-     * @brief load a shader
-     * 
-     * @param source_path 
-     * @param source_only should this be run through the include preprocessor?
-     * @return std::string 
-     */
-    std::string load_shader(const std::filesystem::path& source_path, bool source_only = false) const;
 
     std::filesystem::path get_shader_dir() const noexcept {return shader_include_dir;}
 
@@ -153,18 +165,25 @@ public:
      * @brief Read shader source and append it to the source content.
      *
      * @param path path to shader code file
-     * @param pre  shader preprocessor 
      */
-    void add_source(const std::filesystem::path &path, const ShaderPreprocessor& pre);
+    void push_source_file(const std::filesystem::path &path);
+
+    /**
+     * @brief append source string to shader content
+     * 
+     * @param source_string 
+     */
+    void push_source_string(const std::string& source_string);
 
     /**
      * @brief Compile or recompile all current source and return true on success
      * 
+     * @param pre               shader preprocessor to load include files
      * @param delete_source 
      * @return true     after successful compilation, delete the source string
      * @return false    do not delete the source
      */
-    bool compile(bool delete_source = true);
+    bool compile(ShaderPreprocessor pre, bool delete_source = true);
 
     /**
      * @brief Get the shader type
@@ -196,6 +215,38 @@ private:
     std::filesystem::path path;
 };
 
+/**
+ * @brief Shader source that contains multiple stages
+ * 
+ */
+class UbiquitousShader {
+public:
+    /**
+     * @brief Read shader source and append it to the source content.
+     *
+     * @param path path to shader code file
+     */
+    void push_source_file(const std::filesystem::path &path);
+
+    /**
+     * @brief append source string to shader content
+     * 
+     * @param source_string 
+     */
+    void push_source_string(const std::string& source_string);
+
+    /**
+     * @brief Get the shader stages for this shader. Does not compile
+     * 
+     * @param version the version for this shader source ex: will put "#version 450" in shader for 450
+     * @return std::vector<std::unique_ptr<Shader>> 
+     */
+    std::vector<std::unique_ptr<Shader>> get_shader_stages(int version);
+
+private:
+    std::string source{};
+};
+
 class Buffer;
 
 struct ProgramUniformDescription
@@ -213,7 +264,7 @@ struct ProgramInputDescription
 
 struct ProgramUniformBlockDescription
 {
-    GLint location = -1;  // Index in Program interface
+    GLint location_index = -1;  // Index in Program interface
     GLint block_size = -1; // total size in bytes of buffer
 
     struct Layout
@@ -240,7 +291,7 @@ struct ProgramUniformBlockDescription
         return -1;
     }
 
-    bool isValid() const noexcept {return location != -1;}
+    bool isValid() const noexcept {return location_index != -1;}
 
     /**
      * @brief Set a Shader parameter in the target uniform block buffer.
@@ -298,12 +349,13 @@ struct ProgramUniformBlockDescription
 
     /**
      * @brief bind a given buffer as a uniform buffer
+     * @deprecated use buffer.bind_range
      * 
      * @param buffer 
      */
     void bind_buffer(const Buffer &buffer) {
         GL_CHECKED_CALL(
-            glBindBufferRange(GL_UNIFORM_BUFFER, location, buffer.handle(), 0, buffer.get_capacity())
+            glBindBufferRange(GL_UNIFORM_BUFFER, location_index, buffer.handle(), 0, buffer.get_capacity())
         );
     }
 };
@@ -324,10 +376,10 @@ public:
     /**
      * @brief Set the shader attached to a specific stage. The shader should already be built
      * 
-     * @param type 
+     * @param 
      * @param shader 
      */
-    void setShader(gl::GLSLShaderType type, std::shared_ptr<Shader> shader);
+    void attachShader(const Shader* shader);
 
     /**
      * @brief Set path for shader stage in this program

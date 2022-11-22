@@ -1,7 +1,7 @@
 /**
  * @file ssre.cpp
  * @author Hunter Borlik 
- * @brief definitions for SSRE library header
+ * @brief definitions for EV2 library header
  * @version 0.1
  * @date 2019-09-18
  * 
@@ -14,15 +14,18 @@
 #include <iostream>
 #include <string>
 
-#include <renderer/ev_gl.h>
-#include <glad/glad.h>
-
 #include <window.h>
 #include <renderer/renderer.h>
 #include <resource.h>
 #include <physics.h>
 
-using namespace ev2;
+static ev2::EngineConfig config;
+
+namespace ev2 {
+
+const EngineConfig& EngineConfig::get_config() {
+    return config;
+}
 
 engine_exception::engine_exception(std::string description) noexcept : description{std::move(description)} {
 
@@ -33,45 +36,31 @@ const char* engine_exception::what() const noexcept {
 }
 
 shader_error::shader_error(std::string shaderName, std::string errorString) noexcept : 
-    engine_exception{"Shader " + shaderName + " caused an error: " + errorString}{
+    engine_exception{"Shader " + shaderName + " caused an error: " + errorString} {
 
 }
 
-void ev2::EV2_init(const Args& args, const std::filesystem::path& asset_path) {
+void EV2_init(const Args& args, const std::filesystem::path& asset_path) {
+    config.asset_path = asset_path;
+    config.shader_path = "shaders";
     window::init(args);
     glm::ivec2 screen_size = window::getWindowSize();
-    ev2::renderer::Renderer::initialize(screen_size.x, screen_size.y);
-    ev2::ResourceManager::initialize(asset_path);
-    ev2::renderer::Renderer::get_singleton().init();
-    ev2::Physics::initialize();
+    renderer::Renderer::initialize(screen_size.x, screen_size.y);
+    ResourceManager::initialize(asset_path);
+    renderer::Renderer::get_singleton().init();
+    Physics::initialize();
 }
 
-void ev2::EV2_shutdown() {
-    ev2::Physics::shutdown();
-    ev2::ResourceManager::shutdown();
-    ev2::renderer::Renderer::shutdown();
-}
-
-bool ev2::isGLError() {
-    GLenum status = glGetError();
-    return status != GL_NO_ERROR;
-}
-
-GLenum ev2::getGLError() {
-    return glGetError();
-}
-
-void ev2::clearGLErrors() {
-    while (true)
-    {
-        const GLenum err = glGetError();
-        if (GL_NO_ERROR == err)
-            break;
-    }
+void EV2_shutdown() {
+    Physics::shutdown();
+    ResourceManager::shutdown();
+    renderer::Renderer::shutdown();
 }
 
 Args::Args(int argc, char* argv[]) {
     for (int i = 0; i < argc; ++i) {
 
     }
+}
+
 }

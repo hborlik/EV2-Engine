@@ -21,6 +21,14 @@
 
 namespace ev2 {
 
+class EngineConfig {
+public:
+    static const EngineConfig& get_config();
+
+    std::filesystem::path asset_path;
+    std::filesystem::path shader_path;
+};
+
 class Object : public ReferenceCounted<Object> {
 public:
     virtual ~Object() = default;

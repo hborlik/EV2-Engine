@@ -116,7 +116,7 @@ void CameraNode::pre_render() {
 void CameraNode::update_internal() {
     float r_aspect = ev2::renderer::Renderer::get_singleton().get_aspect_ratio();
     
-    camera.set_projection(fov, aspect * r_aspect, m_near, m_far);
+    camera.set_perspective(fov, aspect * r_aspect, m_near, m_far);
 
     auto tr = get_transform();
     camera.set_position(glm::vec3(tr[3]));

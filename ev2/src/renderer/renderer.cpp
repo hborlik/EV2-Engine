@@ -80,6 +80,7 @@ void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuin
             material_slot = material_ptr->material_slot;
 
             // TODO does this go here?
+            // update the program material index
             if (mat_loc >= 0) {
                 GL_CHECKED_CALL(glUniform1ui(mat_loc, material_slot));
             }
@@ -104,7 +105,7 @@ void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuin
 
         if (indexed) {
             Buffer& el_buf = dr->vertex_buffer.get_buffer(dr->vertex_buffer.get_indexed());
-            el_buf.bind(); // bind index buffer (again, @Windows)
+            el_buf.bind();
             if (instance_buffer || n_instances > 0) {
                 glDrawElementsInstanced(GL_TRIANGLES, m.num_elements, GL_UNSIGNED_INT, (void*)0, n_instances);
             } else {
@@ -131,7 +132,7 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     g_buffer{gl::FBOTarget::RW},
     ssao_buffer{gl::FBOTarget::RW},
     lighting_buffer{gl::FBOTarget::RW},
-    depth_buffer{gl::FBOTarget::RW},
+    depth_fbo{gl::FBOTarget::RW},
     bloom_thresh_combine{gl::FBOTarget::RW},
     bloom_blur_swap_fbo{FBO{gl::FBOTarget::RW}, FBO{gl::FBOTarget::RW}},
     sst_vb{VertexBuffer::vbInitSST()},
@@ -221,8 +222,8 @@ void Renderer::init() {
     shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::CLAMP_TO_BORDER);
     shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::CLAMP_TO_BORDER);
     shadow_depth_tex->set_border_color(glm::vec4{1.0f});
-    depth_buffer.attach(shadow_depth_tex, gl::FBOAttachment::DEPTH);
-    if (!depth_buffer.check())
+    depth_fbo.attach(shadow_depth_tex, gl::FBOAttachment::DEPTH);
+    if (!depth_fbo.check())
         throw engine_exception{"Framebuffer is not complete"};
     
 
@@ -444,6 +445,8 @@ void Renderer::init() {
     point_light_geom_base_scale = scaling.x;
 
     point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.getAttributeMap());
+
+    // additional effect initialization
 }
 
 void Renderer::update_material(mat_id_t material_slot, const MaterialData& material) {
@@ -702,7 +705,7 @@ void Renderer::render(const Camera &camera) {
     if (shadow_directional_light_id >= 0) {
         //set up shadow shader
         depth_program.use();
-        depth_buffer.bind();
+        depth_fbo.bind();
         //set up light's depth map
         glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -751,7 +754,7 @@ void Renderer::render(const Camera &camera) {
         }
 
         depth_program.unbind();
-        depth_buffer.unbind();
+        depth_fbo.unbind();
     }
 
     glPopDebugGroup();
@@ -773,8 +776,8 @@ void Renderer::render(const Camera &camera) {
 
 
     // bind global shader UBO to shader
-    globals_desc.bind_buffer(shader_globals);
-    lighting_materials_desc.bind_buffer(lighting_materials);
+    shader_globals.bind_range(globals_desc.location_index);
+    lighting_materials.bind_range(lighting_materials_desc.location_index);
 
     for (auto &mPair : model_instances) {
         auto& m = mPair.second;
@@ -792,8 +795,8 @@ void Renderer::render(const Camera &camera) {
     // render instanced geometry
     geometry_program_instanced.use();
     // bind global shader UBO to shader
-    globals_desc.bind_buffer(shader_globals);
-    lighting_materials_desc.bind_buffer(lighting_materials);
+    shader_globals.bind_range(globals_desc.location_index);
+    lighting_materials.bind_range(lighting_materials_desc.location_index);
     for (auto &mPair : instanced_drawables) {
         auto& m = mPair.second;
         if (m.drawable) {
@@ -884,8 +887,8 @@ void Renderer::render(const Camera &camera) {
 
     // setup lighting program
     directional_lighting_program.use();
-    globals_desc.bind_buffer(shader_globals);
-    lighting_materials_desc.bind_buffer(lighting_materials);
+    shader_globals.bind_range(globals_desc.location_index);
+    lighting_materials.bind_range(lighting_materials_desc.location_index);
 
 
     if (lp_p_location >= 0) {
@@ -947,7 +950,7 @@ void Renderer::render(const Camera &camera) {
 
     // pointlight pass
     point_lighting_program.use();
-    globals_desc.bind_buffer(shader_globals);
+    shader_globals.bind_range(globals_desc.location_index);
 
     if (plp_n_location >= 0) {
         glActiveTexture(GL_TEXTURE1);
@@ -1025,7 +1028,7 @@ void Renderer::render(const Camera &camera) {
     glProgramUniform1f(sky_program.getHandle(), sky_output_mul_loc, sky_brightness);
 
     sky_program.use();
-    globals_desc.bind_buffer(shader_globals);
+    shader_globals.bind_range(globals_desc.location_index);
     draw_screen_space_triangle();
 
     sky_program.unbind();

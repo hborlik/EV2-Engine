@@ -26,26 +26,40 @@
 #endif
 
 namespace ev2 {
+    namespace {
     /**
      * @brief check for an error since last isGLError call
      * 
      * @return true error was detected
      * @return false no error
      */
-    bool isGLError();
+    bool isGLError() {
+        GLenum status = glGetError();
+        return status != GL_NO_ERROR;
+    }
 
     /**
      * @brief get gl error value from last call
      * 
      * @return GLenum 
      */
-    GLenum getGLError();
+    GLenum getGLError() {
+        return glGetError();
+    }
 
     /**
      * @brief clear all gl errors
      * 
      */
-    void clearGLErrors();
+    void clearGLErrors() {
+        while (true) {
+            const GLenum err = glGetError();
+            if (GL_NO_ERROR == err)
+                break;
+        }
+    }
+
+    }
 
     namespace gl {
 
@@ -111,7 +125,8 @@ namespace ev2 {
         FRAGMENT_SHADER         = GL_FRAGMENT_SHADER,
         GEOMETRY_SHADER         = GL_GEOMETRY_SHADER,
         TESS_EVALUATION_SHADER  = GL_TESS_EVALUATION_SHADER, 
-        TESS_CONTROL_SHADER     = GL_TESS_CONTROL_SHADER
+        TESS_CONTROL_SHADER     = GL_TESS_CONTROL_SHADER,
+        COMPUTE_SHADER          = GL_COMPUTE_SHADER
     };
 
 

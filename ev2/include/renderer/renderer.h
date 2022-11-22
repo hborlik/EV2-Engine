@@ -20,6 +20,7 @@
 #include <renderer/camera.h>
 #include <renderer/material.h>
 #include <renderer/debug_renderer.h>
+#include <renderer/render_state.hpp>
 
 namespace ev2::renderer {
 
@@ -402,7 +403,7 @@ private:
     FBO g_buffer;
     FBO ssao_buffer;
     FBO lighting_buffer;
-    FBO depth_buffer;
+    FBO depth_fbo;
     FBO bloom_thresh_combine;
     std::array<FBO, 2> bloom_blur_swap_fbo;
     
@@ -410,6 +411,7 @@ private:
 
     std::shared_ptr<Texture> shadow_depth_tex;
 
+    // g buffer fbo attachment textures
     std::shared_ptr<Texture> material_tex;
     std::shared_ptr<Texture> albedo_spec;
     std::shared_ptr<Texture> normals;

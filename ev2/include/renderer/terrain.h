@@ -7,6 +7,8 @@
 #ifndef EV2_RENDERED_TERRAIN_H
 #define EV2_RENDERED_TERRAIN_H
 
+#include <renderer/render_state.hpp>
+
 namespace ev2::renderer {
 
 class Terrain {
@@ -14,6 +16,8 @@ public:
     // Terrain();
 
     void init();
+
+    void render(const RenderState& state);
 
     bool load_textures();
 

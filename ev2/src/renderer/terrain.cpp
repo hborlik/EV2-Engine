@@ -18,6 +18,12 @@
 
 #define LOG(x) printf(x)
 
+template<typename T>
+constexpr auto sqr(T a) noexcept {return a * a;}
+
+#define TERRAIN
+#ifdef TERRAIN
+
 namespace ev2::renderer {
 
 enum { FRAMEBUFFER_BACK, FRAMEBUFFER_SCENE, FRAMEBUFFER_COUNT };
@@ -202,36 +208,24 @@ struct TerrainManager {
 ////////////////////////////////////////////////////////////////////////////////
 
 // -----------------------------------------------------------------------------
-// set viewer program uniforms
-void ConfigureViewerProgram()
-{
-    glProgramUniform1i(g_gl.programs[PROGRAM_VIEWER]->getHandle(),
-        g_gl.uniforms[UNIFORM_VIEWER_FRAMEBUFFER_SAMPLER],
-        TEXTURE_CBUF);
-    glProgramUniform1f(g_gl.programs[PROGRAM_VIEWER]->getHandle(),
-        g_gl.uniforms[UNIFORM_VIEWER_GAMMA],
-        g_app.viewer.gamma);
-}
-
-// -----------------------------------------------------------------------------
 // set Terrain program uniforms
-float computeLodFactor()
+float computeLodFactor(const RenderState& state)
 {
-    if (g_camera.projection == PROJECTION_RECTILINEAR) {
-        float tmp = 2.0f * tan(radians(g_camera.fovy) / 2.0f)
-            / g_framebuffer.h * (1 << g_terrain.gpuSubd)
+    if (state.camera->get_projection_mode() == CameraProjection::RECTILINEAR) {
+        float tmp = 2.0f * tan(glm::radians(state.camera->get_fov()) / 2.0f)
+            / state.target_fbo->get_height() * (1 << g_terrain.gpuSubd)
             * g_terrain.primitivePixelLengthTarget;
 
         return -2.0f * std::log2(tmp) + 2.0f;
-    } else if (g_camera.projection == PROJECTION_ORTHOGRAPHIC) {
-        float planeSize = 2.0f * tan(radians(g_camera.fovy / 2.0f));
+    } else if (state.camera->get_projection_mode() == CameraProjection::ORTHOGRAPHIC) {
+        float planeSize = 2.0f * tan(glm::radians(state.camera->get_fov() / 2.0f));
         float targetSize = planeSize * g_terrain.primitivePixelLengthTarget
-                         / g_framebuffer.h * (1 << g_terrain.gpuSubd);
+                         / state.target_fbo->get_height() * (1 << g_terrain.gpuSubd);
 
         return -2.0f * std::log2(targetSize);
-    } else if (g_camera.projection == PROJECTION_FISHEYE) {
-        float tmp = 2.0f * tan(radians(g_camera.fovy) / 2.0f)
-            / g_framebuffer.h * (1 << g_terrain.gpuSubd)
+    } else if (state.camera->get_projection_mode() == CameraProjection::FISHEYE) {
+        float tmp = 2.0f * tan(glm::radians(state.camera->get_fov()) / 2.0f)
+            / state.target_fbo->get_height() * (1 << g_terrain.gpuSubd)
             * g_terrain.primitivePixelLengthTarget;
 
         return -2.0f * std::log2(tmp) + 2.0f;
@@ -240,9 +234,9 @@ float computeLodFactor()
     return 1.0f;
 }
 
-void ConfigureTerrainProgram(GLuint glp, GLuint offset)
+void ConfigureTerrainProgram(const RenderState& state, GLuint glp, GLuint offset)
 {
-    float lodFactor = computeLodFactor();
+    float lodFactor = computeLodFactor(state);
 
     glProgramUniform1f(glp,
         g_gl.uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + offset],
@@ -270,7 +264,7 @@ void ConfigureTerrainProgram(GLuint glp, GLuint offset)
         sqr(g_terrain.minLodStdev / 64.0f / g_terrain.dmap.scale));
     glProgramUniform2f(glp,
         g_gl.uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + offset],
-        g_framebuffer.w, g_framebuffer.h);
+        state.target_fbo->get_width(), state.target_fbo->get_height());
     glProgramUniform1i(glp,
         g_gl.uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + offset],
         TEXTURE_ATMOSPHERE_INSCATTER);
@@ -282,13 +276,16 @@ void ConfigureTerrainProgram(GLuint glp, GLuint offset)
         TEXTURE_ATMOSPHERE_TRANSMITTANCE);
 }
 
-void ConfigureTerrainPrograms()
+void ConfigureTerrainPrograms(const RenderState& state)
 {
-    ConfigureTerrainProgram(g_gl.programs[PROGRAM_SPLIT],
+    ConfigureTerrainProgram(state,
+                            g_gl.programs[PROGRAM_SPLIT]->getHandle(),
                             UNIFORM_SPLIT_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
-    ConfigureTerrainProgram(g_gl.programs[PROGRAM_MERGE],
+    ConfigureTerrainProgram(state,
+                            g_gl.programs[PROGRAM_MERGE]->getHandle(),
                             UNIFORM_MERGE_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
-    ConfigureTerrainProgram(g_gl.programs[PROGRAM_RENDER_ONLY],
+    ConfigureTerrainProgram(state,
+                            g_gl.programs[PROGRAM_RENDER_ONLY]->getHandle(),
                             UNIFORM_RENDER_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
 }
 
@@ -296,10 +293,10 @@ void ConfigureTerrainPrograms()
 // set Terrain program uniforms
 void ConfigureTopViewProgram()
 {
-    glProgramUniform1f(g_gl.programs[PROGRAM_TOPVIEW],
+    glProgramUniform1f(g_gl.programs[PROGRAM_TOPVIEW]->getHandle(),
         g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR],
         g_terrain.dmap.scale);
-    glProgramUniform1i(g_gl.programs[PROGRAM_TOPVIEW],
+    glProgramUniform1i(g_gl.programs[PROGRAM_TOPVIEW]->getHandle(),
         g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER],
         TEXTURE_DMAP);
 }
@@ -308,13 +305,13 @@ void ConfigureTopViewProgram()
 // set Atmosphere program uniforms
 void ConfigureSkyProgram()
 {
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY],
+    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
                        g_gl.uniforms[UNIFORM_SKY_INSCATTER_SAMPLER],
                        TEXTURE_ATMOSPHERE_INSCATTER);
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY],
+    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
                        g_gl.uniforms[UNIFORM_SKY_IRRADIANCE_SAMPLER],
                        TEXTURE_ATMOSPHERE_IRRADIANCE);
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY],
+    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
                        g_gl.uniforms[UNIFORM_SKY_TRANSMITTANCE_SAMPLER],
                        TEXTURE_ATMOSPHERE_TRANSMITTANCE);
 }
@@ -326,129 +323,81 @@ void ConfigureSkyProgram()
 
 // -----------------------------------------------------------------------------
 /**
- * Load the Viewer Program
- *
- * This program is responsible for blitting the scene framebuffer to
- * the back framebuffer, while applying gamma correction and tone mapping to
- * the rendering.
- */
-bool LoadViewerProgram()
-{
-    djg_program *djp = djgp_create();
-    GLuint *program = &g_gl.programs[PROGRAM_VIEWER];
-    char buf[1024];
-
-    LOG("Loading {Viewer-Program}\n");
-    if (g_framebuffer.aa >= AA_MSAA2 && g_framebuffer.aa <= AA_MSAA16)
-        djgp_push_string(djp, "#define MSAA_FACTOR %i\n", 1 << g_framebuffer.aa);
-    switch (g_camera.tonemap) {
-    case TONEMAP_UNCHARTED2:
-        djgp_push_string(djp, "#define TONEMAP_UNCHARTED2\n");
-        break;
-    case TONEMAP_FILMIC:
-        djgp_push_string(djp, "#define TONEMAP_FILMIC\n");
-        break;
-    case TONEMAP_ACES:
-        djgp_push_string(djp, "#define TONEMAP_ACES\n");
-        break;
-    case TONEMAP_REINHARD:
-        djgp_push_string(djp, "#define TONEMAP_REINHARD\n");
-        break;
-    default:
-        break;
-    }
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/ToneMapping.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/Viewer.glsl");
-
-    if (!djgp_to_gl(djp, 450, false, true, program)) {
-        LOG("=> Failure <=\n");
-        djgp_release(djp);
-
-        return false;
-    }
-    djgp_release(djp);
-
-    g_gl.uniforms[UNIFORM_VIEWER_FRAMEBUFFER_SAMPLER] =
-        glGetUniformLocation(g_gl.programs[PROGRAM_VIEWER], "u_FramebufferSampler");
-    g_gl.uniforms[UNIFORM_VIEWER_GAMMA] =
-        glGetUniformLocation(g_gl.programs[PROGRAM_VIEWER], "u_Gamma");
-
-    ConfigureViewerProgram();
-
-    return (glGetError() == GL_NO_ERROR);
-}
-
-// -----------------------------------------------------------------------------
-/**
  * Load the Terrain Rendering Program
  *
  * This program is responsible for updating and rendering the terrain.
  */
-bool LoadTerrainProgram(GLuint *glp, const char *flag, GLuint uniformOffset)
+std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std::string& flag, GLuint uniformOffset, const ShaderPreprocessor& pre)
 {
-    djg_program *djp = djgp_create();
+    std::unique_ptr<Program> djp = std::make_unique<Program>("Terrain Program");
+
+    std::string source_string;
 
     LOG("Loading {Terrain-Program}\n");
     if (!g_terrain.flags.freeze)
-        djgp_push_string(djp, flag);
+        source_string += flag;
     if (g_terrain.method == METHOD_MS) {
-        djgp_push_string(djp, "#ifndef FRAGMENT_SHADER\n#extension GL_NV_mesh_shader : require\n#endif\n");
-        djgp_push_string(djp, "#extension GL_NV_shader_thread_group : require\n");
-        djgp_push_string(djp, "#extension GL_NV_shader_thread_shuffle : require\n");
-        djgp_push_string(djp, "#extension GL_NV_gpu_shader5 : require\n");
+        source_string += "#ifndef FRAGMENT_SHADER\n#extension GL_NV_mesh_shader : require\n#endif\n";
+        source_string += "#extension GL_NV_shader_thread_group : require\n";
+        source_string += "#extension GL_NV_shader_thread_shuffle : require\n";
+        source_string += "#extension GL_NV_gpu_shader5 : require\n";
     }
-    switch (g_camera.projection) {
-    case PROJECTION_RECTILINEAR:
-        djgp_push_string(djp, "#define PROJECTION_RECTILINEAR\n");
+    switch (state.camera->get_projection_mode()) {
+    case CameraProjection::RECTILINEAR:
+        source_string += "#define PROJECTION_RECTILINEAR\n";
         break;
-    case PROJECTION_FISHEYE:
-        djgp_push_string(djp, "#define PROJECTION_FISHEYE\n");
+    case CameraProjection::FISHEYE:
+        source_string += "#define PROJECTION_FISHEYE\n";
         break;
-    case PROJECTION_ORTHOGRAPHIC:
-        djgp_push_string(djp, "#define PROJECTION_ORTHOGRAPHIC\n");
+    case CameraProjection::ORTHOGRAPHIC:
+        source_string += "#define PROJECTION_ORTHOGRAPHIC\n";
         break;
     default:
         break;
     }
-    djgp_push_string(djp, "#define BUFFER_BINDING_TERRAIN_VARIABLES %i\n", STREAM_TERRAIN_VARIABLES);
-    djgp_push_string(djp, "#define BUFFER_BINDING_MESHLET_VERTICES %i\n", BUFFER_MESHLET_VERTICES);
-    djgp_push_string(djp, "#define BUFFER_BINDING_MESHLET_INDEXES %i\n", BUFFER_MESHLET_INDEXES);
-    djgp_push_string(djp, "#define TERRAIN_PATCH_SUBD_LEVEL %i\n", g_terrain.gpuSubd);
-    djgp_push_string(djp, "#define TERRAIN_PATCH_TESS_FACTOR %i\n", 1 << g_terrain.gpuSubd);
+    source_string += "#define BUFFER_BINDING_TERRAIN_VARIABLES " + std::to_string(STREAM_TERRAIN_VARIABLES) + "\n";
+    source_string += "#define BUFFER_BINDING_MESHLET_VERTICES " + std::to_string(BUFFER_MESHLET_VERTICES) + "\n";
+    source_string += "#define BUFFER_BINDING_MESHLET_INDEXES " + std::to_string(BUFFER_MESHLET_INDEXES) + "\n";
+    source_string += "#define TERRAIN_PATCH_SUBD_LEVEL " + std::to_string(g_terrain.gpuSubd) + "\n";
+    source_string += "#define TERRAIN_PATCH_TESS_FACTOR " + std::to_string(1 << g_terrain.gpuSubd) + "\n";
     if (g_terrain.shading == SHADING_DIFFUSE)
-        djgp_push_string(djp, "#define SHADING_DIFFUSE 1\n");
+        source_string += "#define SHADING_DIFFUSE 1\n";
     else if (g_terrain.shading == SHADING_NORMALS)
-        djgp_push_string(djp, "#define SHADING_NORMALS 1\n");
+        source_string += "#define SHADING_NORMALS 1\n";
     else if (g_terrain.shading == SHADING_COLOR)
-        djgp_push_string(djp, "#define SHADING_COLOR 1\n");
+        source_string += "#define SHADING_COLOR 1\n";
     if (g_terrain.flags.displace)
-        djgp_push_string(djp, "#define FLAG_DISPLACE 1\n");
+        source_string += "#define FLAG_DISPLACE 1\n";
     if (g_terrain.flags.cull)
-        djgp_push_string(djp, "#define FLAG_CULL 1\n");
+        source_string += "#define FLAG_CULL 1\n";
     if (g_terrain.flags.wire)
-        djgp_push_string(djp, "#define FLAG_WIRE 1\n");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/FrustumCulling.glsl");
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_string(djp, "#define CBT_READ_ONLY\n");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libleb/glsl/leb.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/BrunetonAtmosphere.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderCommon.glsl");
+        source_string += "#define FLAG_WIRE 1\n";
+
+    UbiquitousShader cull_shader{};
+    cull_shader.push_source_file("./terrain/shaders/FrustumCulling.glsl");
+
+    cull_shader.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
+    cull_shader.push_source_string("#define CBT_READ_ONLY\n");
+
+    cull_shader.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
+    cull_shader.push_source_file("./submodules/libleb/glsl/leb.glsl");
+    cull_shader.push_source_file("./terrain/shaders/BrunetonAtmosphere.glsl");
+    cull_shader.push_source_file("./terrain/shaders/TerrainRenderCommon.glsl");
     if (g_terrain.method == METHOD_CS) {
-        if (strcmp("/* thisIsAHackForComputePass */\n", flag) == 0) {
+        if (strcmp("/* thisIsAHackForComputePass */\n", flag.c_str()) == 0) {
             if (g_terrain.flags.wire) {
-                djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderCS_Wire.glsl");
+                cull_shader.push_source_file("./terrain/shaders/TerrainRenderCS_Wire.glsl");
             } else {
-                djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderCS.glsl");
+                cull_shader.push_source_file("./terrain/shaders/TerrainRenderCS.glsl");
             }
         } else {
-            djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainUpdateCS.glsl");
+            cull_shader.push_source_file("./terrain/shaders/TerrainUpdateCS.glsl");
         }
     } else if (g_terrain.method == METHOD_TS) {
         if (g_terrain.flags.wire) {
-            djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderTS_Wire.glsl");
+            cull_shader.push_source_file("./terrain/shaders/TerrainRenderTS_Wire.glsl");
         } else {
-            djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderTS.glsl");
+            cull_shader.push_source_file("./terrain/shaders/TerrainRenderTS.glsl");
         }
     } else if (g_terrain.method == METHOD_GS) {
         int subdLevel = g_terrain.gpuSubd;
@@ -456,68 +405,71 @@ bool LoadTerrainProgram(GLuint *glp, const char *flag, GLuint uniformOffset)
         if (g_terrain.flags.wire) {
             int vertexCnt = 3 << (2 * subdLevel);
 
-            djgp_push_string(djp, "#define MAX_VERTICES %i\n", vertexCnt);
-            djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderGS_Wire.glsl");
+            cull_shader.push_source_string("#define MAX_VERTICES " + std::to_string(vertexCnt) + "\n");
+            cull_shader.push_source_file("./terrain/shaders/TerrainRenderGS_Wire.glsl");
         } else {
             int vertexCnt = subdLevel == 0 ? 3 : 4 << (2 * subdLevel - 1);
 
-            djgp_push_string(djp, "#define MAX_VERTICES %i\n", vertexCnt);
-            djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderGS.glsl");
+            cull_shader.push_source_string("#define MAX_VERTICES " + std::to_string(vertexCnt) + "\n");
+            cull_shader.push_source_file("./terrain/shaders/TerrainRenderGS.glsl");
         }
     } else if (g_terrain.method == METHOD_MS) {
-        djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderMS.glsl");
+        cull_shader.push_source_file("./terrain/shaders/TerrainRenderMS.glsl");
     }
 
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+    for (auto& shader : cull_shader.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     g_gl.uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + uniformOffset] =
-        glGetUniformLocation(*glp, "u_DmapFactor");
+        glGetUniformLocation(djp->getHandle(), "u_DmapFactor");
     g_gl.uniforms[UNIFORM_TERRAIN_LOD_FACTOR + uniformOffset] =
-        glGetUniformLocation(*glp, "u_LodFactor");
+        glGetUniformLocation(djp->getHandle(), "u_LodFactor");
     g_gl.uniforms[UNIFORM_TERRAIN_DMAP_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "u_DmapSampler");
+        glGetUniformLocation(djp->getHandle(), "u_DmapSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_SMAP_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "u_SmapSampler");
+        glGetUniformLocation(djp->getHandle(), "u_SmapSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_DMAP_ROCK_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "u_DmapRockSampler");
+        glGetUniformLocation(djp->getHandle(), "u_DmapRockSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_SMAP_ROCK_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "u_SmapRockSampler");
+        glGetUniformLocation(djp->getHandle(), "u_SmapRockSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_TARGET_EDGE_LENGTH + uniformOffset] =
-        glGetUniformLocation(*glp, "u_TargetEdgeLength");
+        glGetUniformLocation(djp->getHandle(), "u_TargetEdgeLength");
     g_gl.uniforms[UNIFORM_TERRAIN_MIN_LOD_VARIANCE + uniformOffset] =
-        glGetUniformLocation(*glp, "u_MinLodVariance");
+        glGetUniformLocation(djp->getHandle(), "u_MinLodVariance");
     g_gl.uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + uniformOffset] =
-        glGetUniformLocation(*glp, "u_ScreenResolution");
+        glGetUniformLocation(djp->getHandle(), "u_ScreenResolution");
     g_gl.uniforms[UNIFORM_TERRAIN_IRRADIANCE_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "skyIrradianceSampler");
+        glGetUniformLocation(djp->getHandle(), "skyIrradianceSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "inscatterSampler");
+        glGetUniformLocation(djp->getHandle(), "inscatterSampler");
     g_gl.uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + uniformOffset] =
-        glGetUniformLocation(*glp, "transmittanceSampler");
+        glGetUniformLocation(djp->getHandle(), "transmittanceSampler");
 
-    ConfigureTerrainProgram(*glp, uniformOffset);
+    ConfigureTerrainProgram(state, djp->getHandle(), uniformOffset);
 
-    return (glGetError() == GL_NO_ERROR);
+    assert(glGetError() == GL_NO_ERROR);
+    return std::move(djp); 
 }
 
-bool LoadTerrainPrograms()
+bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre)
 {
     bool v = true;
 
-    if (v) v = v && LoadTerrainProgram(&g_gl.programs[PROGRAM_SPLIT],
+    if (v) v = v && (g_gl.programs[PROGRAM_SPLIT] = LoadTerrainProgram(state,
                                        "#define FLAG_SPLIT 1\n",
-                                       UNIFORM_SPLIT_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR);
-    if (v) v = v && LoadTerrainProgram(&g_gl.programs[PROGRAM_MERGE],
+                                       UNIFORM_SPLIT_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
+                                       pre));
+    if (v) v = v && (g_gl.programs[PROGRAM_MERGE] = LoadTerrainProgram(state,
                                        "#define FLAG_MERGE 1\n",
-                                       UNIFORM_MERGE_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR);
-    if (v) v = v && LoadTerrainProgram(&g_gl.programs[PROGRAM_RENDER_ONLY],
+                                       UNIFORM_MERGE_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
+                                       pre));
+    if (v) v = v && (g_gl.programs[PROGRAM_RENDER_ONLY] = LoadTerrainProgram(state,
                                        "/* thisIsAHackForComputePass */\n",
-                                       UNIFORM_RENDER_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR);
+                                       UNIFORM_RENDER_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
+                                       pre));
 
     return v;
 }
@@ -530,43 +482,41 @@ bool LoadTerrainPrograms()
  * subdivision tree. This allows to locate the i-th bit in a bitfield of
  * size N in log(N) operations.
  */
-bool LoadLebReductionProgram()
+bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
 {
-    djg_program *djp = djgp_create();
-    GLuint *glp = &g_gl.programs[PROGRAM_LEB_REDUCTION];
+    UbiquitousShader usp{};
+    auto& djp = g_gl.programs[PROGRAM_LEB_REDUCTION] = std::make_unique<Program>("LebReductionProgram");
 
     LOG("Loading {Reduction-Program}\n");
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt_SumReduction.glsl");
-    djgp_push_string(djp, "#ifdef COMPUTE_SHADER\n#endif");
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt_SumReduction.glsl");
+    usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif");
 
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+    for (auto& shader : usp.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     return (glGetError() == GL_NO_ERROR);
 }
 
-bool LoadLebReductionPrepassProgram()
+bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
 {
-    djg_program *djp = djgp_create();
-    GLuint *glp = &g_gl.programs[PROGRAM_LEB_REDUCTION_PREPASS];
+    UbiquitousShader usp{};
+    auto& djp = g_gl.programs[PROGRAM_LEB_REDUCTION_PREPASS] = std::make_unique<Program>("LebReductionPrepass");
 
     LOG("Loading {Reduction-Prepass-Program}\n");
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt_SumReductionPrepass.glsl");
-    djgp_push_string(djp, "#ifdef COMPUTE_SHADER\n#endif");
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt_SumReductionPrepass.glsl");
+    usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif");
+    for (auto& shader : usp.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -577,38 +527,38 @@ bool LoadLebReductionPrepassProgram()
  *
  * This program is responsible for preparing an indirect draw call
  */
-bool LoadBatchProgram()
+bool LoadBatchProgram(const ShaderPreprocessor& pre)
 {
-    djg_program *djp = djgp_create();
-    GLuint *glp = &g_gl.programs[PROGRAM_BATCH];
+    UbiquitousShader usp{};
+    auto& djp = g_gl.programs[PROGRAM_BATCH] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Batch-Program}\n");
     if (GLAD_GL_ARB_shader_atomic_counter_ops) {
-        djgp_push_string(djp, "#extension GL_ARB_shader_atomic_counter_ops : require\n");
-        djgp_push_string(djp, "#define ATOMIC_COUNTER_EXCHANGE_ARB 1\n");
+        usp.push_source_string("#extension GL_ARB_shader_atomic_counter_ops : require\n");
+        usp.push_source_string("#define ATOMIC_COUNTER_EXCHANGE_ARB 1\n");
     } else if (GLAD_GL_AMD_shader_atomic_counter_ops) {
-        djgp_push_string(djp, "#extension GL_AMD_shader_atomic_counter_ops : require\n");
-        djgp_push_string(djp, "#define ATOMIC_COUNTER_EXCHANGE_AMD 1\n");
+        usp.push_source_string("#extension GL_AMD_shader_atomic_counter_ops : require\n");
+        usp.push_source_string("#define ATOMIC_COUNTER_EXCHANGE_AMD 1\n");
     }
     if (g_terrain.method == METHOD_MS) {
-        djgp_push_string(djp, "#define FLAG_MS 1\n");
-        djgp_push_string(djp, "#define BUFFER_BINDING_DRAW_MESH_TASKS_INDIRECT_COMMAND %i\n", BUFFER_TERRAIN_DRAW_MS);
+        usp.push_source_string("#define FLAG_MS 1\n");
+        usp.push_source_string("#define BUFFER_BINDING_DRAW_MESH_TASKS_INDIRECT_COMMAND " + std::to_string(BUFFER_TERRAIN_DRAW_MS) + "\n");
     }
     if (g_terrain.method == METHOD_CS) {
-        djgp_push_string(djp, "#define FLAG_CS 1\n");
-        djgp_push_string(djp, "#define BUFFER_BINDING_DRAW_ELEMENTS_INDIRECT_COMMAND %i\n", BUFFER_TERRAIN_DRAW_CS);
-        djgp_push_string(djp, "#define BUFFER_BINDING_DISPATCH_INDIRECT_COMMAND %i\n", BUFFER_TERRAIN_DISPATCH_CS);
-        djgp_push_string(djp, "#define MESHLET_INDEX_COUNT %i\n", 3 << (2 * g_terrain.gpuSubd));
+        usp.push_source_string("#define FLAG_CS 1\n");
+        usp.push_source_string("#define BUFFER_BINDING_DRAW_ELEMENTS_INDIRECT_COMMAND " + std::to_string(BUFFER_TERRAIN_DRAW_CS) + "\n");
+        usp.push_source_string("#define BUFFER_BINDING_DISPATCH_INDIRECT_COMMAND " + std::to_string(BUFFER_TERRAIN_DISPATCH_CS) + "\n");
+        usp.push_source_string("#define MESHLET_INDEX_COUNT " + std::to_string(3 << (2 * g_terrain.gpuSubd)) + "\n");
     }
-    djgp_push_string(djp, "#define LEB_BUFFER_COUNT 1\n");
-    djgp_push_string(djp, "#define BUFFER_BINDING_LEB %i\n", BUFFER_LEB);
-    djgp_push_string(djp, "#define BUFFER_BINDING_DRAW_ARRAYS_INDIRECT_COMMAND %i\n", BUFFER_TERRAIN_DRAW);
+    usp.push_source_string("#define LEB_BUFFER_COUNT 1\n");
+    usp.push_source_string("#define BUFFER_BINDING_LEB " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_string("#define BUFFER_BINDING_DRAW_ARRAYS_INDIRECT_COMMAND " + std::to_string(BUFFER_TERRAIN_DRAW) + "\n");
 #if 0
     djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/LongestEdgeBisection.glsl");
 #else
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_string(djp, "#define CBT_READ_ONLY\n");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt.glsl");
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
+    usp.push_source_string("#define CBT_READ_ONLY\n");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
 #endif
     djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainBatcher.glsl");
     if (!djgp_to_gl(djp, 450, false, true, glp)) {
@@ -1340,3 +1290,5 @@ bool Terrain::load_queries() {
 }
 
 }
+
+#endif

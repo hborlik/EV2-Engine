@@ -50,7 +50,7 @@ void Texture::generate_mips() {
     unbind();
 }
 
-void Texture::set_data2D(gl::TextureInternalFormat internalFormat, uint32_t width, uint32_t height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data) {
+void Texture::set_data2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data) {
     bind();
     GL_CHECKED_CALL(glTexImage2D((GLenum)gl::TextureTarget::TEXTURE_2D, 0, (GLint)internalFormat, width, height, 0, (GLenum)dataFormat, (GLenum)dataType, data));
     unbind();
@@ -59,7 +59,7 @@ void Texture::set_data2D(gl::TextureInternalFormat internalFormat, uint32_t widt
     pixel_type = dataType;
 }
 
-void Texture::set_data3D(gl::TextureInternalFormat internalFormat, uint32_t width, uint32_t height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side) {
+void Texture::set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side) {
     bind();
     GL_CHECKED_CALL(glTexImage2D((GLenum)side, 0, (GLint)internalFormat, width, height, 0, (GLenum)dataFormat, (GLenum)dataType, data));
     unbind();
@@ -70,7 +70,7 @@ void Texture::set_data3D(gl::TextureInternalFormat internalFormat, uint32_t widt
 
 // FBO
 
-void FBO::resize_all(uint32_t width, uint32_t height) {
+void FBO::resize_all(GLsizei width, GLsizei height) {
     for (auto& tex_at : attachments) {
         auto &tex = tex_at.second.texture;
         tex->set_data2D(tex->get_internal_format(), width, height, tex->get_pixel_format(), tex->get_pixel_type(), nullptr);
@@ -79,6 +79,8 @@ void FBO::resize_all(uint32_t width, uint32_t height) {
         auto &rb = rb_at.second;
         rb.set_data(rb.get_format(), width, height);
     }
+    this->width = width;
+    this->height = height;
 }
 
 bool FBO::check() {
