@@ -90,7 +90,7 @@ public:
 
     /**
      * @brief glTexStorage2D. specify the storage requirements for all levels of a two-dimensional texture or one-dimensional texture array simultaneously.
-     * Note that this causes the texture storage to be immutable, so the texture size cannot change.  
+     * Note that this causes the texture storage to be immutable, so the texture size cannot change. It will also generate a new handle for the texture.
      * 
      * @param levels 
      * @param internalFormat 
