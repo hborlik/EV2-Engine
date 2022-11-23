@@ -73,11 +73,9 @@ public:
 
     gl::TextureType type() const noexcept {return texture_type;}
     gl::TextureInternalFormat get_internal_format() const noexcept {return internal_format;}
-    gl::PixelFormat get_pixel_format() const noexcept {return pixel_format;}
-    gl::PixelType get_pixel_type() const noexcept {return pixel_type;}
 
     /**
-     * @brief Allocate and set the image data for a 2D image, texture must have the TextureType::TEXTURE_2D type
+     * @brief glTexImage2D. Allocate and set the image data for a 2D image, texture must have the TextureType::TEXTURE_2D type
      * 
      * @param data nullptr to 0 fill texture memory
      * @param dataFormat 
@@ -86,9 +84,20 @@ public:
      * @param width 
      * @param height 
      */
-    void set_data2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data);
+    void set_image2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data);
 
     void set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side);
+
+    /**
+     * @brief glTexStorage2D. specify the storage requirements for all levels of a two-dimensional texture or one-dimensional texture array simultaneously.
+     * Note that this causes the texture storage to be immutable, so the texture size cannot change.  
+     * 
+     * @param levels 
+     * @param internalFormat 
+     * @param width 
+     * @param height 
+     */
+    void recreate_storage2D(GLsizei levels, gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height);
 
 protected:
     const gl::TextureType texture_type;
@@ -162,12 +171,21 @@ public:
         std::swap(height, o.height);
         std::swap(attachments, o.attachments);
         std::swap(rb_attachments, o.rb_attachments);
+        return *this;
     }
 
     FBO(const FBO& o) = delete;
     FBO& operator=(const FBO&) = delete;
 
-    void resize_all(GLsizei width, GLsizei height);
+    /**
+     * @brief rebuild framebuffer at specified size by recreating backing textures
+     * 
+     * @param width 
+     * @param height 
+     * @return true 
+     * @return false 
+     */
+    bool resize_all(GLsizei width, GLsizei height);
 
     /**
      * @brief Set the bind target. Do not change while framebuffer is bound
@@ -218,6 +236,8 @@ private:
     gl::FBOTarget target;
     GLuint gl_reference = 0;
     GLuint width = 0, height = 0;
+
+    bool attach_texture(const Texture* texture, gl::FBOAttachment attachment_point);
 
     struct AttachmentBinding {
         int location = -1;

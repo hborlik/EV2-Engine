@@ -337,6 +337,7 @@ int initAudio(fs::path asset_path) {
         ma_decoder_uninit(&decoder);
         return -4;
     }
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -360,6 +361,6 @@ int main(int argc, char *argv[]) {
     ev2::window::setApplication(nullptr);
     app = {};
     ev2::EV2_shutdown();
+    //TODO: deinit audio device and decoder.
     return rv;
-    //TODO: uninit audio device and decoder.
 }

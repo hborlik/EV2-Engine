@@ -197,12 +197,12 @@ void Renderer::init() {
 
     // ssao tiling noise texture
     ssao_kernel_noise = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    ssao_kernel_noise->set_data2D(gl::TextureInternalFormat::RGBA16F, 4, 4, gl::PixelFormat::RGB, gl::PixelType::FLOAT, (unsigned char*)ssaoNoise.data());
+    ssao_kernel_noise->set_image2D(gl::TextureInternalFormat::RGBA16F, 4, 4, gl::PixelFormat::RGB, gl::PixelType::FLOAT, (unsigned char*)ssaoNoise.data());
     ssao_kernel_noise->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
     ssao_kernel_noise->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
 
     ssao_kernel_color = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    ssao_kernel_color->set_data2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::FLOAT, nullptr);
+    ssao_kernel_color->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::FLOAT, nullptr);
 
     ssao_buffer.attach(ssao_kernel_color, gl::FBOAttachment::COLOR0, 0);
 
@@ -211,14 +211,14 @@ void Renderer::init() {
 
     // black texture
     one_p_black_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    one_p_black_tex->set_data2D(gl::TextureInternalFormat::RED, 1, 1, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, nullptr);
+    one_p_black_tex->set_image2D(gl::TextureInternalFormat::RED, 1, 1, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, nullptr);
     one_p_black_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
     one_p_black_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
     one_p_black_tex->generate_mips();
 
     // set up FBO textures
     shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    shadow_depth_tex->set_data2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
+    shadow_depth_tex->set_image2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
     shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::CLAMP_TO_BORDER);
     shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::CLAMP_TO_BORDER);
     shadow_depth_tex->set_border_color(glm::vec4{1.0f});
@@ -228,23 +228,23 @@ void Renderer::init() {
     
 
     material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    material_tex->set_data2D(gl::TextureInternalFormat::R8UI, width, height, gl::PixelFormat::RED_INTEGER, gl::PixelType::UNSIGNED_BYTE, nullptr);
+    material_tex->set_image2D(gl::TextureInternalFormat::R8UI, width, height, gl::PixelFormat::RED_INTEGER, gl::PixelType::UNSIGNED_BYTE, nullptr);
     g_buffer.attach(material_tex, gl::FBOAttachment::COLOR3, 3);
 
     albedo_spec = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    albedo_spec->set_data2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, nullptr);
+    albedo_spec->recreate_storage2D(1, gl::TextureInternalFormat::RGBA8, width, height);
     g_buffer.attach(albedo_spec, gl::FBOAttachment::COLOR2, 2);
 
     normals = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    normals->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    normals->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(normals, gl::FBOAttachment::COLOR1, 1);
 
     position = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    position->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    position->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(position, gl::FBOAttachment::COLOR0, 0);
 
     emissive = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    emissive->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    emissive->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(emissive, gl::FBOAttachment::COLOR4, 4);
 
     g_buffer.attach_renderbuffer(gl::RenderBufferInternalFormat::DEPTH_COMPONENT, width, height, gl::FBOAttachment::DEPTH);
@@ -254,7 +254,7 @@ void Renderer::init() {
 
     // lighting output HDR FBO
     hdr_texture = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    hdr_texture->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    hdr_texture->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     lighting_buffer.attach(hdr_texture, gl::FBOAttachment::COLOR0, 0);
 
     lighting_buffer.attach_renderbuffer(gl::RenderBufferInternalFormat::DEPTH24_STENCIL8, width, height, gl::FBOAttachment::DEPTH_STENCIL);
@@ -264,16 +264,16 @@ void Renderer::init() {
 
     // blur pass texture and FBOs
     bloom_blur_swap_tex[0] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    bloom_blur_swap_tex[0]->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    bloom_blur_swap_tex[0]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[0].attach(bloom_blur_swap_tex[0], gl::FBOAttachment::COLOR0, 0);
 
     bloom_blur_swap_tex[1] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    bloom_blur_swap_tex[1]->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    bloom_blur_swap_tex[1]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[1].attach(bloom_blur_swap_tex[1], gl::FBOAttachment::COLOR0, 0);
 
     // bloom threshold combine output HDR FBO
     hdr_combined = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    hdr_combined->set_data2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    hdr_combined->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_thresh_combine.attach(hdr_combined, gl::FBOAttachment::COLOR0, 0);
 
     bloom_thresh_combine.attach(bloom_blur_swap_tex[0], gl::FBOAttachment::COLOR1, 1);

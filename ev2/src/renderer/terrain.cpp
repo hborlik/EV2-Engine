@@ -8,7 +8,7 @@
 #include <renderer/ev_gl.h>
 #include <renderer/buffer.h>
 #include <renderer/camera.h>
-#include  <renderer/shader.h>
+#include <renderer/shader.h>
 
 #define CBT_IMPLEMENTATION
 #include <cbt.h>
@@ -21,7 +21,7 @@
 template<typename T>
 constexpr auto sqr(T a) noexcept {return a * a;}
 
-#define TERRAIN
+// #define TERRAIN
 #ifdef TERRAIN
 
 namespace ev2::renderer {
@@ -556,17 +556,16 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
 #if 0
     djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/LongestEdgeBisection.glsl");
 #else
-    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
     usp.push_source_string("#define CBT_READ_ONLY\n");
     usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
 #endif
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainBatcher.glsl");
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+    usp.push_source_file("./terrain/shaders/TerrainBatcher.glsl");
+    for (auto& shader : usp.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -577,37 +576,36 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
  *
  * This program is responsible for rendering the terrain in a top view fashion
  */
-bool LoadTopViewProgram()
+bool LoadTopViewProgram(const ShaderPreprocessor& pre)
 {
-    djg_program *djp = djgp_create();
-    GLuint *glp = &g_gl.programs[PROGRAM_TOPVIEW];
+    UbiquitousShader usp{};
+    auto& djp = g_gl.programs[PROGRAM_TOPVIEW] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Top-View-Program}\n");
     if (g_terrain.flags.displace)
-        djgp_push_string(djp, "#define FLAG_DISPLACE 1\n");
-    djgp_push_string(djp, "#define TERRAIN_PATCH_SUBD_LEVEL %i\n", g_terrain.gpuSubd);
-    djgp_push_string(djp, "#define TERRAIN_PATCH_TESS_FACTOR %i\n", 1 << g_terrain.gpuSubd);
-    djgp_push_string(djp, "#define BUFFER_BINDING_TERRAIN_VARIABLES %i\n", STREAM_TERRAIN_VARIABLES);
-    djgp_push_string(djp, "#define LEB_BUFFER_COUNT 1\n");
-    djgp_push_string(djp, "#define BUFFER_BINDING_LEB %i\n", BUFFER_LEB);
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/FrustumCulling.glsl");
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_string(djp, "#define CBT_READ_ONLY\n");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libcbt/glsl/cbt.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./submodules/libleb/glsl/leb.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainRenderCommon.glsl");
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/TerrainTopView.glsl");
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+        usp.push_source_string("#define FLAG_DISPLACE 1\n");
+    usp.push_source_string("#define TERRAIN_PATCH_SUBD_LEVEL " + std::to_string(g_terrain.gpuSubd) + "\n");
+    usp.push_source_string("#define TERRAIN_PATCH_TESS_FACTOR " + std::to_string(1 << g_terrain.gpuSubd) + "\n");
+    usp.push_source_string("#define BUFFER_BINDING_TERRAIN_VARIABLES " + std::to_string(STREAM_TERRAIN_VARIABLES) + "\n");
+    usp.push_source_string("#define LEB_BUFFER_COUNT 1\n");
+    usp.push_source_string("#define BUFFER_BINDING_LEB " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_file("./terrain/shaders/FrustumCulling.glsl");
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_string("#define CBT_READ_ONLY\n");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
+    usp.push_source_file("./submodules/libleb/glsl/leb.glsl");
+    usp.push_source_file("./terrain/shaders/TerrainRenderCommon.glsl");
+    usp.push_source_file("./terrain/shaders/TerrainTopView.glsl");
+    for (auto& shader : usp.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR] =
-        glGetUniformLocation(*glp, "u_DmapFactor");
+        glGetUniformLocation(djp->getHandle(), "u_DmapFactor");
     g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER] =
-        glGetUniformLocation(*glp, "u_DmapSampler");
+        glGetUniformLocation(djp->getHandle(), "u_DmapSampler");
 
     ConfigureTopViewProgram();
 
@@ -621,26 +619,24 @@ bool LoadTopViewProgram()
  *
  * This program is responsible for retrieving the number of nodes in the CBT
  */
-bool LoadCbtNodeCountProgram()
+bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
 {
-    std::unique_ptr<Program> djp = std::make_unique<Program>("NodeCountProgram");
-    GLuint *glp = &g_gl.programs[PROGRAM_CBT_NODE_COUNT];
+    UbiquitousShader usp{};
+    auto& djp = g_gl.programs[PROGRAM_CBT_NODE_COUNT] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Cbt-Node-Count-Program}\n");
-    std::shared_ptr<Shader> shader0 = std::make_shared<Shader>()
     
-    djgp_push_string(djp, "#define CBT_NODE_COUNT_BUFFER_BINDING %i\n", BUFFER_CBT_NODE_COUNT);
-    djgp_push_string(djp, "#define CBT_HEAP_BUFFER_BINDING %i\n", BUFFER_LEB);
-    djgp_push_string(djp, "#define CBT_READ_ONLY\n");
-    djgp_push_file(djp, "./submodules/libcbt/glsl/cbt.glsl");
-    djgp_push_file(djp, "./terrain/shaders/NodeCount.glsl");
-    djgp_push_string(djp, "#ifdef COMPUTE_SHADER\n#endif\n");
-    if (!djgp_to_gl(djp, 450, false, true, glp)) {
-        djgp_release(djp);
-
-        return false;
+    usp.push_source_string("#define CBT_NODE_COUNT_BUFFER_BINDING " + std::to_string(BUFFER_CBT_NODE_COUNT) + "\n");
+    usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
+    usp.push_source_string("#define CBT_READ_ONLY\n");
+    usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
+    usp.push_source_file("./terrain/shaders/NodeCount.glsl");
+    usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif\n");
+    for (auto& shader : usp.get_shader_stages(450)) {
+        if (!shader->compile(pre))
+            return {};
+        djp->attachShader(shader.get());
     }
-    djgp_release(djp);
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -651,18 +647,18 @@ bool LoadCbtNodeCountProgram()
  * Load All Programs
  *
  */
-bool LoadPrograms()
+bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
 {
     bool v = true;
 
-    if (v) v &= LoadViewerProgram();
-    if (v) v &= LoadTerrainPrograms();
-    if (v) v &= LoadLebReductionProgram();
-    if (v) v &= LoadLebReductionPrepassProgram();
-    if (v) v &= LoadBatchProgram();
-    if (v) v &= LoadTopViewProgram();
+    // if (v) v &= LoadViewerProgram(pre);
+    if (v) v &= LoadTerrainPrograms(state, pre);
+    if (v) v &= LoadLebReductionProgram(pre);
+    if (v) v &= LoadLebReductionPrepassProgram(pre);
+    if (v) v &= LoadBatchProgram(pre);
+    if (v) v &= LoadTopViewProgram(pre);
     // if (v) v &= LoadSkyProgram();
-    if (v) v &= LoadCbtNodeCountProgram();
+    if (v) v &= LoadCbtNodeCountProgram(pre);
 
     return v;
 }

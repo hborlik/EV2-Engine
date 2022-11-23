@@ -300,7 +300,7 @@ public:
         glfwMakeContextCurrent(window_ptr);
 
         // load gl functions
-        if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        if(!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
             std::clog << "Failed to initialize GLAD" << std::endl;
             throw engine_exception{"Failed to initialize GLAD"};
         }

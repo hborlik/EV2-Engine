@@ -50,7 +50,7 @@ void Texture::generate_mips() {
     unbind();
 }
 
-void Texture::set_data2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data) {
+void Texture::set_image2D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data) {
     bind();
     GL_CHECKED_CALL(glTexImage2D((GLenum)gl::TextureTarget::TEXTURE_2D, 0, (GLint)internalFormat, width, height, 0, (GLenum)dataFormat, (GLenum)dataType, data));
     unbind();
@@ -68,12 +68,25 @@ void Texture::set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width
     pixel_type = dataType;
 }
 
+void Texture::recreate_storage2D(GLsizei levels, gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height) {
+    // recreate the texture to allow for new storage
+    if (glIsTexture(handle))
+        glDeleteTextures(1, &handle);
+    
+    GL_CHECKED_CALL(glGenTextures(1, &handle));
+    bind();
+    GL_CHECKED_CALL(glTexStorage2D((GLenum)texture_type, levels, (GLint)internalFormat, width, height));
+    unbind();
+    internal_format = internalFormat;
+}
+
 // FBO
 
-void FBO::resize_all(GLsizei width, GLsizei height) {
+bool FBO::resize_all(GLsizei width, GLsizei height) {
     for (auto& tex_at : attachments) {
         auto &tex = tex_at.second.texture;
-        tex->set_data2D(tex->get_internal_format(), width, height, tex->get_pixel_format(), tex->get_pixel_type(), nullptr);
+        tex->recreate_storage2D(1, tex->get_internal_format(), width, height);
+        attach_texture(tex.get(), tex_at.first);
     }
     for (auto& rb_at : rb_attachments) {
         auto &rb = rb_at.second;
@@ -81,6 +94,7 @@ void FBO::resize_all(GLsizei width, GLsizei height) {
     }
     this->width = width;
     this->height = height;
+    return check();
 }
 
 bool FBO::check() {
@@ -116,12 +130,7 @@ bool FBO::attach(std::shared_ptr<Texture> texture, gl::FBOAttachment attachment_
     if (attachments.find(attachment_point) != attachments.end())
         return false;
     if (texture && texture->type() == gl::TextureType::TEXTURE_2D) {
-        clearGLErrors();
-        // glNamedFramebufferTexture(gl_reference, (GLenum)attachment_point, texture->get_handle(), 0);
-        bind();
-        glFramebufferTexture2D((GLenum)target, (GLenum)attachment_point, (GLenum)texture->type(), texture->get_handle(), 0);
-        unbind();
-        if (!isGLError()) {
+        if (attach_texture(texture.get(), attachment_point)) {
             attachments.insert(std::pair{attachment_point, AttachmentBinding{location, texture}});
             rb_attachments.erase(attachment_point);
 
@@ -153,6 +162,15 @@ bool FBO::attach_renderbuffer(gl::RenderBufferInternalFormat format, uint32_t wi
         return true;
     }
     return false;
+}
+
+bool FBO::attach_texture(const Texture* texture, gl::FBOAttachment attachment_point) {
+    clearGLErrors();
+    // glNamedFramebufferTexture(gl_reference, (GLenum)attachment_point, texture->get_handle(), 0);
+    bind();
+    glFramebufferTexture2D((GLenum)target, (GLenum)attachment_point, (GLenum)texture->type(), texture->get_handle(), 0);
+    unbind();
+    return !isGLError();
 }
 
 }

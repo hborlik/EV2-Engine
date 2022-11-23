@@ -726,7 +726,7 @@ std::shared_ptr<Texture> ResourceManager::get_texture(const std::filesystem::pat
         }
 
         std::shared_ptr<Texture> texture = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR);
-        texture->set_data2D(internal_format, w, h, pixel_format, gl::PixelType::UNSIGNED_BYTE, data);
+        texture->set_image2D(internal_format, w, h, pixel_format, gl::PixelType::UNSIGNED_BYTE, data);
         texture->generate_mips();
         stbi_image_free(data);
         textures.insert({filename.generic_string(), texture});
@@ -829,13 +829,13 @@ std::unique_ptr<Texture> load_texture2D(const std::filesystem::path& filename) {
 
             out = std::make_unique<Texture>(gl::TextureType::TEXTURE_2D);
             if(nrChannels == 1) {
-                out->set_data2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, image);
             } else if(nrChannels == 2) { // rg
-                out->set_data2D(gl::TextureInternalFormat::RG, width, height, gl::PixelFormat::RG, gl::PixelType::UNSIGNED_BYTE, image); 
+                out->set_image2D(gl::TextureInternalFormat::RG, width, height, gl::PixelFormat::RG, gl::PixelType::UNSIGNED_BYTE, image); 
             } else if(nrChannels == 3) { // rgb
-                out->set_data2D(gl::TextureInternalFormat::RGB, width, height, gl::PixelFormat::RGB, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RGB, width, height, gl::PixelFormat::RGB, gl::PixelType::UNSIGNED_BYTE, image);
             } else if(nrChannels == 4) { // rgba
-                out->set_data2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image);
             } else {
                 error = true;
                 std::cerr << "unable to load unsupported texture format. " + file + " Channels:" + std::to_string(nrChannels) << std::endl;
