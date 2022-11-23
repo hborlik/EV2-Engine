@@ -202,7 +202,7 @@ void Renderer::init() {
     ssao_kernel_noise->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
 
     ssao_kernel_color = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    ssao_kernel_color->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::FLOAT, nullptr);
+    ssao_kernel_color->recreate_storage2D(1, gl::TextureInternalFormat::R8, width, height);
 
     ssao_buffer.attach(ssao_kernel_color, gl::FBOAttachment::COLOR0, 0);
 
@@ -228,7 +228,7 @@ void Renderer::init() {
     
 
     material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    material_tex->set_image2D(gl::TextureInternalFormat::R8UI, width, height, gl::PixelFormat::RED_INTEGER, gl::PixelType::UNSIGNED_BYTE, nullptr);
+    material_tex->recreate_storage2D(1, gl::TextureInternalFormat::R8UI, width, height);
     g_buffer.attach(material_tex, gl::FBOAttachment::COLOR3, 3);
 
     albedo_spec = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
@@ -254,7 +254,7 @@ void Renderer::init() {
 
     // lighting output HDR FBO
     hdr_texture = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
-    hdr_texture->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
+    hdr_texture->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     lighting_buffer.attach(hdr_texture, gl::FBOAttachment::COLOR0, 0);
 
     lighting_buffer.attach_renderbuffer(gl::RenderBufferInternalFormat::DEPTH24_STENCIL8, width, height, gl::FBOAttachment::DEPTH_STENCIL);
