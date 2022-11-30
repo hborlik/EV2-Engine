@@ -156,22 +156,6 @@ struct Ref {
 };
 
 template<typename T>
-class ReferenceCounted : public ReferenceCountedBase {
-public:
-    ReferenceCounted() = default;
-    virtual ~ReferenceCounted() = default;
-
-    ReferenceCounted(const ReferenceCounted&) = delete;
-    ReferenceCounted<T> operator=(const ReferenceCounted<T>& o) = delete;
-    ReferenceCounted<T> operator=(ReferenceCounted<T>&& o) = delete;
-
-    Ref<T> get_ref() noexcept {return Ref<T>{this};}
-
-    uint32_t get_ref_count() const noexcept {return count;}
-
-};
-
-template<typename T>
 void Ref<T>::clear() {
     if (_ref)
         _ref->decrement();
@@ -183,6 +167,25 @@ Ref<T> make_referenced(Args&&... args) {
     T *obj = new T(std::forward<Args&&>(args)...);
     return Ref<T>{obj};
 }
+
+template<typename T>
+class ReferenceCounted : public ReferenceCountedBase {
+public:
+    using RefType = Ref<T>;
+
+    ReferenceCounted() = default;
+    virtual ~ReferenceCounted() = default;
+
+    ReferenceCounted(const ReferenceCounted&) = delete;
+    
+    ReferenceCounted<T> operator=(const ReferenceCounted<T>& o) = delete;
+    ReferenceCounted<T> operator=(ReferenceCounted<T>&& o) = delete;
+
+    Ref<T> get_ref() noexcept {return Ref<T>{this};}
+
+    uint32_t get_ref_count() const noexcept {return count;}
+
+};
 
 }
 

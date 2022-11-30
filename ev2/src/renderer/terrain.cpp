@@ -21,7 +21,7 @@
 template<typename T>
 constexpr auto sqr(T a) noexcept {return a * a;}
 
-// #define TERRAIN
+#define TERRAIN
 #ifdef TERRAIN
 
 namespace ev2::renderer {
@@ -677,81 +677,81 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
  * are created. In other modes, one RGBA16F and one DEPTH24_STENCIL8 textures
  * are created.
  */
-bool LoadSceneFramebufferTexture()
-{
-    if (glIsTexture(g_gl.textures[TEXTURE_CBUF]))
-        glDeleteTextures(1, &g_gl.textures[TEXTURE_CBUF]);
-    if (glIsTexture(g_gl.textures[TEXTURE_ZBUF]))
-        glDeleteTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
-    glGenTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
-    glGenTextures(1, &g_gl.textures[TEXTURE_CBUF]);
+// bool LoadSceneFramebufferTexture()
+// {
+//     if (glIsTexture(g_gl.textures[TEXTURE_CBUF]))
+//         glDeleteTextures(1, &g_gl.textures[TEXTURE_CBUF]);
+//     if (glIsTexture(g_gl.textures[TEXTURE_ZBUF]))
+//         glDeleteTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
+//     glGenTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
+//     glGenTextures(1, &g_gl.textures[TEXTURE_CBUF]);
 
-    switch (g_framebuffer.aa) {
-    case AA_NONE:
-        LOG("Loading {Z-Buffer-Framebuffer-Texture}\n");
-        glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
-        glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_ZBUF]);
-        glTexStorage2D(GL_TEXTURE_2D,
-            1,
-            GL_DEPTH24_STENCIL8,
-            g_framebuffer.w,
-            g_framebuffer.h);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//     switch (g_framebuffer.aa) {
+//     case AA_NONE:
+//         LOG("Loading {Z-Buffer-Framebuffer-Texture}\n");
+//         glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
+//         glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_ZBUF]);
+//         glTexStorage2D(GL_TEXTURE_2D,
+//             1,
+//             GL_DEPTH24_STENCIL8,
+//             g_framebuffer.w,
+//             g_framebuffer.h);
+//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        LOG("Loading {Color-Buffer-Framebuffer-Texture}\n");
-        glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
-        glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_CBUF]);
-        glTexStorage2D(GL_TEXTURE_2D,
-            1,
-            GL_RGBA32F,
-            g_framebuffer.w,
-            g_framebuffer.h);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        break;
-    case AA_MSAA2:
-    case AA_MSAA4:
-    case AA_MSAA8:
-    case AA_MSAA16: {
-        int samples = 1 << g_framebuffer.aa;
+//         LOG("Loading {Color-Buffer-Framebuffer-Texture}\n");
+//         glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
+//         glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_CBUF]);
+//         glTexStorage2D(GL_TEXTURE_2D,
+//             1,
+//             GL_RGBA32F,
+//             g_framebuffer.w,
+//             g_framebuffer.h);
+//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//         break;
+//     case AA_MSAA2:
+//     case AA_MSAA4:
+//     case AA_MSAA8:
+//     case AA_MSAA16: {
+//         int samples = 1 << g_framebuffer.aa;
 
-        int maxSamples;
-        int maxSamplesDepth;
-        //glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &maxSamples); //Wrong enum !
-        glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES, &maxSamples);
-        glGetIntegerv(GL_MAX_DEPTH_TEXTURE_SAMPLES, &maxSamplesDepth);
-        maxSamples = maxSamplesDepth < maxSamples ? maxSamplesDepth : maxSamples;
+//         int maxSamples;
+//         int maxSamplesDepth;
+//         //glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &maxSamples); //Wrong enum !
+//         glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES, &maxSamples);
+//         glGetIntegerv(GL_MAX_DEPTH_TEXTURE_SAMPLES, &maxSamplesDepth);
+//         maxSamples = maxSamplesDepth < maxSamples ? maxSamplesDepth : maxSamples;
 
-        if (samples > maxSamples) {
-            LOG("note: MSAA is %ix\n", maxSamples);
-            samples = maxSamples;
-        }
-        LOG("Loading {Scene-MSAA-Z-Framebuffer-Texture}\n");
-        glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_ZBUF]);
-        glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
-                                  samples,
-                                  GL_DEPTH24_STENCIL8,
-                                  g_framebuffer.w,
-                                  g_framebuffer.h,
-                                  g_framebuffer.msaa.fixed);
+//         if (samples > maxSamples) {
+//             LOG("note: MSAA is %ix\n", maxSamples);
+//             samples = maxSamples;
+//         }
+//         LOG("Loading {Scene-MSAA-Z-Framebuffer-Texture}\n");
+//         glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
+//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_ZBUF]);
+//         glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
+//                                   samples,
+//                                   GL_DEPTH24_STENCIL8,
+//                                   g_framebuffer.w,
+//                                   g_framebuffer.h,
+//                                   g_framebuffer.msaa.fixed);
 
-        LOG("Loading {Scene-MSAA-RGBA-Framebuffer-Texture}\n");
-        glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
-        glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_CBUF]);
-        glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
-                                  samples,
-                                  GL_RGBA32F,
-                                  g_framebuffer.w,
-                                  g_framebuffer.h,
-                                  g_framebuffer.msaa.fixed);
-    } break;
-    }
-    glActiveTexture(GL_TEXTURE0);
+//         LOG("Loading {Scene-MSAA-RGBA-Framebuffer-Texture}\n");
+//         glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
+//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_CBUF]);
+//         glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
+//                                   samples,
+//                                   GL_RGBA32F,
+//                                   g_framebuffer.w,
+//                                   g_framebuffer.h,
+//                                   g_framebuffer.msaa.fixed);
+//     } break;
+//     }
+//     glActiveTexture(GL_TEXTURE0);
 
-    return (glGetError() == GL_NO_ERROR);
-}
+//     return (glGetError() == GL_NO_ERROR);
+// }
 
 // -----------------------------------------------------------------------------
 /**
@@ -759,109 +759,109 @@ bool LoadSceneFramebufferTexture()
  *
  * This Loads an RG32F texture used as a slope map
  */
-void LoadNmapTexture16(int smapID, const djg_texture *dmap)
-{
-    int w = dmap->next->x;
-    int h = dmap->next->y;
-    const uint16_t *texels = (const uint16_t *)dmap->next->texels;
-    int mipcnt = djgt__mipcnt(w, h, 1);
+// void LoadNmapTexture16(int smapID, const djg_texture *dmap)
+// {
+//     int w = dmap->next->x;
+//     int h = dmap->next->y;
+//     const uint16_t *texels = (const uint16_t *)dmap->next->texels;
+//     int mipcnt = djgt__mipcnt(w, h, 1);
 
-    std::vector<float> smap(w * h * 2);
+//     std::vector<float> smap(w * h * 2);
 
-    for (int j = 0; j < h; ++j)
-        for (int i = 0; i < w; ++i) {
-            int i1 = std::max(0, i - 1);
-            int i2 = std::min(w - 1, i + 1);
-            int j1 = std::max(0, j - 1);
-            int j2 = std::min(h - 1, j + 1);
-            uint16_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
-            uint16_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
-            uint16_t px_b = texels[i + w * j1]; // in [0,2^16-1]
-            uint16_t px_t = texels[i + w * j2]; // in [0,2^16-1]
-            float z_l = (float)px_l / 65535.0f; // in [0, 1]
-            float z_r = (float)px_r / 65535.0f; // in [0, 1]
-            float z_b = (float)px_b / 65535.0f; // in [0, 1]
-            float z_t = (float)px_t / 65535.0f; // in [0, 1]
-            float slope_x = (float)w * 0.5f * (z_r - z_l);
-            float slope_y = (float)h * 0.5f * (z_t - z_b);
+//     for (int j = 0; j < h; ++j)
+//         for (int i = 0; i < w; ++i) {
+//             int i1 = std::max(0, i - 1);
+//             int i2 = std::min(w - 1, i + 1);
+//             int j1 = std::max(0, j - 1);
+//             int j2 = std::min(h - 1, j + 1);
+//             uint16_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
+//             uint16_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
+//             uint16_t px_b = texels[i + w * j1]; // in [0,2^16-1]
+//             uint16_t px_t = texels[i + w * j2]; // in [0,2^16-1]
+//             float z_l = (float)px_l / 65535.0f; // in [0, 1]
+//             float z_r = (float)px_r / 65535.0f; // in [0, 1]
+//             float z_b = (float)px_b / 65535.0f; // in [0, 1]
+//             float z_t = (float)px_t / 65535.0f; // in [0, 1]
+//             float slope_x = (float)w * 0.5f * (z_r - z_l);
+//             float slope_y = (float)h * 0.5f * (z_t - z_b);
 
-            smap[    2 * (i + w * j)] = slope_x;
-            smap[1 + 2 * (i + w * j)] = slope_y;
-        }
+//             smap[    2 * (i + w * j)] = slope_x;
+//             smap[1 + 2 * (i + w * j)] = slope_y;
+//         }
 
-    if (glIsTexture(g_gl.textures[smapID]))
-        glDeleteTextures(1, &g_gl.textures[smapID]);
+//     if (glIsTexture(g_gl.textures[smapID]))
+//         glDeleteTextures(1, &g_gl.textures[smapID]);
 
-    glGenTextures(1, &g_gl.textures[smapID]);
-    glActiveTexture(GL_TEXTURE0 + smapID);
-    glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
-    glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
+//     glGenTextures(1, &g_gl.textures[smapID]);
+//     glActiveTexture(GL_TEXTURE0 + smapID);
+//     glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
+//     glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
+//     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
 
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_CLAMP_TO_EDGE);
-    glActiveTexture(GL_TEXTURE0);
-}
+//     glGenerateMipmap(GL_TEXTURE_2D);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_MIN_FILTER,
+//         GL_LINEAR_MIPMAP_LINEAR);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_WRAP_S,
+//         GL_CLAMP_TO_EDGE);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_WRAP_T,
+//         GL_CLAMP_TO_EDGE);
+//     glActiveTexture(GL_TEXTURE0);
+// }
 
-void LoadNmapTexture8(int smapID, const djg_texture *dmap)
-{
-    int w = dmap->next->x;
-    int h = dmap->next->y;
-    const uint8_t *texels = (const uint8_t *)dmap->next->texels;
-    int mipcnt = djgt__mipcnt(w, h, 1);
+// void LoadNmapTexture8(int smapID, const djg_texture *dmap)
+// {
+//     int w = dmap->next->x;
+//     int h = dmap->next->y;
+//     const uint8_t *texels = (const uint8_t *)dmap->next->texels;
+//     int mipcnt = djgt__mipcnt(w, h, 1);
 
-    std::vector<float> smap(w * h * 2);
+//     std::vector<float> smap(w * h * 2);
 
-    for (int j = 0; j < h; ++j)
-        for (int i = 0; i < w; ++i) {
-            int i1 = std::max(0, i - 1);
-            int i2 = std::min(w - 1, i + 1);
-            int j1 = std::max(0, j - 1);
-            int j2 = std::min(h - 1, j + 1);
-            uint8_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
-            uint8_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
-            uint8_t px_b = texels[i + w * j1]; // in [0,2^16-1]
-            uint8_t px_t = texels[i + w * j2]; // in [0,2^16-1]
-            float z_l = (float)px_l / 255.0f; // in [0, 1]
-            float z_r = (float)px_r / 255.0f; // in [0, 1]
-            float z_b = (float)px_b / 255.0f; // in [0, 1]
-            float z_t = (float)px_t / 255.0f; // in [0, 1]
-            float slope_x = (float)w * 0.5f * (z_r - z_l);
-            float slope_y = (float)h * 0.5f * (z_t - z_b);
+//     for (int j = 0; j < h; ++j)
+//         for (int i = 0; i < w; ++i) {
+//             int i1 = std::max(0, i - 1);
+//             int i2 = std::min(w - 1, i + 1);
+//             int j1 = std::max(0, j - 1);
+//             int j2 = std::min(h - 1, j + 1);
+//             uint8_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
+//             uint8_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
+//             uint8_t px_b = texels[i + w * j1]; // in [0,2^16-1]
+//             uint8_t px_t = texels[i + w * j2]; // in [0,2^16-1]
+//             float z_l = (float)px_l / 255.0f; // in [0, 1]
+//             float z_r = (float)px_r / 255.0f; // in [0, 1]
+//             float z_b = (float)px_b / 255.0f; // in [0, 1]
+//             float z_t = (float)px_t / 255.0f; // in [0, 1]
+//             float slope_x = (float)w * 0.5f * (z_r - z_l);
+//             float slope_y = (float)h * 0.5f * (z_t - z_b);
 
-            smap[    2 * (i + w * j)] = slope_x;
-            smap[1 + 2 * (i + w * j)] = slope_y;
-        }
+//             smap[    2 * (i + w * j)] = slope_x;
+//             smap[1 + 2 * (i + w * j)] = slope_y;
+//         }
 
-    if (glIsTexture(g_gl.textures[smapID]))
-        glDeleteTextures(1, &g_gl.textures[smapID]);
+//     if (glIsTexture(g_gl.textures[smapID]))
+//         glDeleteTextures(1, &g_gl.textures[smapID]);
 
-    glGenTextures(1, &g_gl.textures[smapID]);
-    glActiveTexture(GL_TEXTURE0 + smapID);
-    glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
-    glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
+//     glGenTextures(1, &g_gl.textures[smapID]);
+//     glActiveTexture(GL_TEXTURE0 + smapID);
+//     glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
+//     glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
+//     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
 
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_REPEAT);
-    glActiveTexture(GL_TEXTURE0);
-}
+//     glGenerateMipmap(GL_TEXTURE_2D);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_MIN_FILTER,
+//         GL_LINEAR_MIPMAP_LINEAR);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_WRAP_S,
+//         GL_REPEAT);
+//     glTexParameteri(GL_TEXTURE_2D,
+//         GL_TEXTURE_WRAP_T,
+//         GL_REPEAT);
+//     glActiveTexture(GL_TEXTURE0);
+// }
 
 // -----------------------------------------------------------------------------
 /**
@@ -925,7 +925,7 @@ bool LoadDmapTexture16(int dmapID, int smapID, const char *pathToFile)
 
 bool LoadDmapTexture()
 {
-    LOG("%s", g_terrain.dmap.pathToFile.c_str());
+    std::cout << "Loading Dmap Texture: " << g_terrain.dmap.pathToFile << "\n";
     if (!g_terrain.dmap.pathToFile.empty()) {
         return LoadDmapTexture16(TEXTURE_DMAP,
                                  TEXTURE_SMAP,
@@ -942,7 +942,7 @@ bool LoadDmapTexture()
 bool Terrain::load_textures() {
     bool v = true;
 
-    if (v) v &= LoadSceneFramebufferTexture();
+    // if (v) v &= LoadSceneFramebufferTexture();
     if (v) v &= LoadDmapTexture();
     // if (v) v &= LoadBrunetonAtmosphereTextures();
 
