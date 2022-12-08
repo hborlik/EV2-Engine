@@ -496,6 +496,7 @@ bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
             return {};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -515,6 +516,7 @@ bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
             return {};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -564,6 +566,7 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
             return {};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -636,6 +639,7 @@ bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
             return {};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -987,8 +991,8 @@ bool LoadTerrainVariables(const Camera& m_camera)
     // m_camera.get_view
     glm::mat4 viewInv = m_camera.get_view_inv();
     glm::mat4 view = glm::inverse(viewInv);
-    glm::mat4 model = glm::translate({}, glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
-            * glm::scale({}, glm::vec3(scale))
+    glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
+            * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
             * glm::rotate(glm::identity<glm::mat4>(), (float)M_PI / 2.0f, glm::vec3(1, 0, 0));
 
     // set transformations (column-major)

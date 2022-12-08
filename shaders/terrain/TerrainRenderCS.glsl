@@ -56,10 +56,16 @@ void main()
 #ifdef FRAGMENT_SHADER
 layout(location = 0) in vec2 i_TexCoord;
 layout(location = 1) in vec3 i_WorldPos;
-layout(location = 0) out vec4 o_FragColor;
+
+layout (location = 0) out vec3 gPosition;
+layout (location = 1) out vec3 gNormal;
+layout (location = 2) out vec4 gAlbedoSpec;
+layout (location = 3) out uint gMaterialTex;
+layout (location = 4) out vec4 gEmissive;
 
 void main()
 {
-    o_FragColor = ShadeFragment(i_TexCoord, i_WorldPos);
+    gAlbedoSpec = ShadeFragment(i_TexCoord, i_WorldPos);
+    gPosition = i_WorldPos;
 }
 #endif
