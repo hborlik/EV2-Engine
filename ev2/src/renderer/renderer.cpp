@@ -219,8 +219,9 @@ void Renderer::init() {
     // set up FBO textures
     shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     shadow_depth_tex->set_image2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
-    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::CLAMP_TO_BORDER);
-    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::CLAMP_TO_BORDER);
+    // edge clamping is required for border color to be used
+    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::CLAMP_TO_EDGE);
+    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::CLAMP_TO_EDGE);
     shadow_depth_tex->set_border_color(glm::vec4{1.0f});
     depth_fbo.attach(shadow_depth_tex, gl::FBOAttachment::DEPTH);
     if (!depth_fbo.check())
@@ -705,6 +706,7 @@ void Renderer::render(const Camera &camera) {
     glDisable(GL_BLEND);
     glDisable(GL_DITHER);
     glDisable(GL_STENCIL_TEST);
+    glDepthFunc(GL_LESS);
 
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, __LINE__, -1, "Shadow Pass");
 
@@ -758,7 +760,6 @@ void Renderer::render(const Camera &camera) {
                 draw(m.drawable.get(), depth_program, false, m.gl_vao);
             }
         }
-
         depth_program.unbind();
         depth_fbo.unbind();
     }

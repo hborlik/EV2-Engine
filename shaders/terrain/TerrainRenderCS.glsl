@@ -15,6 +15,7 @@ by Jonathan Dupuy
 layout(location = 0) in vec2 i_VertexPos;
 layout(location = 0) out vec2 o_TexCoord;
 layout(location = 1) out vec3 o_WorldPos;
+layout(location = 2) out vec3 o_frag_pos;
 
 void main()
 {
@@ -45,6 +46,7 @@ void main()
 #endif
     o_TexCoord  = attrib.texCoord;
     o_WorldPos  = (u_ModelMatrix * attrib.position).xyz;
+    o_frag_pos = (u_ModelViewMatrix * attrib.position).xyz;
 }
 #endif
 
@@ -56,6 +58,7 @@ void main()
 #ifdef FRAGMENT_SHADER
 layout(location = 0) in vec2 i_TexCoord;
 layout(location = 1) in vec3 i_WorldPos;
+layout(location = 2) in vec3 i_frag_pos; // fragment position in view space
 
 layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
@@ -65,7 +68,11 @@ layout (location = 4) out vec4 gEmissive;
 
 void main()
 {
-    gAlbedoSpec = ShadeFragment(i_TexCoord, i_WorldPos);
-    gPosition = i_WorldPos;
+    NormalAlbedo na = ShadeFragmentGbuf(i_TexCoord, i_WorldPos);
+    gAlbedoSpec = vec4(na.albedo, 0.0f);
+    gPosition = i_frag_pos;
+    gMaterialTex = 7;
+    gNormal = na.normal;
+    gEmissive = vec4(0.0);
 }
 #endif

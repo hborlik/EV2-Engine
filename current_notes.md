@@ -15,7 +15,11 @@ Modeling and rendering are two core research problems in computer graphics.
     - urban models library
     - define the constraints
         - forest can be close to the road but not on
-    
+
+### Other todos
+1. Convert gbuffers from view to world space only (reason: get rid of extra view matrix multiply for positions and normals)
+2. BUGS:
+   - The normals for terrain are wrong! this is why only part of it shades
 
 ### Tree generation methods
 1. L-systems for branching skeletons

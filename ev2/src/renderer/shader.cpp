@@ -242,9 +242,11 @@ void Program::attachShader(const Shader* shader) {
         throw shader_error{ProgramName, "Shader could not be attached"};
 }
 
-void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor) {
+void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor, int version) {
     std::shared_ptr<Shader> s = std::make_shared<Shader>(type);
 
+    s->push_source_string("#version " + std::to_string(version) + " core\n");
+    s->push_source_string("#line 1\n");
     s->push_source_file(Engine::get().shader_path / path);
     s->compile(preprocessor);
     auto suc = attach_shader(s->getHandle());

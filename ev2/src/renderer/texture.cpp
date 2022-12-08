@@ -57,6 +57,8 @@ void Texture::set_image2D(gl::TextureInternalFormat internalFormat, GLsizei widt
     internal_format = internalFormat;
     pixel_format = dataFormat;
     pixel_type = dataType;
+    this->width = width;
+    this->height = height;
 }
 
 void Texture::set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height, gl::PixelFormat dataFormat, gl::PixelType dataType, const unsigned char* data, gl::TextureTarget side) {
@@ -66,6 +68,8 @@ void Texture::set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width
     internal_format = internalFormat;
     pixel_format = dataFormat;
     pixel_type = dataType;
+    this->width = width;
+    this->height = height;
 }
 
 void Texture::recreate_storage2D(GLsizei levels, gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height) {
@@ -78,6 +82,8 @@ void Texture::recreate_storage2D(GLsizei levels, gl::TextureInternalFormat inter
     GL_CHECKED_CALL(glTexStorage2D((GLenum)texture_type, levels, (GLint)internalFormat, width, height));
     unbind();
     internal_format = internalFormat;
+    this->width = width;
+    this->height = height;
 }
 
 // FBO
@@ -127,6 +133,11 @@ bool FBO::attach(std::shared_ptr<Texture> texture, gl::FBOAttachment attachment_
     {
         assert(location == -1);
     }
+    if (!(width > 0 && height > 0)) {
+        width = texture->get_width();
+        height = texture->get_height();
+    }
+    assert(width == texture->get_width() && height == texture->get_height());
     if (attachments.find(attachment_point) != attachments.end())
         return false;
     if (texture && texture->type() == gl::TextureType::TEXTURE_2D) {

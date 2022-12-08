@@ -1,4 +1,4 @@
-#version 460 core
+
 out vec3 frag_color;
 
 layout (std140) uniform Globals {

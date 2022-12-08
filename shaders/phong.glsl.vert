@@ -1,4 +1,4 @@
-#version 460 core
+
 
 in vec3 VertPos;
 in vec3 Normal;

@@ -383,11 +383,14 @@ public:
     void attachShader(const Shader* shader);
 
     /**
-     * @brief Set path for shader stage in this program
-     *
-     * @param program
+     * @brief  Set path for shader stage in this program
+     * 
+     * @param type 
+     * @param path 
+     * @param preprocessor 
+     * @param version 
      */
-    void loadShader(gl::GLSLShaderType type, const std::filesystem::path &path, const ShaderPreprocessor& preprocessor);
+    void loadShader(gl::GLSLShaderType type, const std::filesystem::path &path, const ShaderPreprocessor& preprocessor, int version = 450);
 
     /**
      * @brief Load, Compile, and Link shader programs

@@ -21,14 +21,16 @@ public:
     Texture(gl::TextureType texture_type, gl::TextureFilterMode filterMode);
 
     ~Texture() {
-        if (handle != 0)
+        if (glIsTexture(handle))
             glDeleteTextures(1, &handle);
     }
 
     Texture(Texture &&o) : texture_type{o.texture_type},
                            internal_format{o.internal_format},
                            pixel_format{o.pixel_format},
-                           pixel_type{o.pixel_type}
+                           pixel_type{o.pixel_type},
+                           width{o.width},
+                           height{o.height}
     {
         std::swap(handle, o.handle);
     }
@@ -99,12 +101,20 @@ public:
      */
     void recreate_storage2D(GLsizei levels, gl::TextureInternalFormat internalFormat, GLsizei width, GLsizei height);
 
+    int get_width() const noexcept {return width;}
+    int get_height() const noexcept {return height;}
+
+    bool is_valid() const noexcept {
+        return width > 0 && height > 0 && glIsTexture(handle);
+    }
+
 protected:
     const gl::TextureType texture_type;
     gl::TextureInternalFormat internal_format;
     gl::PixelFormat pixel_format;
     gl::PixelType pixel_type;
     GLuint handle = 0;
+    int width = -1, height = -1;
 };
 
 class RenderBuffer {
@@ -235,7 +245,7 @@ public:
 private:
     gl::FBOTarget target;
     GLuint gl_reference = 0;
-    GLuint width = 0, height = 0;
+    int width = -1, height = -1;
 
     bool attach_texture(const Texture* texture, gl::FBOAttachment attachment_point);
 

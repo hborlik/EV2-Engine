@@ -1,4 +1,4 @@
-#version 460 core
+
 in layout(location = 0) vec3 VertPos;
 in layout(location = 1) vec2 TexPos;
 in layout(location = 2) vec3 BiTangent;

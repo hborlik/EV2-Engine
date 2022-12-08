@@ -1,4 +1,4 @@
-#version 460 core
+
 in vec4 FragPos;
 in vec4 ClipPos;
 

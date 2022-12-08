@@ -1,4 +1,4 @@
-#version 460 core
+
 in layout(location = 0) vec3 VertPos;
 
 uniform mat4 M;

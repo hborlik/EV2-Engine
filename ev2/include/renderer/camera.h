@@ -201,7 +201,7 @@ private:
     mutable bool dirty = true;
 
     float fov = 60.0f;
-    float m_near = 0.1f, m_far = 500.0f;
+    float m_near = 0.1f, m_far = 32000.0f;
     float aspect = 1.0f;
 };
 

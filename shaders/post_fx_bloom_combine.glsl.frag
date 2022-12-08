@@ -1,4 +1,4 @@
-#version 460 core
+
 
 // threshold bright areas of the hdr texture for bloom
 // also add emissive brightness to final hdr texture

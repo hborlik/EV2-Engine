@@ -1,4 +1,4 @@
-#version 460 core
+
 
 // gaussian blur in multiple passes (either horizontal or vertical)
 

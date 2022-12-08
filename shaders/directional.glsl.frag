@@ -1,4 +1,4 @@
-#version 460 core
+
 #extension GL_GOOGLE_include_directive : enable
 
 #include "globals.glslinc"
@@ -24,6 +24,8 @@ uniform vec3 lightAmbient;
 /* returns 1 if shadowed */
 /* called with the point projected into the light's coordinate space */
 float TestShadow(vec3 LSfPos, vec3 Normal) {
+    if (any(greaterThan(abs(2 * LSfPos - 1.0f), vec3(1.0f))))
+        return 0.f;
     // pcss
     vec3 X = vec3(1, 0, 0);
     vec3 Y = normalize(cross(Normal, X));
@@ -38,7 +40,7 @@ float TestShadow(vec3 LSfPos, vec3 Normal) {
         for (int j = -2; j <= 2; j++) {
             const vec3 spos = TBN * vec3(vec2(i, j) * texelScale, 0);
             const float lightDepth = texture(shadowDepth, LSfPos.xy + spos.xy).r;
-            if (LSfPos.z - spos.z * 1.5f > lightDepth)
+            if (LSfPos.z - abs(spos.z * 1.5f) > lightDepth)
                 percentShadow += 1.0f;
         }
 
@@ -72,10 +74,13 @@ void main() {
     vec3 viewDir = normalize(-FragPos);
 
     mat4 inv_pv = LS * VInv;
-    float Shade = TestShadow((inv_pv * vec4(FragPos, 1.0)).xyz, (inv_pv * vec4(Normal, 0.0)).xyz);
+    vec4 LSfPos = (inv_pv * vec4(FragPos, 1.0));
+    float Shade = TestShadow(LSfPos.xyz, (inv_pv * vec4(Normal, 0.0)).xyz);
 
     vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, Normal, X, Y, Albedo, materials[MaterialId]);
     
     frag_color = vec4(color, 1.0);
     // frag_color = vec4(AO, AO, AO, 1.0);
+    // frag_color = vec4(texture(shadowDepth, (inv_pv * vec4(FragPos, 1.0)).xy).r);
+    // frag_color = vec4(Normal, 0);
 }

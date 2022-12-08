@@ -186,7 +186,8 @@ struct TerrainManager {
 } g_terrain = {
     {true, true, false, false, true},
     {std::string("" "./kauai.png"),
-     52660.0f, 52660.0f, -14.0f, 1587.0f,
+    //  52660.0f, 52660.0f, -400.0f, 1587.0f,
+    5000.0f, 5000.0f, -200.0f, 14.0f,
      1.0f},
     METHOD_CS,
     SHADING_DIFFUSE,
@@ -195,7 +196,7 @@ struct TerrainManager {
     0.1f,
     25,
     0,
-    52660.0f
+    5000.0f
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -993,7 +994,7 @@ bool LoadTerrainVariables(const Camera& m_camera)
     glm::mat4 view = glm::inverse(viewInv);
     glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
             * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
-            * glm::rotate(glm::identity<glm::mat4>(), (float)M_PI / 2.0f, glm::vec3(1, 0, 0));
+            * glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
 
     // set transformations (column-major)
     variables.model = model;
@@ -1581,6 +1582,12 @@ void lebRenderCs()
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
     glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_MESHLET]);
+
+    glActiveTexture(GL_TEXTURE0 + TEXTURE_DMAP);
+    glBindTexture(GL_TEXTURE_2D, g_gl->textures[TEXTURE_DMAP]);
+
+    glActiveTexture(GL_TEXTURE0 + TEXTURE_SMAP);
+    glBindTexture(GL_TEXTURE_2D, g_gl->textures[TEXTURE_SMAP]);
 
     // render
     glUseProgram(g_gl->programs[PROGRAM_RENDER_ONLY]->getHandle());

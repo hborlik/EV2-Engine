@@ -344,4 +344,77 @@ vec4 ShadeFragment(vec2 texCoord, vec3 worldPos)
     return vec4(1, 0, 0, 1);
 #endif
 }
+
+struct NormalAlbedo {
+    vec3 normal;
+    vec3 albedo;
+};
+NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
+{
+#if FLAG_WIRE
+    const float wireScale = 1.1; // scale of the wire in pixel
+    vec4 wireColor = vec4(0.0, 0.0, 0.0, 1.0);
+    vec3 distanceSquared = distance * distance;
+    float nearestDistance = min(min(distanceSquared.x, distanceSquared.y), distanceSquared.z);
+    float blendFactor = exp2(-nearestDistance / wireScale);
+#endif
+
+#if FLAG_DISPLACE
+#if 1
+    // slope
+    vec2 smap = texture(u_SmapSampler, texCoord).rg * u_DmapFactor * 0.03;
+    vec3 n = normalize(vec3(-smap, 1));
+#else // compute the slope from the dmap directly
+    float filterSize = 1.0f / float(textureSize(u_DmapSampler, 0).x);// sqrt(dot(dFdx(texCoord), dFdy(texCoord)));
+    float sx0 = textureLod(u_DmapSampler, texCoord - vec2(filterSize, 0.0), 0.0).r;
+    float sx1 = textureLod(u_DmapSampler, texCoord + vec2(filterSize, 0.0), 0.0).r;
+    float sy0 = textureLod(u_DmapSampler, texCoord - vec2(0.0, filterSize), 0.0).r;
+    float sy1 = textureLod(u_DmapSampler, texCoord + vec2(0.0, filterSize), 0.0).r;
+    float sx = sx1 - sx0;
+    float sy = sy1 - sy0;
+
+    vec3 n = normalize(vec3(u_DmapFactor * 0.03 / filterSize * 0.5f * vec2(-sx, -sy), 1));
+#endif
+#else
+    vec3 n = vec3(0, 0, 1);
+#endif
+
+#if SHADING_SNOWY
+    float d = clamp(n.z, 0.0, 1.0);
+    float slopeMag = dot(n.xy, n.xy);
+    vec3 albedo = slopeMag > 0.5 ? vec3(0.75) : vec3(2);
+    float z = 3.0 * gl_FragCoord.z / gl_FragCoord.w;
+
+    return NormalAlbedo(
+        n,
+        vec3(mix(vec3(albedo * d / 3.14159), vec3(0.5), 1.0 - exp2(-z)))
+    );
+#elif SHADING_DIFFUSE
+    vec3 wi = normalize(vec3(1, 1, 1));
+    float d = dot(wi, n) * 0.5 + 0.5;
+    vec3 albedo = vec3(252, 197, 150) / 255.0f;
+    vec3 camPos = u_CameraMatrix[3].xyz;
+    vec3 extinction;
+    vec3 inscatter = inScattering(camPos.zxy + earthPos,
+                                  worldPos.zxy + earthPos,
+                                  wi.zxy,
+                                  extinction);
+#if FLAG_WIRE
+    vec3 shading = mix((d / 3.14159) * albedo, wireColor.xyz, blendFactor);
+#else
+    vec3 shading = (d / 3.14159) * albedo;
+#endif
+
+    return NormalAlbedo(
+        n,
+        shading * extinction + inscatter * 0.5
+    );
+#else
+    return NormalAlbedo(
+        n,
+        vec3(1, 0, 0)
+    );
+#endif
+}
+
 #endif
