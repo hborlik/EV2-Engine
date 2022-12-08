@@ -13,18 +13,35 @@
 
 #include <iostream>
 #include <string>
+#include <ctime>
+#include <sstream>
 
 #include <window.h>
 #include <renderer/renderer.h>
 #include <resource.h>
 #include <physics.h>
 
-static ev2::EngineConfig config;
+static ev2::Engine engine;
 
 namespace ev2 {
 
-const EngineConfig& EngineConfig::get_config() {
-    return config;
+std::string formatted_current_time() {
+    // from https://stackoverflow.com/questions/16357999/current-date-and-time-as-string
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+    auto str = oss.str();
+    return str;
+}
+
+const Engine& Engine::get() {
+    return engine;
+}
+
+Engine& Engine::get_internal() {
+    return engine;
 }
 
 engine_exception::engine_exception(std::string description) noexcept : description{std::move(description)} {
@@ -40,21 +57,24 @@ shader_error::shader_error(std::string shaderName, std::string errorString) noex
 
 }
 
-void EV2_init(const Args& args, const std::filesystem::path& asset_path) {
-    config.asset_path = asset_path;
-    config.shader_path = "shaders";
+void EV2_init(const Args& args, const std::filesystem::path& asset_path, const std::filesystem::path& log_file_dir) {
+    engine.asset_path = asset_path;
+    engine.shader_path = "shaders";
+    engine.log_file_stream.open(log_file_dir / ("ev2_log-" + formatted_current_time() + ".txt"));
     window::init(args);
     glm::ivec2 screen_size = window::getWindowSize();
     renderer::Renderer::initialize(screen_size.x, screen_size.y);
     ResourceManager::initialize(asset_path);
     renderer::Renderer::get_singleton().init();
     Physics::initialize();
+    engine.log_file<Engine>("Initialized");
 }
 
 void EV2_shutdown() {
     Physics::shutdown();
     ResourceManager::shutdown();
     renderer::Renderer::shutdown();
+    engine.log_file<Engine>("Shutdown");
 }
 
 Args::Args(int argc, char* argv[]) {

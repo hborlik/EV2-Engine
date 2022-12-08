@@ -149,8 +149,12 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
             GLsizei written;
             glGetShaderInfoLog(gl_reference, logLen, &written, log.data());
 
-            std::cout << "Shader Log for " << path << ":\n" << std::string{log.begin(), log.end()} << std::endl;
-            std::cout << source << std::endl;
+            std::cout << "Shader error log dumped to log file for " << path << "\n";
+            Engine::get().log_file<Shader>(
+                std::string{log.begin(), log.end() - 1} +
+                "\n------BEGIN SHADER SOURCE-----\n\n" +
+                source +
+                "\n------END SHADER SOURCE-----\n\n");
         }
     }
     return result == GL_TRUE;
@@ -159,17 +163,22 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
 // UbiquitousShader
 
 void UbiquitousShader::push_source_file(const std::filesystem::path &path) {
+    last_shader_begin = source.length();
+#if not NDEBUG
+    source += "\n//" + path.generic_string() + "\n";
+#endif
     source += load_shader_content(path);
 }
 
 void UbiquitousShader::push_source_string(const std::string& source_string) {
+    last_shader_begin = source.length();
     source += source_string;
 }
 
 std::unique_ptr<Shader> create_shader_stage(const std::string& stage_define, const std::string& source, gl::GLSLShaderType type, int version) {
     auto out = std::make_unique<Shader>(type);
     out->push_source_string("#version " + std::to_string(version) + "\n");
-    out->push_source_string("#define " + source + "\n");
+    out->push_source_string("#define " + stage_define + "\n");
     out->push_source_string(source);
     
     return out;
@@ -178,27 +187,27 @@ std::unique_ptr<Shader> create_shader_stage(const std::string& stage_define, con
 std::vector<std::unique_ptr<Shader>> UbiquitousShader::get_shader_stages(int version) {
     std::vector<std::unique_ptr<Shader>> output_shaders{};
     GLSLShaderTypeFlag stages{};
-    if (source.find("VERTEX_SHADER") != std::string::npos) {
+    if (source.find("VERTEX_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::VERTEX_SHADER;
         output_shaders.push_back(create_shader_stage("VERTEX_SHADER", source, gl::GLSLShaderType::VERTEX_SHADER, version));
     }
-    if (source.find("FRAGMENT_SHADER") != std::string::npos) {
+    if (source.find("FRAGMENT_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::FRAGMENT_SHADER;
         output_shaders.push_back(create_shader_stage("FRAGMENT_SHADER", source, gl::GLSLShaderType::FRAGMENT_SHADER, version));
     }
-    if (source.find("GEOMETRY_SHADER") != std::string::npos) {
+    if (source.find("GEOMETRY_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::GEOMETRY_SHADER;
         output_shaders.push_back(create_shader_stage("GEOMETRY_SHADER", source, gl::GLSLShaderType::GEOMETRY_SHADER, version));
     }
-    if (source.find("TESS_CONTROL_SHADER") != std::string::npos) {
+    if (source.find("TESS_CONTROL_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::TESS_CONTROL_SHADER;
         output_shaders.push_back(create_shader_stage("TESS_CONTROL_SHADER", source, gl::GLSLShaderType::TESS_CONTROL_SHADER, version));
     }
-    if (source.find("TESS_EVALUATION_SHADER") != std::string::npos) {
+    if (source.find("TESS_EVALUATION_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::TESS_EVALUATION_SHADER;
         output_shaders.push_back(create_shader_stage("TESS_EVALUATION_SHADER", source, gl::GLSLShaderType::TESS_EVALUATION_SHADER, version));
     }
-    if (source.find("COMPUTE_SHADER") != std::string::npos) {
+    if (source.find("COMPUTE_SHADER", last_shader_begin) != std::string::npos) {
         stages.v |= GLSLShaderTypeFlag::COMPUTE_SHADER;
         output_shaders.push_back(create_shader_stage("COMPUTE_SHADER", source, gl::GLSLShaderType::COMPUTE_SHADER, version));
     }
@@ -236,7 +245,7 @@ void Program::attachShader(const Shader* shader) {
 void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor) {
     std::shared_ptr<Shader> s = std::make_shared<Shader>(type);
 
-    s->push_source_file(EngineConfig::get_config().shader_path / path);
+    s->push_source_file(Engine::get().shader_path / path);
     s->compile(preprocessor);
     auto suc = attach_shader(s->getHandle());
     if (!suc)
@@ -268,7 +277,12 @@ void Program::link() {
             GLsizei written;
             glGetProgramInfoLog(gl_reference, logLen, &written, log.data());
 
-            std::cerr << "Program Log for " << ProgramName << ":\n" << std::string{log.begin(), log.end()} << std::endl;
+            std::cout << "Program error log dumped to log file for " << ProgramName << "\n";
+            std::string log_str{log.begin(), log.end()-1};
+            log_str += "\nProgram Log for " + ProgramName + "\n";
+            Engine::get().log_file<Program>(log_str);
+
+            std::cerr << log_str << std::endl;
         }
         throw shader_error{ProgramName, "Failed to link program"};
     }

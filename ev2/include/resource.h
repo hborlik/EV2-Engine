@@ -13,8 +13,9 @@
 
 #include <renderer/model.h>
 #include <renderer/renderer.h>
-#include <scene.h>
 #include <renderer/texture.h>
+#include <image.hpp>
+#include <scene.h>
 #include <gltf.h>
 
 namespace ev2 {
@@ -104,10 +105,9 @@ public:
 
     const auto& get_materials() const {return materials;}
 
-public:
+private:
     std::filesystem::path asset_path;
 
-private:
     std::unordered_map<std::string, std::weak_ptr<renderer::Drawable>> model_lookup;
 
     std::unordered_map<std::string, Ref<MaterialResource>> materials;

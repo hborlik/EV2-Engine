@@ -8,3 +8,6 @@ build/*
 testapp/asset/models/*
 
 ev2_tests/imgui.ini
+
+logs/
+imgui.ini

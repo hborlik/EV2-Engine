@@ -15,8 +15,8 @@
 namespace ev2::renderer {
 
 struct RenderState {
-    FBO* target_fbo;
-    Camera* camera;
+    const FBO* target_fbo;
+    const Camera* camera;
 };
 
 }

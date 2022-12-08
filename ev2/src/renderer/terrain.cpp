@@ -3,12 +3,13 @@
 #include <stdio.h>
 #include <map>
 #include <vector>
-#include <memory>
 
 #include <renderer/ev_gl.h>
 #include <renderer/buffer.h>
 #include <renderer/camera.h>
 #include <renderer/shader.h>
+#include <image.hpp>
+#include <resource.h>
 
 #define CBT_IMPLEMENTATION
 #include <cbt.h>
@@ -149,23 +150,18 @@ enum {
     UNIFORM_COUNT
 };
 struct OpenGLManager {
-    std::unique_ptr<Program> programs[PROGRAM_COUNT];
-    GLuint framebuffers[FRAMEBUFFER_COUNT];
-    GLuint textures[TEXTURE_COUNT];
-    GLuint vertexArrays[VERTEXARRAY_COUNT];
-    GLuint buffers[BUFFER_COUNT];
-    GLuint queries[QUERY_COUNT];
-    GLint uniforms[UNIFORM_COUNT];
-    std::unique_ptr<Buffer> streams[STREAM_COUNT];
-} g_gl = {
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    {0},
-    NULL
-};
+
+    OpenGLManager() = default;
+
+    std::unique_ptr<Program> programs[PROGRAM_COUNT] = {nullptr};
+    GLuint framebuffers[FRAMEBUFFER_COUNT] = {0};
+    GLuint textures[TEXTURE_COUNT] = {0};
+    GLuint vertexArrays[VERTEXARRAY_COUNT] = {0};
+    GLuint buffers[BUFFER_COUNT] = {0};
+    GLuint queries[QUERY_COUNT] = {0};
+    GLint uniforms[UNIFORM_COUNT] = {0};
+    std::unique_ptr<Buffer> streams[STREAM_COUNT] = {nullptr};
+} *g_gl;
 
 
 // -----------------------------------------------------------------------------
@@ -239,53 +235,53 @@ void ConfigureTerrainProgram(const RenderState& state, GLuint glp, GLuint offset
     float lodFactor = computeLodFactor(state);
 
     glProgramUniform1f(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + offset],
         g_terrain.dmap.scale);
     glProgramUniform1f(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_LOD_FACTOR + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_LOD_FACTOR + offset],
         lodFactor);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_DMAP_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_DMAP_SAMPLER + offset],
         TEXTURE_DMAP);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_SMAP_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_SMAP_SAMPLER + offset],
         TEXTURE_SMAP);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_DMAP_ROCK_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_DMAP_ROCK_SAMPLER + offset],
         TEXTURE_ROCK_DMAP);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_SMAP_ROCK_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_SMAP_ROCK_SAMPLER + offset],
         TEXTURE_ROCK_SMAP);
     glProgramUniform1f(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_TARGET_EDGE_LENGTH + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_TARGET_EDGE_LENGTH + offset],
         g_terrain.primitivePixelLengthTarget);
     glProgramUniform1f(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_MIN_LOD_VARIANCE + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_MIN_LOD_VARIANCE + offset],
         sqr(g_terrain.minLodStdev / 64.0f / g_terrain.dmap.scale));
     glProgramUniform2f(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + offset],
         state.target_fbo->get_width(), state.target_fbo->get_height());
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + offset],
         TEXTURE_ATMOSPHERE_INSCATTER);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_IRRADIANCE_SAMPLER+ offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_IRRADIANCE_SAMPLER+ offset],
         TEXTURE_ATMOSPHERE_IRRADIANCE);
     glProgramUniform1i(glp,
-        g_gl.uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + offset],
+        g_gl->uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + offset],
         TEXTURE_ATMOSPHERE_TRANSMITTANCE);
 }
 
 void ConfigureTerrainPrograms(const RenderState& state)
 {
     ConfigureTerrainProgram(state,
-                            g_gl.programs[PROGRAM_SPLIT]->getHandle(),
+                            g_gl->programs[PROGRAM_SPLIT]->getHandle(),
                             UNIFORM_SPLIT_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
     ConfigureTerrainProgram(state,
-                            g_gl.programs[PROGRAM_MERGE]->getHandle(),
+                            g_gl->programs[PROGRAM_MERGE]->getHandle(),
                             UNIFORM_MERGE_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
     ConfigureTerrainProgram(state,
-                            g_gl.programs[PROGRAM_RENDER_ONLY]->getHandle(),
+                            g_gl->programs[PROGRAM_RENDER_ONLY]->getHandle(),
                             UNIFORM_RENDER_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
 }
 
@@ -293,11 +289,11 @@ void ConfigureTerrainPrograms(const RenderState& state)
 // set Terrain program uniforms
 void ConfigureTopViewProgram()
 {
-    glProgramUniform1f(g_gl.programs[PROGRAM_TOPVIEW]->getHandle(),
-        g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR],
+    glProgramUniform1f(g_gl->programs[PROGRAM_TOPVIEW]->getHandle(),
+        g_gl->uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR],
         g_terrain.dmap.scale);
-    glProgramUniform1i(g_gl.programs[PROGRAM_TOPVIEW]->getHandle(),
-        g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER],
+    glProgramUniform1i(g_gl->programs[PROGRAM_TOPVIEW]->getHandle(),
+        g_gl->uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER],
         TEXTURE_DMAP);
 }
 
@@ -305,14 +301,14 @@ void ConfigureTopViewProgram()
 // set Atmosphere program uniforms
 void ConfigureSkyProgram()
 {
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
-                       g_gl.uniforms[UNIFORM_SKY_INSCATTER_SAMPLER],
+    glProgramUniform1i(g_gl->programs[PROGRAM_SKY]->getHandle(),
+                       g_gl->uniforms[UNIFORM_SKY_INSCATTER_SAMPLER],
                        TEXTURE_ATMOSPHERE_INSCATTER);
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
-                       g_gl.uniforms[UNIFORM_SKY_IRRADIANCE_SAMPLER],
+    glProgramUniform1i(g_gl->programs[PROGRAM_SKY]->getHandle(),
+                       g_gl->uniforms[UNIFORM_SKY_IRRADIANCE_SAMPLER],
                        TEXTURE_ATMOSPHERE_IRRADIANCE);
-    glProgramUniform1i(g_gl.programs[PROGRAM_SKY]->getHandle(),
-                       g_gl.uniforms[UNIFORM_SKY_TRANSMITTANCE_SAMPLER],
+    glProgramUniform1i(g_gl->programs[PROGRAM_SKY]->getHandle(),
+                       g_gl->uniforms[UNIFORM_SKY_TRANSMITTANCE_SAMPLER],
                        TEXTURE_ATMOSPHERE_TRANSMITTANCE);
 }
 
@@ -374,30 +370,31 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
         source_string += "#define FLAG_WIRE 1\n";
 
     UbiquitousShader cull_shader{};
-    cull_shader.push_source_file("./terrain/shaders/FrustumCulling.glsl");
+    cull_shader.push_source_string(source_string);
+    cull_shader.push_source_file("./shaders/terrain/FrustumCulling.glsl");
 
     cull_shader.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
     cull_shader.push_source_string("#define CBT_READ_ONLY\n");
 
     cull_shader.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
     cull_shader.push_source_file("./submodules/libleb/glsl/leb.glsl");
-    cull_shader.push_source_file("./terrain/shaders/BrunetonAtmosphere.glsl");
-    cull_shader.push_source_file("./terrain/shaders/TerrainRenderCommon.glsl");
+    cull_shader.push_source_file("./shaders/terrain/BrunetonAtmosphere.glsl");
+    cull_shader.push_source_file("./shaders/terrain/TerrainRenderCommon.glsl");
     if (g_terrain.method == METHOD_CS) {
         if (strcmp("/* thisIsAHackForComputePass */\n", flag.c_str()) == 0) {
             if (g_terrain.flags.wire) {
-                cull_shader.push_source_file("./terrain/shaders/TerrainRenderCS_Wire.glsl");
+                cull_shader.push_source_file("./shaders/terrain/TerrainRenderCS_Wire.glsl");
             } else {
-                cull_shader.push_source_file("./terrain/shaders/TerrainRenderCS.glsl");
+                cull_shader.push_source_file("./shaders/terrain/TerrainRenderCS.glsl");
             }
         } else {
-            cull_shader.push_source_file("./terrain/shaders/TerrainUpdateCS.glsl");
+            cull_shader.push_source_file("./shaders/terrain/TerrainUpdateCS.glsl");
         }
     } else if (g_terrain.method == METHOD_TS) {
         if (g_terrain.flags.wire) {
-            cull_shader.push_source_file("./terrain/shaders/TerrainRenderTS_Wire.glsl");
+            cull_shader.push_source_file("./shaders/terrain/TerrainRenderTS_Wire.glsl");
         } else {
-            cull_shader.push_source_file("./terrain/shaders/TerrainRenderTS.glsl");
+            cull_shader.push_source_file("./shaders/terrain/TerrainRenderTS.glsl");
         }
     } else if (g_terrain.method == METHOD_GS) {
         int subdLevel = g_terrain.gpuSubd;
@@ -406,46 +403,47 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
             int vertexCnt = 3 << (2 * subdLevel);
 
             cull_shader.push_source_string("#define MAX_VERTICES " + std::to_string(vertexCnt) + "\n");
-            cull_shader.push_source_file("./terrain/shaders/TerrainRenderGS_Wire.glsl");
+            cull_shader.push_source_file("./shaders/terrain/TerrainRenderGS_Wire.glsl");
         } else {
             int vertexCnt = subdLevel == 0 ? 3 : 4 << (2 * subdLevel - 1);
 
             cull_shader.push_source_string("#define MAX_VERTICES " + std::to_string(vertexCnt) + "\n");
-            cull_shader.push_source_file("./terrain/shaders/TerrainRenderGS.glsl");
+            cull_shader.push_source_file("./shaders/terrain/TerrainRenderGS.glsl");
         }
     } else if (g_terrain.method == METHOD_MS) {
-        cull_shader.push_source_file("./terrain/shaders/TerrainRenderMS.glsl");
+        cull_shader.push_source_file("./shaders/terrain/TerrainRenderMS.glsl");
     }
 
     for (auto& shader : cull_shader.get_shader_stages(450)) {
         if (!shader->compile(pre))
-            return {};
+            throw shader_error{"TerrainProgram", "Failed to compile"};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
-    g_gl.uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_DMAP_FACTOR + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_DmapFactor");
-    g_gl.uniforms[UNIFORM_TERRAIN_LOD_FACTOR + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_LOD_FACTOR + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_LodFactor");
-    g_gl.uniforms[UNIFORM_TERRAIN_DMAP_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_DMAP_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_DmapSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_SMAP_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_SMAP_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_SmapSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_DMAP_ROCK_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_DMAP_ROCK_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_DmapRockSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_SMAP_ROCK_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_SMAP_ROCK_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_SmapRockSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_TARGET_EDGE_LENGTH + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_TARGET_EDGE_LENGTH + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_TargetEdgeLength");
-    g_gl.uniforms[UNIFORM_TERRAIN_MIN_LOD_VARIANCE + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_MIN_LOD_VARIANCE + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_MinLodVariance");
-    g_gl.uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_SCREEN_RESOLUTION + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "u_ScreenResolution");
-    g_gl.uniforms[UNIFORM_TERRAIN_IRRADIANCE_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_IRRADIANCE_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "skyIrradianceSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_INSCATTER_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "inscatterSampler");
-    g_gl.uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + uniformOffset] =
+    g_gl->uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "transmittanceSampler");
 
     ConfigureTerrainProgram(state, djp->getHandle(), uniformOffset);
@@ -458,15 +456,15 @@ bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre
 {
     bool v = true;
 
-    if (v) v = v && (g_gl.programs[PROGRAM_SPLIT] = LoadTerrainProgram(state,
+    if (v) v = v && (g_gl->programs[PROGRAM_SPLIT] = LoadTerrainProgram(state,
                                        "#define FLAG_SPLIT 1\n",
                                        UNIFORM_SPLIT_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
                                        pre));
-    if (v) v = v && (g_gl.programs[PROGRAM_MERGE] = LoadTerrainProgram(state,
+    if (v) v = v && (g_gl->programs[PROGRAM_MERGE] = LoadTerrainProgram(state,
                                        "#define FLAG_MERGE 1\n",
                                        UNIFORM_MERGE_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
                                        pre));
-    if (v) v = v && (g_gl.programs[PROGRAM_RENDER_ONLY] = LoadTerrainProgram(state,
+    if (v) v = v && (g_gl->programs[PROGRAM_RENDER_ONLY] = LoadTerrainProgram(state,
                                        "/* thisIsAHackForComputePass */\n",
                                        UNIFORM_RENDER_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
                                        pre));
@@ -485,7 +483,7 @@ bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre
 bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
 {
     UbiquitousShader usp{};
-    auto& djp = g_gl.programs[PROGRAM_LEB_REDUCTION] = std::make_unique<Program>("LebReductionProgram");
+    auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION] = std::make_unique<Program>("LebReductionProgram");
 
     LOG("Loading {Reduction-Program}\n");
     usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
@@ -505,7 +503,7 @@ bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
 bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
 {
     UbiquitousShader usp{};
-    auto& djp = g_gl.programs[PROGRAM_LEB_REDUCTION_PREPASS] = std::make_unique<Program>("LebReductionPrepass");
+    auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION_PREPASS] = std::make_unique<Program>("LebReductionPrepass");
 
     LOG("Loading {Reduction-Prepass-Program}\n");
     usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
@@ -530,7 +528,7 @@ bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
 bool LoadBatchProgram(const ShaderPreprocessor& pre)
 {
     UbiquitousShader usp{};
-    auto& djp = g_gl.programs[PROGRAM_BATCH] = std::make_unique<Program>("BatchProgram");
+    auto& djp = g_gl->programs[PROGRAM_BATCH] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Batch-Program}\n");
     if (GLAD_GL_ARB_shader_atomic_counter_ops) {
@@ -554,13 +552,13 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
     usp.push_source_string("#define BUFFER_BINDING_LEB " + std::to_string(BUFFER_LEB) + "\n");
     usp.push_source_string("#define BUFFER_BINDING_DRAW_ARRAYS_INDIRECT_COMMAND " + std::to_string(BUFFER_TERRAIN_DRAW) + "\n");
 #if 0
-    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./terrain/shaders/LongestEdgeBisection.glsl");
+    djgp_push_file(djp, PATH_TO_SRC_DIRECTORY "./shaders/terrain/LongestEdgeBisection.glsl");
 #else
     usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
     usp.push_source_string("#define CBT_READ_ONLY\n");
     usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
 #endif
-    usp.push_source_file("./terrain/shaders/TerrainBatcher.glsl");
+    usp.push_source_file("./shaders/terrain/TerrainBatcher.glsl");
     for (auto& shader : usp.get_shader_stages(450)) {
         if (!shader->compile(pre))
             return {};
@@ -579,7 +577,7 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
 bool LoadTopViewProgram(const ShaderPreprocessor& pre)
 {
     UbiquitousShader usp{};
-    auto& djp = g_gl.programs[PROGRAM_TOPVIEW] = std::make_unique<Program>("BatchProgram");
+    auto& djp = g_gl->programs[PROGRAM_TOPVIEW] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Top-View-Program}\n");
     if (g_terrain.flags.displace)
@@ -589,22 +587,23 @@ bool LoadTopViewProgram(const ShaderPreprocessor& pre)
     usp.push_source_string("#define BUFFER_BINDING_TERRAIN_VARIABLES " + std::to_string(STREAM_TERRAIN_VARIABLES) + "\n");
     usp.push_source_string("#define LEB_BUFFER_COUNT 1\n");
     usp.push_source_string("#define BUFFER_BINDING_LEB " + std::to_string(BUFFER_LEB) + "\n");
-    usp.push_source_file("./terrain/shaders/FrustumCulling.glsl");
+    usp.push_source_file("./shaders/terrain/FrustumCulling.glsl");
     usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
     usp.push_source_string("#define CBT_READ_ONLY\n");
     usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
     usp.push_source_file("./submodules/libleb/glsl/leb.glsl");
-    usp.push_source_file("./terrain/shaders/TerrainRenderCommon.glsl");
-    usp.push_source_file("./terrain/shaders/TerrainTopView.glsl");
+    usp.push_source_file("./shaders/terrain/TerrainRenderCommon.glsl");
+    usp.push_source_file("./shaders/terrain/TerrainTopView.glsl");
     for (auto& shader : usp.get_shader_stages(450)) {
         if (!shader->compile(pre))
             return {};
         djp->attachShader(shader.get());
     }
+    djp->link();
 
-    g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR] =
+    g_gl->uniforms[UNIFORM_TOPVIEW_DMAP_FACTOR] =
         glGetUniformLocation(djp->getHandle(), "u_DmapFactor");
-    g_gl.uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER] =
+    g_gl->uniforms[UNIFORM_TOPVIEW_DMAP_SAMPLER] =
         glGetUniformLocation(djp->getHandle(), "u_DmapSampler");
 
     ConfigureTopViewProgram();
@@ -622,7 +621,7 @@ bool LoadTopViewProgram(const ShaderPreprocessor& pre)
 bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
 {
     UbiquitousShader usp{};
-    auto& djp = g_gl.programs[PROGRAM_CBT_NODE_COUNT] = std::make_unique<Program>("BatchProgram");
+    auto& djp = g_gl->programs[PROGRAM_CBT_NODE_COUNT] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Cbt-Node-Count-Program}\n");
     
@@ -630,7 +629,7 @@ bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
     usp.push_source_string("#define CBT_HEAP_BUFFER_BINDING " + std::to_string(BUFFER_LEB) + "\n");
     usp.push_source_string("#define CBT_READ_ONLY\n");
     usp.push_source_file("./submodules/libcbt/glsl/cbt.glsl");
-    usp.push_source_file("./terrain/shaders/NodeCount.glsl");
+    usp.push_source_file("./shaders/terrain/NodeCount.glsl");
     usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif\n");
     for (auto& shader : usp.get_shader_stages(450)) {
         if (!shader->compile(pre))
@@ -679,18 +678,18 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
  */
 // bool LoadSceneFramebufferTexture()
 // {
-//     if (glIsTexture(g_gl.textures[TEXTURE_CBUF]))
-//         glDeleteTextures(1, &g_gl.textures[TEXTURE_CBUF]);
-//     if (glIsTexture(g_gl.textures[TEXTURE_ZBUF]))
-//         glDeleteTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
-//     glGenTextures(1, &g_gl.textures[TEXTURE_ZBUF]);
-//     glGenTextures(1, &g_gl.textures[TEXTURE_CBUF]);
+//     if (glIsTexture(g_gl->textures[TEXTURE_CBUF]))
+//         glDeleteTextures(1, &g_gl->textures[TEXTURE_CBUF]);
+//     if (glIsTexture(g_gl->textures[TEXTURE_ZBUF]))
+//         glDeleteTextures(1, &g_gl->textures[TEXTURE_ZBUF]);
+//     glGenTextures(1, &g_gl->textures[TEXTURE_ZBUF]);
+//     glGenTextures(1, &g_gl->textures[TEXTURE_CBUF]);
 
 //     switch (g_framebuffer.aa) {
 //     case AA_NONE:
 //         LOG("Loading {Z-Buffer-Framebuffer-Texture}\n");
 //         glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
-//         glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_ZBUF]);
+//         glBindTexture(GL_TEXTURE_2D, g_gl->textures[TEXTURE_ZBUF]);
 //         glTexStorage2D(GL_TEXTURE_2D,
 //             1,
 //             GL_DEPTH24_STENCIL8,
@@ -701,7 +700,7 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
 
 //         LOG("Loading {Color-Buffer-Framebuffer-Texture}\n");
 //         glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
-//         glBindTexture(GL_TEXTURE_2D, g_gl.textures[TEXTURE_CBUF]);
+//         glBindTexture(GL_TEXTURE_2D, g_gl->textures[TEXTURE_CBUF]);
 //         glTexStorage2D(GL_TEXTURE_2D,
 //             1,
 //             GL_RGBA32F,
@@ -729,7 +728,7 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
 //         }
 //         LOG("Loading {Scene-MSAA-Z-Framebuffer-Texture}\n");
 //         glActiveTexture(GL_TEXTURE0 + TEXTURE_ZBUF);
-//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_ZBUF]);
+//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl->textures[TEXTURE_ZBUF]);
 //         glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
 //                                   samples,
 //                                   GL_DEPTH24_STENCIL8,
@@ -739,7 +738,7 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
 
 //         LOG("Loading {Scene-MSAA-RGBA-Framebuffer-Texture}\n");
 //         glActiveTexture(GL_TEXTURE0 + TEXTURE_CBUF);
-//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl.textures[TEXTURE_CBUF]);
+//         glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, g_gl->textures[TEXTURE_CBUF]);
 //         glTexStorage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE,
 //                                   samples,
 //                                   GL_RGBA32F,
@@ -759,109 +758,109 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
  *
  * This Loads an RG32F texture used as a slope map
  */
-// void LoadNmapTexture16(int smapID, const djg_texture *dmap)
-// {
-//     int w = dmap->next->x;
-//     int h = dmap->next->y;
-//     const uint16_t *texels = (const uint16_t *)dmap->next->texels;
-//     int mipcnt = djgt__mipcnt(w, h, 1);
+void LoadNmapTexture16(int smapID, const Image& dmap)
+{
+    int w = dmap.get_width();
+    int h = dmap.get_height();
+    const uint16_t *texels = (const uint16_t *)dmap.data();
+    int mipcnt = mip_count(w, h, 1);
 
-//     std::vector<float> smap(w * h * 2);
+    std::vector<float> smap(w * h * 2);
 
-//     for (int j = 0; j < h; ++j)
-//         for (int i = 0; i < w; ++i) {
-//             int i1 = std::max(0, i - 1);
-//             int i2 = std::min(w - 1, i + 1);
-//             int j1 = std::max(0, j - 1);
-//             int j2 = std::min(h - 1, j + 1);
-//             uint16_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
-//             uint16_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
-//             uint16_t px_b = texels[i + w * j1]; // in [0,2^16-1]
-//             uint16_t px_t = texels[i + w * j2]; // in [0,2^16-1]
-//             float z_l = (float)px_l / 65535.0f; // in [0, 1]
-//             float z_r = (float)px_r / 65535.0f; // in [0, 1]
-//             float z_b = (float)px_b / 65535.0f; // in [0, 1]
-//             float z_t = (float)px_t / 65535.0f; // in [0, 1]
-//             float slope_x = (float)w * 0.5f * (z_r - z_l);
-//             float slope_y = (float)h * 0.5f * (z_t - z_b);
+    for (int j = 0; j < h; ++j)
+        for (int i = 0; i < w; ++i) {
+            int i1 = std::max(0, i - 1);
+            int i2 = std::min(w - 1, i + 1);
+            int j1 = std::max(0, j - 1);
+            int j2 = std::min(h - 1, j + 1);
+            uint16_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
+            uint16_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
+            uint16_t px_b = texels[i + w * j1]; // in [0,2^16-1]
+            uint16_t px_t = texels[i + w * j2]; // in [0,2^16-1]
+            float z_l = (float)px_l / 65535.0f; // in [0, 1]
+            float z_r = (float)px_r / 65535.0f; // in [0, 1]
+            float z_b = (float)px_b / 65535.0f; // in [0, 1]
+            float z_t = (float)px_t / 65535.0f; // in [0, 1]
+            float slope_x = (float)w * 0.5f * (z_r - z_l);
+            float slope_y = (float)h * 0.5f * (z_t - z_b);
 
-//             smap[    2 * (i + w * j)] = slope_x;
-//             smap[1 + 2 * (i + w * j)] = slope_y;
-//         }
+            smap[    2 * (i + w * j)] = slope_x;
+            smap[1 + 2 * (i + w * j)] = slope_y;
+        }
 
-//     if (glIsTexture(g_gl.textures[smapID]))
-//         glDeleteTextures(1, &g_gl.textures[smapID]);
+    if (glIsTexture(g_gl->textures[smapID]))
+        glDeleteTextures(1, &g_gl->textures[smapID]);
 
-//     glGenTextures(1, &g_gl.textures[smapID]);
-//     glActiveTexture(GL_TEXTURE0 + smapID);
-//     glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
-//     glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
-//     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
+    glGenTextures(1, &g_gl->textures[smapID]);
+    glActiveTexture(GL_TEXTURE0 + smapID);
+    glBindTexture(GL_TEXTURE_2D, g_gl->textures[smapID]);
+    glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
 
-//     glGenerateMipmap(GL_TEXTURE_2D);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_MIN_FILTER,
-//         GL_LINEAR_MIPMAP_LINEAR);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_WRAP_S,
-//         GL_CLAMP_TO_EDGE);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_WRAP_T,
-//         GL_CLAMP_TO_EDGE);
-//     glActiveTexture(GL_TEXTURE0);
-// }
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE);
+    glActiveTexture(GL_TEXTURE0);
+}
 
-// void LoadNmapTexture8(int smapID, const djg_texture *dmap)
-// {
-//     int w = dmap->next->x;
-//     int h = dmap->next->y;
-//     const uint8_t *texels = (const uint8_t *)dmap->next->texels;
-//     int mipcnt = djgt__mipcnt(w, h, 1);
+void LoadNmapTexture8(int smapID, const Image& dmap)
+{
+    int w = dmap.get_width();
+    int h = dmap.get_height();
+    const uint8_t *texels = (const uint8_t *)dmap.data();
+    int mipcnt = mip_count(w, h, 1);
 
-//     std::vector<float> smap(w * h * 2);
+    std::vector<float> smap(w * h * 2);
 
-//     for (int j = 0; j < h; ++j)
-//         for (int i = 0; i < w; ++i) {
-//             int i1 = std::max(0, i - 1);
-//             int i2 = std::min(w - 1, i + 1);
-//             int j1 = std::max(0, j - 1);
-//             int j2 = std::min(h - 1, j + 1);
-//             uint8_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
-//             uint8_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
-//             uint8_t px_b = texels[i + w * j1]; // in [0,2^16-1]
-//             uint8_t px_t = texels[i + w * j2]; // in [0,2^16-1]
-//             float z_l = (float)px_l / 255.0f; // in [0, 1]
-//             float z_r = (float)px_r / 255.0f; // in [0, 1]
-//             float z_b = (float)px_b / 255.0f; // in [0, 1]
-//             float z_t = (float)px_t / 255.0f; // in [0, 1]
-//             float slope_x = (float)w * 0.5f * (z_r - z_l);
-//             float slope_y = (float)h * 0.5f * (z_t - z_b);
+    for (int j = 0; j < h; ++j)
+        for (int i = 0; i < w; ++i) {
+            int i1 = std::max(0, i - 1);
+            int i2 = std::min(w - 1, i + 1);
+            int j1 = std::max(0, j - 1);
+            int j2 = std::min(h - 1, j + 1);
+            uint8_t px_l = texels[i1 + w * j]; // in [0,2^16-1]
+            uint8_t px_r = texels[i2 + w * j]; // in [0,2^16-1]
+            uint8_t px_b = texels[i + w * j1]; // in [0,2^16-1]
+            uint8_t px_t = texels[i + w * j2]; // in [0,2^16-1]
+            float z_l = (float)px_l / 255.0f; // in [0, 1]
+            float z_r = (float)px_r / 255.0f; // in [0, 1]
+            float z_b = (float)px_b / 255.0f; // in [0, 1]
+            float z_t = (float)px_t / 255.0f; // in [0, 1]
+            float slope_x = (float)w * 0.5f * (z_r - z_l);
+            float slope_y = (float)h * 0.5f * (z_t - z_b);
 
-//             smap[    2 * (i + w * j)] = slope_x;
-//             smap[1 + 2 * (i + w * j)] = slope_y;
-//         }
+            smap[    2 * (i + w * j)] = slope_x;
+            smap[1 + 2 * (i + w * j)] = slope_y;
+        }
 
-//     if (glIsTexture(g_gl.textures[smapID]))
-//         glDeleteTextures(1, &g_gl.textures[smapID]);
+    if (glIsTexture(g_gl->textures[smapID]))
+        glDeleteTextures(1, &g_gl->textures[smapID]);
 
-//     glGenTextures(1, &g_gl.textures[smapID]);
-//     glActiveTexture(GL_TEXTURE0 + smapID);
-//     glBindTexture(GL_TEXTURE_2D, g_gl.textures[smapID]);
-//     glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
-//     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
+    glGenTextures(1, &g_gl->textures[smapID]);
+    glActiveTexture(GL_TEXTURE0 + smapID);
+    glBindTexture(GL_TEXTURE_2D, g_gl->textures[smapID]);
+    glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG32F, w, h);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_FLOAT, &smap[0]);
 
-//     glGenerateMipmap(GL_TEXTURE_2D);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_MIN_FILTER,
-//         GL_LINEAR_MIPMAP_LINEAR);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_WRAP_S,
-//         GL_REPEAT);
-//     glTexParameteri(GL_TEXTURE_2D,
-//         GL_TEXTURE_WRAP_T,
-//         GL_REPEAT);
-//     glActiveTexture(GL_TEXTURE0);
-// }
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_REPEAT);
+    glActiveTexture(GL_TEXTURE0);
+}
 
 // -----------------------------------------------------------------------------
 /**
@@ -869,23 +868,21 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
  *
  * This Loads an R16 texture used as a displacement map
  */
-bool LoadDmapTexture16(int dmapID, int smapID, const char *pathToFile)
+bool LoadDmapTexture16(int dmapID, int smapID, const std::string& pathToFile)
 {
-    djg_texture *djgt = djgt_create(1);
-
     LOG("Loading {Dmap-Texture}\n");
-    djgt_push_image_u16(djgt, pathToFile, 1);
+    std::unique_ptr<Image> image = load_image_16(pathToFile);
 
-    int w = djgt->next->x;
-    int h = djgt->next->y;
-    const uint16_t *texels = (const uint16_t *)djgt->next->texels;
-    int mipcnt = djgt__mipcnt(w, h, 1);
+    int w = image->get_width();
+    int h = image->get_width();
+    const uint16_t *texels = (const uint16_t*)image->data();
+    int mipcnt = mip_count(w, h);
     std::vector<uint16_t> dmap(w * h * 2);
 
     for (int j = 0; j < h; ++j)
     for (int i = 0; i < w; ++i) {
         uint16_t z = texels[i + w * j]; // in [0,2^16-1]
-        float zf = float(z) / float((1 << 16) - 1);
+        float zf = float(z) / float((1 << 16) - 1); // normalized height
         uint16_t z2 = zf * zf * ((1 << 16) - 1);
 
         dmap[    2 * (i + w * j)] = z;
@@ -893,15 +890,15 @@ bool LoadDmapTexture16(int dmapID, int smapID, const char *pathToFile)
     }
 
     // Load nmap from dmap
-    LoadNmapTexture16(smapID, djgt);
+    LoadNmapTexture16(smapID, *image.get());
 
     glActiveTexture(GL_TEXTURE0 + dmapID);
-    if (glIsTexture(g_gl.textures[dmapID]))
-        glDeleteTextures(1, &g_gl.textures[dmapID]);
+    if (glIsTexture(g_gl->textures[dmapID]))
+        glDeleteTextures(1, &g_gl->textures[dmapID]);
 
-    glGenTextures(1, &g_gl.textures[dmapID]);
+    glGenTextures(1, &g_gl->textures[dmapID]);
     glActiveTexture(GL_TEXTURE0 + dmapID);
-    glBindTexture(GL_TEXTURE_2D, g_gl.textures[dmapID]);
+    glBindTexture(GL_TEXTURE_2D, g_gl->textures[dmapID]);
     glTexStorage2D(GL_TEXTURE_2D, mipcnt, GL_RG16, w, h);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RG, GL_UNSIGNED_SHORT, &dmap[0]);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -918,18 +915,18 @@ bool LoadDmapTexture16(int dmapID, int smapID, const char *pathToFile)
                     GL_TEXTURE_WRAP_T,
                     GL_CLAMP_TO_EDGE);
     glActiveTexture(GL_TEXTURE0);
-    djgt_release(djgt);
 
     return (glGetError() == GL_NO_ERROR);
 }
 
 bool LoadDmapTexture()
 {
-    std::cout << "Loading Dmap Texture: " << g_terrain.dmap.pathToFile << "\n";
+    std::string path = Engine::get().asset_path / g_terrain.dmap.pathToFile;
+    std::cout << "Loading Dmap Texture: " << path << "\n";
     if (!g_terrain.dmap.pathToFile.empty()) {
         return LoadDmapTexture16(TEXTURE_DMAP,
                                  TEXTURE_SMAP,
-                                 g_terrain.dmap.pathToFile.c_str());
+                                 path);
     }
 
     return (glGetError() == GL_NO_ERROR);
@@ -975,7 +972,7 @@ bool LoadTerrainVariables(const Camera& m_camera)
     } variables;
 
     if (first) {
-        g_gl.streams[STREAM_TERRAIN_VARIABLES] = std::make_unique<Buffer>(gl::BindingTarget::UNIFORM, gl::Usage::STREAM_DRAW);
+        g_gl->streams[STREAM_TERRAIN_VARIABLES] = std::make_unique<Buffer>(gl::BindingTarget::UNIFORM, gl::Usage::STREAM_DRAW);
         first = false;
     }
 
@@ -1010,9 +1007,9 @@ bool LoadTerrainVariables(const Camera& m_camera)
     m_camera.extract_frustum().copy_to_array(variables.frustum);
 
     // upLoad to GPU
-    g_gl.streams[STREAM_TERRAIN_VARIABLES]->copy_data(sizeof(PerFrameVariables), (const void *)&variables);
+    g_gl->streams[STREAM_TERRAIN_VARIABLES]->copy_data(sizeof(PerFrameVariables), (const void *)&variables);
 
-    g_gl.streams[STREAM_TERRAIN_VARIABLES]->bind_range(STREAM_TERRAIN_VARIABLES, sizeof(PerFrameVariables));
+    g_gl->streams[STREAM_TERRAIN_VARIABLES]->bind_range(STREAM_TERRAIN_VARIABLES, sizeof(PerFrameVariables));
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -1028,10 +1025,10 @@ bool LoadLebBuffer()
     cbt_Tree *cbt = cbt_CreateAtDepth(g_terrain.maxDepth, 1);
 
     LOG("Loading {Subd-Buffer}\n");
-    if (glIsBuffer(g_gl.buffers[BUFFER_LEB]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_LEB]);
-    glGenBuffers(1, &g_gl.buffers[BUFFER_LEB]);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl.buffers[BUFFER_LEB]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_LEB]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_LEB]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_LEB]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl->buffers[BUFFER_LEB]);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
                  cbt_HeapByteSize(cbt),
                  cbt_GetHeap(cbt),
@@ -1039,7 +1036,7 @@ bool LoadLebBuffer()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                      BUFFER_LEB,
-                     g_gl.buffers[BUFFER_LEB]);
+                     g_gl->buffers[BUFFER_LEB]);
 
     cbt_Release(cbt);
 
@@ -1056,17 +1053,17 @@ bool LoadLebBuffer()
 bool LoadCbtNodeCountBuffer()
 {
     LOG("Loading {Cbt-Node-Count-Buffer}\n");
-    if (glIsBuffer(g_gl.buffers[BUFFER_CBT_NODE_COUNT]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_CBT_NODE_COUNT]);
-    glGenBuffers(1, &g_gl.buffers[BUFFER_CBT_NODE_COUNT]);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl.buffers[BUFFER_CBT_NODE_COUNT]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_CBT_NODE_COUNT]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_CBT_NODE_COUNT]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_CBT_NODE_COUNT]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl->buffers[BUFFER_CBT_NODE_COUNT]);
     glBufferStorage(GL_SHADER_STORAGE_BUFFER,
                     sizeof(int32_t),
                     NULL,
                     GL_MAP_READ_BIT);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
                      BUFFER_CBT_NODE_COUNT,
-                     g_gl.buffers[BUFFER_CBT_NODE_COUNT]);
+                     g_gl->buffers[BUFFER_CBT_NODE_COUNT]);
 
     return (glGetError() == GL_NO_ERROR);
 }
@@ -1085,33 +1082,33 @@ bool LoadRenderCmdBuffer()
     uint32_t drawElementsCmd[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     uint32_t dispatchCmd[8] = {2, 1, 1, 0, 0, 0, 0, 0};
 
-    if (glIsBuffer(g_gl.buffers[BUFFER_TERRAIN_DRAW]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_TERRAIN_DRAW]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW]);
 
-    if (glIsBuffer(g_gl.buffers[BUFFER_TERRAIN_DRAW_MS]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW_MS]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]);
 
-    if (glIsBuffer(g_gl.buffers[BUFFER_TERRAIN_DRAW_CS]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW_CS]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW]);
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl.buffers[BUFFER_TERRAIN_DRAW]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW]);
     glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(drawArraysCmd), drawArraysCmd, GL_STATIC_DRAW);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW_MS]);
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl.buffers[BUFFER_TERRAIN_DRAW_MS]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]);
     glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(drawMeshTasksCmd), drawMeshTasksCmd, GL_STATIC_DRAW);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DRAW_CS]);
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl.buffers[BUFFER_TERRAIN_DRAW_CS]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
     glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(drawElementsCmd), drawElementsCmd, GL_STATIC_DRAW);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_TERRAIN_DISPATCH_CS]);
-    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl.buffers[BUFFER_TERRAIN_DISPATCH_CS]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_TERRAIN_DISPATCH_CS]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DISPATCH_CS]);
     glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(dispatchCmd), dispatchCmd, GL_STATIC_DRAW);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
 
@@ -1159,24 +1156,24 @@ bool LoadMeshletBuffers()
         }
     }
 
-    if (glIsBuffer(g_gl.buffers[BUFFER_MESHLET_VERTICES]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_MESHLET_VERTICES]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_MESHLET_VERTICES]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_MESHLET_VERTICES]);
 
-    if (glIsBuffer(g_gl.buffers[BUFFER_MESHLET_INDEXES]))
-        glDeleteBuffers(1, &g_gl.buffers[BUFFER_MESHLET_INDEXES]);
+    if (glIsBuffer(g_gl->buffers[BUFFER_MESHLET_INDEXES]))
+        glDeleteBuffers(1, &g_gl->buffers[BUFFER_MESHLET_INDEXES]);
 
     LOG("Loading {Meshlet-Buffers}\n");
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_MESHLET_INDEXES]);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl.buffers[BUFFER_MESHLET_INDEXES]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_MESHLET_INDEXES]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl->buffers[BUFFER_MESHLET_INDEXES]);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
                  sizeof(indexBuffer[0]) * indexBuffer.size(),
                  &indexBuffer[0],
                  GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-    glGenBuffers(1, &g_gl.buffers[BUFFER_MESHLET_VERTICES]);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl.buffers[BUFFER_MESHLET_VERTICES]);
+    glGenBuffers(1, &g_gl->buffers[BUFFER_MESHLET_VERTICES]);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_gl->buffers[BUFFER_MESHLET_VERTICES]);
     glBufferData(GL_SHADER_STORAGE_BUFFER,
                  sizeof(vertexBuffer[0]) * vertexBuffer.size(),
                  &vertexBuffer[0],
@@ -1191,10 +1188,10 @@ bool LoadMeshletBuffers()
  * Load All Buffers
  *
  */
-bool Terrain::load_buffers() {
+bool Terrain::load_buffers(const RenderState& state) {
     bool v = true;
 
-    if (v) v &= LoadTerrainVariables();
+    if (v) v &= LoadTerrainVariables(*state.camera);
     if (v) v &= LoadLebBuffer();
     if (v) v &= LoadRenderCmdBuffer();
     if (v) v &= LoadMeshletBuffers();
@@ -1217,11 +1214,11 @@ bool Terrain::load_buffers() {
 bool LoadEmptyVertexArray()
 {
     LOG("Loading {Empty-VertexArray}\n");
-    if (glIsVertexArray(g_gl.vertexArrays[VERTEXARRAY_EMPTY]))
-        glDeleteVertexArrays(1, &g_gl.vertexArrays[VERTEXARRAY_EMPTY]);
+    if (glIsVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]))
+        glDeleteVertexArrays(1, &g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
 
-    glGenVertexArrays(1, &g_gl.vertexArrays[VERTEXARRAY_EMPTY]);
-    glBindVertexArray(g_gl.vertexArrays[VERTEXARRAY_EMPTY]);
+    glGenVertexArrays(1, &g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
     glBindVertexArray(0);
 
     return (glGetError() == GL_NO_ERROR);
@@ -1235,16 +1232,16 @@ bool LoadEmptyVertexArray()
 bool LoadMeshletVertexArray()
 {
     LOG("Loading {Meshlet-VertexArray}\n");
-    if (glIsVertexArray(g_gl.vertexArrays[VERTEXARRAY_MESHLET]))
-        glDeleteVertexArrays(1, &g_gl.vertexArrays[VERTEXARRAY_MESHLET]);
+    if (glIsVertexArray(g_gl->vertexArrays[VERTEXARRAY_MESHLET]))
+        glDeleteVertexArrays(1, &g_gl->vertexArrays[VERTEXARRAY_MESHLET]);
 
-    glGenVertexArrays(1, &g_gl.vertexArrays[VERTEXARRAY_MESHLET]);
+    glGenVertexArrays(1, &g_gl->vertexArrays[VERTEXARRAY_MESHLET]);
 
-    glBindVertexArray(g_gl.vertexArrays[VERTEXARRAY_MESHLET]);
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_MESHLET]);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, g_gl.buffers[BUFFER_MESHLET_VERTICES]);
+    glBindBuffer(GL_ARRAY_BUFFER, g_gl->buffers[BUFFER_MESHLET_VERTICES]);
     glVertexAttribPointer(0, 2, GL_FLOAT, 0, 0, gl::buffer_offset(0));
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_gl.buffers[BUFFER_MESHLET_INDEXES]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_gl->buffers[BUFFER_MESHLET_INDEXES]);
     glBindVertexArray(0);
 
     return (glGetError() == GL_NO_ERROR);
@@ -1264,25 +1261,371 @@ bool Terrain::load_vaos() {
     return v;
 }
 
+//// Terrain 
 
-void Terrain::init() {
+Terrain::Terrain() {
+    m_glmanager = std::make_unique<OpenGLManager>();
+
+    g_gl = m_glmanager.get(); // no, im not happy about this
+}
+
+Terrain::~Terrain() {
+    //
+}
+
+void Terrain::init(const RenderState& state, const ShaderPreprocessor& pre) {
     bool v = true;
 
     if (v) v &= load_textures();
-    if (v) v &= load_buffers();
+    if (v) v &= load_buffers(state);
     if (v) v &= load_vaos();
-    if (v) v &= load_programs();
+    if (v) v &= load_programs(state, pre);
     if (v) v &= load_queries();
 
     // TODO exception
+    if (!v)
+        throw std::runtime_error{"Terrain::init failure"};
 }
 
-bool Terrain::load_programs() {
-
+bool Terrain::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
+    return LoadPrograms(state, pre);
 }
 
 bool Terrain::load_queries() {
+    return true;
+}
 
+////////////////////////////////////////////////////////////////////////////////
+// OpenGL Rendering
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// -----------------------------------------------------------------------------
+/**
+ * Render top view
+ *
+ * This routine renders the terrain from a top view, which is useful for
+ * debugging.
+ */
+void renderTopView(const RenderState& render_state)
+{
+    if (g_terrain.flags.topView) {
+        glDisable(GL_CULL_FACE);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+        glViewport(10, 10, 512, 512);
+        glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
+        glPatchParameteri(GL_PATCH_VERTICES, 1);
+
+        glUseProgram(g_gl->programs[PROGRAM_TOPVIEW]->getHandle());
+            glDrawArraysIndirect(GL_PATCHES, 0);
+
+        glBindVertexArray(0);
+        glViewport(0, 0, render_state.target_fbo->get_width(), render_state.target_fbo->get_height());
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, 0);
+    }
+}
+
+// -----------------------------------------------------------------------------
+/**
+ * Reduction Pass -- Generic
+ *
+ * The reduction prepass is used for counting the number of nodes and
+ * dispatch the threads to the proper node. This routine is entirely
+ * generic and isn't tied to a specific pipeline.
+ */
+// LEB reduction step
+void lebReductionPass()
+{
+    // djgc_start(g_gl->clocks[CLOCK_REDUCTION]);
+    int it = g_terrain.maxDepth;
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
+    glUseProgram(g_gl->programs[PROGRAM_LEB_REDUCTION_PREPASS]->getHandle());
+    if (true) {
+        int cnt = ((1 << it) >> 5);// / 2;
+        int numGroup = (cnt >= 256) ? (cnt >> 8) : 1;
+        int loc = glGetUniformLocation(g_gl->programs[PROGRAM_LEB_REDUCTION_PREPASS]->getHandle(),
+                                       "u_PassID");
+
+        // djgc_start(g_gl->clocks[CLOCK_REDUCTION00 + it - 1]);
+        glUniform1i(loc, it);
+        glDispatchCompute(numGroup, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        // djgc_stop(g_gl->clocks[CLOCK_REDUCTION00 + g_terrain.maxDepth - 1]);
+
+        it-= 5;
+    }
+
+    glUseProgram(g_gl->programs[PROGRAM_LEB_REDUCTION]->getHandle());
+    while (--it >= 0) {
+        int loc = glGetUniformLocation(g_gl->programs[PROGRAM_LEB_REDUCTION]->getHandle(), "u_PassID");
+        int cnt = 1 << it;
+        int numGroup = (cnt >= 256) ? (cnt >> 8) : 1;
+
+        // djgc_start(g_gl->clocks[CLOCK_REDUCTION00 + it]);
+        glUniform1i(loc, it);
+        glDispatchCompute(numGroup, 1, 1);
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+        // djgc_stop(g_gl->clocks[CLOCK_REDUCTION00 + it]);
+    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, 0);
+    // djgc_stop(g_gl->clocks[CLOCK_REDUCTION]);
+}
+
+// -----------------------------------------------------------------------------
+/**
+ * Batching Pass
+ *
+ * The batching pass prepares indirect draw calls for rendering the terrain.
+ * This routine works for the
+ */
+void lebBatchingPassTsGs()
+{
+    glUseProgram(g_gl->programs[PROGRAM_BATCH]->getHandle());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DRAW,
+                     g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DRAW, 0);
+}
+void lebBatchingPassMs()
+{
+    glUseProgram(g_gl->programs[PROGRAM_BATCH]->getHandle());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DRAW,
+                     g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DRAW_MS,
+                     g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]);
+
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DRAW, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DRAW_MS, 0);
+}
+void lebBatchingPassCs()
+{
+    glUseProgram(g_gl->programs[PROGRAM_BATCH]->getHandle());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DRAW,
+                     g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DRAW_CS,
+                     g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER,
+                     BUFFER_TERRAIN_DISPATCH_CS,
+                     g_gl->buffers[BUFFER_TERRAIN_DISPATCH_CS]);
+
+    glDispatchCompute(1, 1, 1);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DRAW, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DRAW_CS, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_TERRAIN_DISPATCH_CS, 0);
+}
+void lebBatchingPass()
+{
+    // djgc_start(g_gl->clocks[CLOCK_BATCH]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
+    switch (g_terrain.method) {
+    case METHOD_TS:
+    case METHOD_GS:
+        lebBatchingPassTsGs();
+        break;
+    case METHOD_CS:
+        lebBatchingPassCs();
+        break;
+    case METHOD_MS:
+        lebBatchingPassMs();
+        break;
+    default:
+        break;
+    }
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, 0);
+    // djgc_stop(g_gl->clocks[CLOCK_BATCH]);
+}
+
+// -----------------------------------------------------------------------------
+/**
+ * Update Pass
+ *
+ * The update pass updates the LEB binary tree.
+ * All pipelines except that the compute shader pipeline render the
+ * terrain at the same time.
+ */
+void lebUpdateAndRenderTs(int pingPong)
+{
+    // set GL state
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
+
+    // update and render
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+    glPatchParameteri(GL_PATCH_VERTICES, 1);
+    glUseProgram(g_gl->programs[PROGRAM_SPLIT + pingPong]->getHandle());
+        glDrawArraysIndirect(GL_PATCHES, 0);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    // reset GL state
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+}
+void lebUpdateAndRenderGs(int pingPong)
+{
+    // set GL state
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
+
+    // update and render
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW]);
+    glUseProgram(g_gl->programs[PROGRAM_SPLIT + pingPong]->getHandle());
+        glDrawArraysIndirect(GL_POINTS, 0);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    // reset GL state
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+}
+void lebUpdateAndRenderMs(int pingPong)
+{
+    // set GL state
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glDepthFunc(GL_LESS);
+
+    // update and render
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_EMPTY]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW_MS]);
+    glUseProgram(g_gl->programs[PROGRAM_SPLIT + pingPong]->getHandle());
+        glDrawMeshTasksIndirectNV(0);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    // reset GL state
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+}
+void lebUpdateCs(int pingPong)
+{
+    // set GL state
+    glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER,
+                 g_gl->buffers[BUFFER_TERRAIN_DISPATCH_CS]);
+
+    // update
+    glUseProgram(g_gl->programs[PROGRAM_SPLIT + pingPong]->getHandle());
+    glDispatchComputeIndirect(0);
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+    // reset GL state
+    glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, 0);
+}
+void lebUpdate()
+{
+    static int pingPong = 0;
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
+
+    // djgc_start(g_gl->clocks[CLOCK_UPDATE]);
+    switch (g_terrain.method) {
+    case METHOD_TS:
+        lebUpdateAndRenderTs(pingPong);
+        break;
+    case METHOD_GS:
+        lebUpdateAndRenderGs(pingPong);
+        break;
+    case METHOD_CS:
+        lebUpdateCs(pingPong);
+        break;
+    case METHOD_MS:
+        lebUpdateAndRenderMs(pingPong);
+        break;
+    default:
+        break;
+    }
+    // djgc_stop(g_gl->clocks[CLOCK_UPDATE]);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, 0);
+    pingPong = 1 - pingPong;
+}
+
+// -----------------------------------------------------------------------------
+/**
+ * Render Pass (Compute shader pipeline only)
+ *
+ * The render pass renders the geometry to the framebuffer.
+ */
+void lebRenderCs()
+{
+    // set GL state
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, g_gl->buffers[BUFFER_LEB]);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g_gl->buffers[BUFFER_TERRAIN_DRAW_CS]);
+    glBindVertexArray(g_gl->vertexArrays[VERTEXARRAY_MESHLET]);
+
+    // render
+    glUseProgram(g_gl->programs[PROGRAM_RENDER_ONLY]->getHandle());
+    glDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_SHORT, gl::buffer_offset(0));
+
+    // reset GL state
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, BUFFER_LEB, 0);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+    glBindVertexArray(0);
+    glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
+}
+void lebRender()
+{
+    // djgc_start(g_gl->clocks[CLOCK_RENDER]);
+    if (g_terrain.method == METHOD_CS) {
+        lebRenderCs();
+    }
+    // djgc_stop(g_gl->clocks[CLOCK_RENDER]);
+}
+
+// -----------------------------------------------------------------------------
+void renderTerrain(const Camera& camera)
+{
+    // djgc_start(g_gl->clocks[CLOCK_ALL]);
+
+    LoadTerrainVariables(camera);
+    lebUpdate();
+    lebReductionPass();
+    lebBatchingPass();
+    lebRender(); // render pass (if applicable)
+
+    // djgc_stop(g_gl->clocks[CLOCK_ALL]);
+}
+
+void renderScene(const Camera& camera)
+{
+    renderTerrain(camera);
+    // RetrieveNodeCount();
+    // renderSky();
+}
+
+void Terrain::render(const RenderState& state)
+{
+    state.target_fbo->bind();
+    glViewport(0, 0, state.target_fbo->get_width(), state.target_fbo->get_height());
+    // glClearColor(0.5, 0.5, 0.5, 1.0);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    renderScene(*state.camera);
 }
 
 }

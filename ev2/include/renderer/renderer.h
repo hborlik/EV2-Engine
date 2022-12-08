@@ -21,6 +21,7 @@
 #include <renderer/material.h>
 #include <renderer/debug_renderer.h>
 #include <renderer/render_state.hpp>
+#include <renderer/terrain.h>
 
 namespace ev2::renderer {
 
@@ -447,6 +448,8 @@ private:
     GLuint point_light_gl_vao = 0;
 
     int32_t default_material_id = 0;
+
+    Terrain m_terrain;
 };
 
 }

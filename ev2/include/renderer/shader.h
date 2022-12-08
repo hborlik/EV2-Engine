@@ -245,6 +245,7 @@ public:
 
 private:
     std::string source{};
+    std::size_t last_shader_begin;
 };
 
 class Buffer;

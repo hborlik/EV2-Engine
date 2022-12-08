@@ -9,6 +9,12 @@ Modeling and rendering are two core research problems in computer graphics.
     - procedural geometry or scene placement?
     - Or trees in Urban environments?
     - Data based?
+
+3. by Dec 7
+    - use a tree library
+    - urban models library
+    - define the constraints
+        - forest can be close to the road but not on
     
 
 ### Tree generation methods
@@ -39,4 +45,5 @@ process, and is forced to use a trial and error approach.
 
 Thoughts: these limitations are similar to the limitations of destructive modeling 
 processes. Iterative editing relies on making small changes to the input and, in the case
-of the above limitations, being unaware of how the change will affect the output. A user needs to know how their changes will affect the output and need to be in control of the scale of that change. 
+of the above limitations, being unaware of how the change will affect the output. A user needs to know how their changes will affect the output and need to be in control of the scale of that change. Since changes are made to affect the output, the structure of the input is less meaningful. 
+The user can pick which parts / aspects (?) of the output they want to keep.

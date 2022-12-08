@@ -346,8 +346,9 @@ int main(int argc, char *argv[]) {
     ev2::Args args{argc, argv};
 
     fs::path asset_path = fs::path("asset");
+    fs::path log_path = fs::path("logs");
 
-    ev2::EV2_init(args, asset_path);
+    ev2::EV2_init(args, asset_path, log_path);
     ev2::window::setWindowTitle("Plant Game");
 
     std::unique_ptr<TestApp> app = std::make_unique<TestApp>(asset_path);

@@ -113,7 +113,7 @@ void computeSmoothingNormals(const tinyobj::attrib_t &attrib, const tinyobj::sha
 } // computeSmoothingNormals
 
 void computeAllSmoothingNormals(tinyobj::attrib_t &attrib,
-                                       std::vector<tinyobj::shape_t> &shapes)
+                                std::vector<tinyobj::shape_t> &shapes)
 {
     glm::vec3 p[3];
     for (size_t s = 0, slen = shapes.size(); s < slen; ++s)

@@ -447,6 +447,12 @@ void Renderer::init() {
     point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.getAttributeMap());
 
     // additional effect initialization
+    Camera default_camera{};
+    RenderState terrain_target_state{
+        &g_buffer,
+        &default_camera
+    };
+    m_terrain.init(terrain_target_state, prep);
 }
 
 void Renderer::update_material(mat_id_t material_slot, const MaterialData& material) {
@@ -806,6 +812,14 @@ void Renderer::render(const Camera &camera) {
         }
     }
     geometry_program_instanced.unbind();
+
+    // terrain render
+    const RenderState current_state{
+        &g_buffer,
+        &camera
+    };
+
+    m_terrain.render(current_state);
 
     g_buffer.unbind();
 
