@@ -24,25 +24,40 @@ enum class CameraProjection {
     FISHEYE       // conformal (stereographic projection)
 };
 
+/**
+ * @brief Extract projection frustum planes
+ * 
+ * @param comp 
+ * @return Frustum 
+ */
+inline Frustum extract_frustum(const glm::mat4& comp) noexcept {
+    using namespace glm;
+    Frustum f{};
+
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 2; j++) {
+            f.planes[i * 2 + j].p.x = comp[0][3] + (j == 0 ? comp[0][j] : -comp[0][j]);
+            f.planes[i * 2 + j].p.y = comp[1][3] + (j == 0 ? comp[1][j] : -comp[1][j]);
+            f.planes[i * 2 + j].p.z = comp[2][3] + (j == 0 ? comp[2][j] : -comp[2][j]);
+            f.planes[i * 2 + j].p.w = comp[3][3] + (j == 0 ? comp[3][j] : -comp[3][j]);
+            f.planes[i * 2 + j].normalize();
+        }
+
+    return f;
+}
+
 class Camera {
 public:
+    /**
+     * @brief Get the world space frustums of this camera
+     * 
+     * @return Frustum 
+     */
     Frustum extract_frustum() const noexcept {
         using namespace glm;
         if (dirty)
             force_update_internal();
-        const mat4& comp = p_v;
-        Frustum f{};
-
-        for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 2; j++) {
-                f.planes[i * 2 + j].p.x = comp[0][3] + (j == 0 ? comp[0][j] : -comp[0][j]);
-                f.planes[i * 2 + j].p.y = comp[1][3] + (j == 0 ? comp[1][j] : -comp[1][j]);
-                f.planes[i * 2 + j].p.z = comp[2][3] + (j == 0 ? comp[2][j] : -comp[2][j]);
-                f.planes[i * 2 + j].p.w = comp[3][3] + (j == 0 ? comp[3][j] : -comp[3][j]);
-                f.planes[i * 2 + j].normalize();
-            }
-
-        return f;
+        return ev2::extract_frustum(p_v);
     }
     
     /**
@@ -201,7 +216,7 @@ private:
     mutable bool dirty = true;
 
     float fov = 60.0f;
-    float m_near = 0.1f, m_far = 32000.0f;
+    float m_near = 1.f, m_far = 64000.0f;
     float aspect = 1.0f;
 };
 

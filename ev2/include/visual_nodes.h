@@ -79,7 +79,7 @@ private:
 
     Camera camera{};
     float fov = 60.0f;
-    float m_near = 0.1f, m_far = 500.0f;
+    float m_near = 1.f, m_far = 64000.0f;
     float aspect = 1.0f;
 };
 

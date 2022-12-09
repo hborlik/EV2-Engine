@@ -184,19 +184,19 @@ struct TerrainManager {
     uint32_t nodeCount;
     float size;
 } g_terrain = {
-    {true, true, false, false, true},
+    {true, false, false, false, true},
     {std::string("" "./kauai.png"),
-    //  52660.0f, 52660.0f, -400.0f, 1587.0f,
-    5000.0f, 5000.0f, -200.0f, 14.0f,
+     52660.0f, 52660.0f, -1000.0f, 15.0f,
+    // 1000.0f, 1000.0f, -100.0f, 14.0f,
      1.0f},
     METHOD_CS,
     SHADING_DIFFUSE,
     3,
     7.0f,
-    0.1f,
+    0.005f,
     25,
     0,
-    5000.0f
+    52660.0f
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -991,7 +991,7 @@ bool LoadTerrainVariables(const Camera& m_camera)
     glm::vec3 scale = glm::vec3(width, zMax - zMin, height);
     // m_camera.get_view
     glm::mat4 viewInv = m_camera.get_view_inv();
-    glm::mat4 view = glm::inverse(viewInv);
+    glm::mat4 view = m_camera.get_view();
     glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
             * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
             * glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
@@ -1006,10 +1006,9 @@ bool LoadTerrainVariables(const Camera& m_camera)
     variables.viewProjection = projection * view;
     //variables.projection = dja::transpose(projection);
 
-    // extract frustum planes
+    // extract frustum planes in model space
     glm::mat4 mvp = variables.modelViewProjection;
-    
-    m_camera.extract_frustum().copy_to_array(variables.frustum);
+    extract_frustum(mvp).copy_to_array(variables.frustum);
 
     // upLoad to GPU
     g_gl->streams[STREAM_TERRAIN_VARIABLES]->copy_data(sizeof(PerFrameVariables), (const void *)&variables);

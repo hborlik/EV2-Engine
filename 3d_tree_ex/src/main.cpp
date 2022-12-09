@@ -253,7 +253,7 @@ public:
             static int32_t scroll_last = scroll_pos;
             int32_t scroll_delta = scroll_pos - scroll_last;
             scroll_last = scroll_pos;
-            cam_boom_length = glm::clamp(cam_boom_length - scroll_delta, 0.f, 200.f);
+            cam_boom_length = glm::clamp(cam_boom_length - scroll_delta, 0.1f, 1000.f);
         }
     }
 
