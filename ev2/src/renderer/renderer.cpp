@@ -198,8 +198,8 @@ void Renderer::init() {
     // ssao tiling noise texture
     ssao_kernel_noise = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     ssao_kernel_noise->set_image2D(gl::TextureInternalFormat::RGBA16F, 4, 4, gl::PixelFormat::RGB, gl::PixelType::FLOAT, (unsigned char*)ssaoNoise.data());
-    ssao_kernel_noise->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
-    ssao_kernel_noise->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
+    ssao_kernel_noise->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
+    ssao_kernel_noise->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
 
     ssao_kernel_color = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     ssao_kernel_color->recreate_storage2D(1, gl::TextureInternalFormat::R8, width, height);
@@ -212,16 +212,16 @@ void Renderer::init() {
     // black texture
     one_p_black_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     one_p_black_tex->set_image2D(gl::TextureInternalFormat::RED, 1, 1, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, nullptr);
-    one_p_black_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
-    one_p_black_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
+    one_p_black_tex->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
+    one_p_black_tex->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
     one_p_black_tex->generate_mips();
 
     // set up FBO textures
     shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     shadow_depth_tex->set_image2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
     // edge clamping is required for border color to be used
-    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::CLAMP_TO_EDGE);
-    shadow_depth_tex->set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::CLAMP_TO_EDGE);
+    shadow_depth_tex->set_texture_wrap_s(gl::TextureWrapMode::CLAMP_TO_EDGE);
+    shadow_depth_tex->set_texture_wrap_t(gl::TextureWrapMode::CLAMP_TO_EDGE);
     shadow_depth_tex->set_border_color(glm::vec4{1.0f});
     depth_fbo.attach(shadow_depth_tex, gl::FBOAttachment::DEPTH);
     if (!depth_fbo.check())

@@ -25,13 +25,18 @@ public:
             glDeleteTextures(1, &handle);
     }
 
-    Texture(Texture &&o) : texture_type{o.texture_type},
-                           internal_format{o.internal_format},
-                           pixel_format{o.pixel_format},
-                           pixel_type{o.pixel_type},
-                           width{o.width},
-                           height{o.height}
+    Texture(Texture &&o)
     {
+        std::swap(texture_type, o.texture_type);
+        std::swap(internal_format, o.internal_format);
+        std::swap(pixel_type, o.pixel_type);
+        std::swap(m_wrap_r, o.m_wrap_r);
+        std::swap(m_wrap_s, o.m_wrap_s);
+        std::swap(m_wrap_t, o.m_wrap_t);
+        std::swap(m_mag_filter, o.m_mag_filter);
+        std::swap(m_min_filter, o.m_min_filter);
+        std::swap(width, o.width);
+        std::swap(height, o.height);
         std::swap(handle, o.handle);
     }
 
@@ -39,23 +44,14 @@ public:
     Texture& operator=(const Texture&) = delete;
     Texture& operator=(Texture&&) = delete;
 
-    /**
-     * @brief Set the Texture wrapping behavior
-     * 
-     * @param wrap edge
-     * @param mode behavior
-     */
-    void set_wrap_mode(gl::TextureParamWrap wrap, gl::TextureWrapMode mode);
-
     void set_border_color(const glm::vec4& color);
 
-    /**
-     * @brief Set the Filter Mode udes when determining pixle color
-     * 
-     * @param filter filter function
-     * @param mode behavior 
-     */
-    void set_filter_mode(gl::TextureParamFilter filter, gl::TextureFilterMode mode);
+    void set_texture_wrap_r(gl::TextureWrapMode mode);
+    void set_texture_wrap_s(gl::TextureWrapMode mode);
+    void set_texture_wrap_t(gl::TextureWrapMode mode);
+
+    void set_texture_filter_mode_mag(gl::TextureFilterMode mode);
+    void set_texture_filter_mode_min(gl::TextureFilterMode mode);
 
     /**
      * @brief generate the mip maps for this texture
@@ -108,11 +104,43 @@ public:
         return width > 0 && height > 0 && glIsTexture(handle);
     }
 
+private:
+    /**
+     * @brief GL API call to set the Filter Mode used when determining pixel color
+     * 
+     * @param filter filter function
+     * @param mode behavior 
+     */
+    void set_filter_mode(gl::TextureParamFilter filter, gl::TextureFilterMode mode);
+
+    /**
+     * @brief GL API call to set the Texture wrapping behavior
+     * 
+     * @param wrap edge
+     * @param mode behavior
+     */
+    void set_wrap_mode(gl::TextureParamWrap wrap, gl::TextureWrapMode mode);
+
+    /**
+     * @brief update all gl texture params from member values
+     * 
+     */
+    void set_params();
+
 protected:
-    const gl::TextureType texture_type;
+    gl::TextureType texture_type;
     gl::TextureInternalFormat internal_format;
-    gl::PixelFormat pixel_format;
     gl::PixelType pixel_type;
+
+    // wrap modes
+    gl::TextureWrapMode m_wrap_r = gl::TextureWrapMode::CLAMP_TO_BORDER;
+    gl::TextureWrapMode m_wrap_s = gl::TextureWrapMode::CLAMP_TO_BORDER;
+    gl::TextureWrapMode m_wrap_t = gl::TextureWrapMode::CLAMP_TO_BORDER;
+
+    // sampling modes
+    gl::TextureFilterMode m_mag_filter = gl::TextureFilterMode::NEAREST_MIPMAP_NEAREST;
+    gl::TextureFilterMode m_min_filter = gl::TextureFilterMode::NEAREST_MIPMAP_NEAREST;
+
     GLuint handle = 0;
     int width = -1, height = -1;
 };

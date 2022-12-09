@@ -8,22 +8,17 @@ namespace ev2 {
 
 Texture::Texture(gl::TextureType texture_type) : texture_type{texture_type} {
     GL_CHECKED_CALL(glGenTextures(1, &handle));
-    
-    set_filter_mode(gl::TextureParamFilter::TEXTURE_MIN_FILTER, gl::TextureFilterMode::LINEAR);
-    set_filter_mode(gl::TextureParamFilter::TEXTURE_MAG_FILTER, gl::TextureFilterMode::LINEAR);
 
-    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
-    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
+    set_params();
 }
 
 Texture::Texture(gl::TextureType texture_type, gl::TextureFilterMode filterMode) : texture_type{texture_type} {
     GL_CHECKED_CALL(glGenTextures(1, &handle));
 
-    set_filter_mode(gl::TextureParamFilter::TEXTURE_MIN_FILTER, filterMode);
-    set_filter_mode(gl::TextureParamFilter::TEXTURE_MAG_FILTER, filterMode);
+    m_mag_filter = filterMode;
+    m_min_filter = filterMode;
 
-    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, gl::TextureWrapMode::REPEAT);
-    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, gl::TextureWrapMode::REPEAT);
+    set_params();
 }
 
 void Texture::set_wrap_mode(gl::TextureParamWrap wrap, gl::TextureWrapMode mode) {
@@ -36,6 +31,28 @@ void Texture::set_border_color(const glm::vec4& color) {
     glBindTexture((GLenum)texture_type, handle);
     GL_CHECKED_CALL(glTexParameterfv((GLenum)texture_type, GL_TEXTURE_BORDER_COLOR, glm::value_ptr(color)));
     glBindTexture((GLenum)texture_type, 0);
+}
+
+void Texture::set_texture_wrap_r(gl::TextureWrapMode mode) {
+    m_wrap_r = mode;
+    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_R, mode);
+}
+void Texture::set_texture_wrap_s(gl::TextureWrapMode mode) {
+    m_wrap_s = mode;
+    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_S, mode);
+}
+void Texture::set_texture_wrap_t(gl::TextureWrapMode mode) {
+    m_wrap_t = mode;
+    set_wrap_mode(gl::TextureParamWrap::TEXTURE_WRAP_T, mode);
+}
+
+void Texture::set_texture_filter_mode_mag(gl::TextureFilterMode mode) {
+    m_mag_filter = mode;
+    set_filter_mode(gl::TextureParamFilter::TEXTURE_MAG_FILTER, mode);
+}
+void Texture::set_texture_filter_mode_min(gl::TextureFilterMode mode) {
+    m_min_filter = mode;
+    set_filter_mode(gl::TextureParamFilter::TEXTURE_MIN_FILTER, mode);
 }
 
 void Texture::set_filter_mode(gl::TextureParamFilter filter, gl::TextureFilterMode mode) {
@@ -55,7 +72,6 @@ void Texture::set_image2D(gl::TextureInternalFormat internalFormat, GLsizei widt
     GL_CHECKED_CALL(glTexImage2D((GLenum)gl::TextureTarget::TEXTURE_2D, 0, (GLint)internalFormat, width, height, 0, (GLenum)dataFormat, (GLenum)dataType, data));
     unbind();
     internal_format = internalFormat;
-    pixel_format = dataFormat;
     pixel_type = dataType;
     this->width = width;
     this->height = height;
@@ -66,7 +82,6 @@ void Texture::set_data3D(gl::TextureInternalFormat internalFormat, GLsizei width
     GL_CHECKED_CALL(glTexImage2D((GLenum)side, 0, (GLint)internalFormat, width, height, 0, (GLenum)dataFormat, (GLenum)dataType, data));
     unbind();
     internal_format = internalFormat;
-    pixel_format = dataFormat;
     pixel_type = dataType;
     this->width = width;
     this->height = height;
@@ -84,6 +99,18 @@ void Texture::recreate_storage2D(GLsizei levels, gl::TextureInternalFormat inter
     internal_format = internalFormat;
     this->width = width;
     this->height = height;
+
+    // update new gl texture with previous settings
+    set_params();
+}
+
+void Texture::set_params() {
+    set_texture_filter_mode_mag(m_mag_filter);
+    set_texture_filter_mode_min(m_min_filter);
+
+    set_texture_wrap_r(m_wrap_r);
+    set_texture_wrap_s(m_wrap_s);
+    set_texture_wrap_t(m_wrap_t);
 }
 
 // FBO
