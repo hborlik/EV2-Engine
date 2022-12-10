@@ -48,34 +48,30 @@ float fbm(vec3 p)
 
 void main()
 {
-    if (pos.y < 0) {
-        float mu = dot(normalize(pos), normalize(fsun));
-        color = vec4(Km * mu, 1.0);
-    } else {
-        // Atmosphere Scattering
-        float mu = dot(normalize(pos), normalize(fsun));
-        float rayleigh = 3.0 / (8.0 * 3.14) * (1.0 + mu * mu);
-        vec3 mie = (Kr + Km * (1.0 - g * g) / (2.0 + g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5)) / (Br + Bm);
+    // Atmosphere Scattering
+    float mu = dot(normalize(pos), normalize(fsun));
+    float rayleigh = 3.0 / (8.0 * 3.14) * (1.0 + mu * mu);
+    vec3 mie = (Kr + Km * (1.0 - g * g) / (2.0 + g * g) / pow(1.0 + g * g - 2.0 * g * mu, 1.5)) / (Br + Bm);
 
-        vec3 day_extinction = exp(-exp(-((pos.y + fsun.y * 4.0) * (exp(-pos.y * 16.0) + 0.1) / 80.0) / Br) * (exp(-pos.y * 16.0) + 0.1) * Kr / Br) * exp(-pos.y * exp(-pos.y * 8.0 ) * 4.0) * exp(-pos.y * 2.0) * 4.0;
-        vec3 night_extinction = vec3(1.0 - exp(fsun.y)) * 0.2;
-        vec3 extinction = mix(day_extinction, night_extinction, -fsun.y * 0.2 + 0.5);
-        color.rgb = rayleigh * mie * extinction;
+    vec3 day_extinction = exp(-exp(-((pos.y + fsun.y * 4.0) * (exp(-pos.y * 16.0) + 0.1) / 80.0) / Br) * (exp(-pos.y * 16.0) + 0.1) * Kr / Br) * exp(-pos.y * exp(-pos.y * 8.0 ) * 4.0) * exp(-pos.y * 2.0) * 4.0;
+    vec3 night_extinction = vec3(1.0 - exp(fsun.y)) * 0.2;
+    vec3 extinction = mix(day_extinction, night_extinction, -fsun.y * 0.2 + 0.5);
+    color.rgb = rayleigh * mie * extinction;
 
-        // Cirrus Clouds
-        float density = smoothstep(1.0 - cirrus, 1.0, fbm(pos.xyz / pos.y * 2.0 + time * 0.05)) * 0.3;
-        color.rgb = mix(color.rgb, extinction * 4.0, density * max(pos.y, 0.0));
+    // Cirrus Clouds
+    float density = smoothstep(1.0 - cirrus, 1.0, fbm(pos.xyz / pos.y * 2.0 + time * 0.05)) * 0.3;
+    color.rgb = mix(color.rgb, extinction * 4.0, density * max(pos.y, 0.0));
 
-        // Cumulus Clouds
-        for (int i = 0; i < 3; i++)
-        {
-            float density = smoothstep(1.0 - cumulus, 1.0, fbm((0.7 + float(i) * 0.01) * pos.xyz / pos.y + time * 0.3));
-            color.rgb = mix(color.rgb, extinction * density * 5.0, min(density, 1.0) * max(pos.y, 0.0));
-        }
-
-        // Dithering Noise
-        color.rgb += noise(pos * 1000) * 0.01;
+    // Cumulus Clouds
+    for (int i = 0; i < 3; i++)
+    {
+        float density = smoothstep(1.0 - cumulus, 1.0, fbm((0.7 + float(i) * 0.01) * pos.xyz / pos.y + time * 0.3));
+        color.rgb = mix(color.rgb, extinction * density * 5.0, min(density, 1.0) * max(pos.y, 0.0));
     }
+
+    // Dithering Noise
+    color.rgb += noise(pos * 1000) * 0.01;
+
     color.rgb = vec3(output_mul) * color.rgb;
     // color.rgb = vec3(1.0) - exp(-color.rgb * 0.5);
     // color.rgb = log(vec3(1.0) + color.rgb);

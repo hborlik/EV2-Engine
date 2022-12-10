@@ -724,7 +724,7 @@ void Renderer::render(const Camera &camera) {
         glm::mat4 LV =  glm::lookAt(directional_light_pos, camera.get_position(), camera.get_forward());
                     //    glm::inverse(glm::translate(glm::identity<glm::mat4>(), directional_light_pos));
         
-        std::array<glm::vec3, 8> worldPoints = camera.extract_frustum_corners(0.1f);
+        std::array<glm::vec3, 8> worldPoints = camera.extract_frustum_corners_world(100.f);
         float minX = INFINITY, maxX = -INFINITY, minY = INFINITY, maxY = -INFINITY;
         for (auto &point : worldPoints) {
             glm::vec3 ls_point = LV * glm::vec4{point, 1.0};

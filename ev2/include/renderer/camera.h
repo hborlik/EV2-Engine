@@ -93,6 +93,33 @@ public:
         return worldPoints;
     }
 
+    std::array<glm::vec3, 8> extract_frustum_corners_world(float frustum_extent_far_world = 10.0f) const noexcept {
+        using namespace glm;
+        if (dirty)
+            force_update_internal();
+        const float f_n = m_far - m_near;
+        const float f_view = frustum_extent_far_world + m_near;
+        const float ndc_far = (m_far + m_near) / f_n + 2 * m_far * m_near / (f_n * -f_view);
+        std::array<glm::vec3, 8> ndcPoints = {
+            glm::vec3(-1, -1,  ndc_far),
+            glm::vec3( 1, -1,  ndc_far),
+            glm::vec3(-1,  1,  ndc_far),
+            glm::vec3( 1,  1,  ndc_far),
+            glm::vec3(-1, -1, -1),
+            glm::vec3( 1, -1, -1),
+            glm::vec3(-1,  1, -1),
+            glm::vec3( 1,  1, -1)
+        };    
+        std::array<glm::vec3, 8> worldPoints;
+        for (int i = 0; i < 8; i++)
+        {
+            glm::vec4 pos = inv_pv() * vec4(ndcPoints[i], 1.0);
+            pos = pos / pos.w;
+            worldPoints[i] = glm::vec3(pos);
+        }
+        return worldPoints;
+    }
+
     /**
      * @brief Force internal View and Projection * View matrices to be updated.
      * 
