@@ -55,7 +55,7 @@ void main()
 
     vec3 day_extinction = exp(-exp(-((pos.y + fsun.y * 4.0) * (exp(-pos.y * 16.0) + 0.1) / 80.0) / Br) * (exp(-pos.y * 16.0) + 0.1) * Kr / Br) * exp(-pos.y * exp(-pos.y * 8.0 ) * 4.0) * exp(-pos.y * 2.0) * 4.0;
     vec3 night_extinction = vec3(1.0 - exp(fsun.y)) * 0.2;
-    vec3 extinction = mix(day_extinction, night_extinction, -fsun.y * 0.2 + 0.5);
+    vec3 extinction = max(mix(day_extinction, night_extinction, -fsun.y * 0.2 + 0.5), 0);
     color.rgb = rayleigh * mie * extinction;
 
     // Cirrus Clouds
