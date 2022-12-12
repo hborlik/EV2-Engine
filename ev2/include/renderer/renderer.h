@@ -264,6 +264,9 @@ private:
     GLuint                      gl_vao = 0;
 };
 
+// forward declare rendering classes
+class Terrain;
+
 class Renderer : public Singleton<Renderer> {
 public:
     Renderer(uint32_t width, uint32_t height);
@@ -313,6 +316,8 @@ public:
     int get_n_pointlights() const {return point_lights.size();}
 
     // ======================
+
+    Terrain& get_terrain() {return *m_terrain.get();}
 
     float ssao_radius = 0.5f;
     float ssao_bias = 0.025f;
@@ -449,7 +454,7 @@ private:
 
     int32_t default_material_id = 0;
 
-    Terrain m_terrain;
+    std::unique_ptr<Terrain> m_terrain;
 };
 
 }

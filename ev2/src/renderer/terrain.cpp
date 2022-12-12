@@ -184,7 +184,7 @@ struct TerrainManager {
     uint32_t nodeCount;
     float size;
 } g_terrain = {
-    {true, false, false, false, true},
+    {true, true, false, false, true},
     {std::string("" "./kauai.png"),
      52660.0f, 52660.0f, -1000.0f, 15.0f,
     // 1000.0f, 1000.0f, -100.0f, 14.0f,
@@ -193,7 +193,7 @@ struct TerrainManager {
     SHADING_DIFFUSE,
     3,
     7.0f,
-    0.005f,
+    0.0f,
     25,
     0,
     52660.0f
@@ -873,7 +873,7 @@ void LoadNmapTexture8(int smapID, const Image& dmap)
  *
  * This Loads an R16 texture used as a displacement map
  */
-bool LoadDmapTexture16(int dmapID, int smapID, const std::string& pathToFile)
+std::unique_ptr<Image> LoadDmapTexture16(int dmapID, int smapID, const std::string& pathToFile)
 {
     LOG("Loading {Dmap-Texture}\n");
     std::unique_ptr<Image> image = load_image_16(pathToFile);
@@ -921,10 +921,12 @@ bool LoadDmapTexture16(int dmapID, int smapID, const std::string& pathToFile)
                     GL_CLAMP_TO_EDGE);
     glActiveTexture(GL_TEXTURE0);
 
-    return (glGetError() == GL_NO_ERROR);
+    assert(glGetError() == GL_NO_ERROR);
+
+    return image;
 }
 
-bool LoadDmapTexture()
+std::unique_ptr<ev2::Image> LoadDmapTexture()
 {
     std::string path = Engine::get().asset_path / g_terrain.dmap.pathToFile;
     std::cout << "Loading Dmap Texture: " << path << "\n";
@@ -933,8 +935,8 @@ bool LoadDmapTexture()
                                  TEXTURE_SMAP,
                                  path);
     }
-
-    return (glGetError() == GL_NO_ERROR);
+    assert(glGetError() == GL_NO_ERROR);
+    return {};
 }
 
 // -----------------------------------------------------------------------------
@@ -944,8 +946,10 @@ bool LoadDmapTexture()
 bool Terrain::load_textures() {
     bool v = true;
 
+    m_heightmap = LoadDmapTexture();
+
     // if (v) v &= LoadSceneFramebufferTexture();
-    if (v) v &= LoadDmapTexture();
+    if (v) v &= (bool)m_heightmap;
     // if (v) v &= LoadBrunetonAtmosphereTextures();
 
     return v;

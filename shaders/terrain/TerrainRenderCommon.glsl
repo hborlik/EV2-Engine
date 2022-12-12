@@ -221,11 +221,11 @@ vec2 LevelOfDetail(in const vec4[3] patchVertices)
         return vec2(0.0f, 1.0f);
 #endif
 
-// #   if FLAG_DISPLACE
-//     // variance test
-//     if (!DisplacementVarianceTest(patchVertices))
-//         return vec2(0.0f, 1.0f);
-// #endif
+#   if FLAG_DISPLACE
+    // variance test
+    if (!DisplacementVarianceTest(patchVertices))
+        return vec2(0.0f, 1.0f);
+#endif
 
     // compute triangle LOD
     return vec2(TriangleLevelOfDetail(patchVertices), 1.0f);

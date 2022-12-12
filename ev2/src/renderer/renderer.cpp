@@ -453,7 +453,8 @@ void Renderer::init() {
         &g_buffer,
         &default_camera
     };
-    m_terrain.init(terrain_target_state, prep);
+    m_terrain = std::make_unique<Terrain>();
+    m_terrain->init(terrain_target_state, prep);
 }
 
 void Renderer::update_material(mat_id_t material_slot, const MaterialData& material) {
@@ -820,7 +821,7 @@ void Renderer::render(const Camera &camera) {
         &camera
     };
 
-    m_terrain.render(current_state);
+    m_terrain->render(current_state);
 
     g_buffer.unbind();
 

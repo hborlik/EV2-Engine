@@ -11,6 +11,7 @@
 
 #include <renderer/render_state.hpp>
 #include <renderer/shader.h>
+#include <image.hpp>
 
 namespace ev2::renderer {
 
@@ -37,8 +38,12 @@ public:
 
     bool load_queries();
 
+    float height_query(float x, float y) const;
+
 private:
     std::unique_ptr<OpenGLManager> m_glmanager;
+
+    std::unique_ptr<Image> m_heightmap;
 };
 
 }
