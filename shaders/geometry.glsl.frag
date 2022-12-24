@@ -1,6 +1,4 @@
 
-#extension GL_GOOGLE_include_directive : enable
-
 #include "globals.glslinc"
 #include "disney.glslinc"
 
@@ -10,7 +8,7 @@ layout (location = 2) out vec4 gAlbedoSpec;
 layout (location = 3) out uint gMaterialTex;
 layout (location = 4) out vec4 gEmissive;
 
-in vec3 frag_pos; // fragment position in view space
+in vec3 frag_pos; // fragment position in world space
 in vec3 vert_normal;
 in vec3 vert_color;
 in vec2 tex_coord;

@@ -833,6 +833,9 @@ void Renderer::render(const Camera &camera) {
     // ssao pass
     ssao_buffer.bind();
 
+    // bind global shader UBO to shader
+    shader_globals.bind_range(globals_desc.location_index);
+
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);

@@ -53,8 +53,10 @@ void main() {
     vec3 FragPos = texture(gPosition, tex_coord).rgb;
     if (FragPos == vec3(0, 0, 0)) // no rendered geometry
         discard;
+    vec3 FragPosView = (View * vec4(FragPos, 1)).xyz;
 
     vec3 Normal = texture(gNormal, tex_coord).rgb;
+    vec3 vNormal = (View * vec4(Normal, 0)).xyz;
     vec3 Albedo = texture(gAlbedoSpec, tex_coord).rgb;
     float Specular = texture(gAlbedoSpec, tex_coord).a;
     uint MaterialId = texture(gMaterialTex, tex_coord).r;
@@ -62,22 +64,18 @@ void main() {
 
     // constant tangent spaces
     vec3 X = vec3(1, 0, 0);
-    vec3 Y = normalize(cross(Normal, X));
-    X = normalize(cross(Y, Normal));
+    vec3 Y = normalize(cross(vNormal, X));
+    X = normalize(cross(Y, vNormal));
 
-    // const vec3 vLightPos = vec3(View * vec4(lightPos, 1.0f)); 
-    // float lD = length(vLightPos - FragPos);
-    // vec3 lightDir = normalize(vLightPos - FragPos);
-    // float attenuation = 1.0 / (0.9 * lD + 0.1 * lD*lD);
     vec3 lightDirV = vec3(View * vec4(lightDir, .0f));
 
-    vec3 viewDir = normalize(-FragPos);
+    vec3 viewDir = normalize(-FragPosView);
 
-    mat4 inv_pv = LS * VInv;
-    vec4 LSfPos = (inv_pv * vec4(FragPos, 1.0));
-    float Shade = TestShadow(LSfPos.xyz, (inv_pv * vec4(Normal, 0.0)).xyz);
+    // mat4 inv_pv = LS * VInv;
+    vec4 LSfPos = (LS * vec4(FragPos, 1.0));
+    float Shade = 0;//TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
-    vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, Normal, X, Y, Albedo, materials[MaterialId]);
+    vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
     
     frag_color = vec4(color, 1.0);
     // frag_color = vec4(AO, AO, AO, 1.0);

@@ -185,7 +185,7 @@ struct TerrainManager {
     float size;
 } g_terrain = {
     {true, true, false, false, true},
-    {std::string("" "./kauai.png"),
+    {std::string("./kauai.png"),
      52660.0f, 52660.0f, -1000.0f, 15.0f,
     // 1000.0f, 1000.0f, -100.0f, 14.0f,
      1.0f},

@@ -1,6 +1,4 @@
 
-#extension GL_GOOGLE_include_directive : enable
-
 #include "globals.glslinc"
 out float FragColor;
   
@@ -19,9 +17,9 @@ layout (std140, binding = 1) uniform Samples {
 };
 
 void main() {
-    const vec2 noiseScale = textureSize(gPosition, 0) * (1.0 / 4.0);
-    vec3 fragPos   = texture(gPosition, tex_coord).xyz;
-    vec3 normal    = texture(gNormal, tex_coord).rgb;
+    const vec2 noiseScale = textureSize(gPosition, 0) * 0.25;
+    vec3 fragPos   = (View * vec4(texture(gPosition, tex_coord).xyz, 1)).xyz;
+    vec3 normal    = normalize((View * vec4(texture(gNormal, tex_coord).rgb, 0)).xyz);
 
     vec3 randomVec = texture(texNoise, tex_coord * noiseScale).xyz;
 
@@ -41,7 +39,7 @@ void main() {
         offset.xyz /= offset.w;               // perspective divide
         offset.xyz  = offset.xyz * 0.5 + vec3(0.5); // transform to range 0.0 - 1.0
 
-        float sampleDepth = texture(gPosition, offset.xy).z;
+        float sampleDepth = (View * vec4(texture(gPosition, offset.xy).xyz, 1)).z;
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
         occlusion       += (sampleDepth > samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
