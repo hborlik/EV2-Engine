@@ -4,6 +4,9 @@ Modeling and rendering are two core research problems in computer graphics.
 
 ### current milestones
 1. implement terrain rendering
+   - geometry (done)
+   - normals
+   - texture
 2. Vegetation and terrain rendering (focus)
     - what exactly is the problem?
     - procedural geometry or scene placement?
@@ -15,11 +18,12 @@ Modeling and rendering are two core research problems in computer graphics.
     - urban models library
     - define the constraints
         - forest can be close to the road but not on
+    - Scene saving and loading? how to save scenes
 
 ### Other todos
-1. Convert gbuffers from view to world space only (reason: get rid of extra view matrix multiply for positions and normals)
+1. Convert gbuffers from view to world space only (reason: get rid of extra view matrix multiply for positions and normals) (done)
 2. BUGS:
-   - The normals for terrain are wrong! this is why only part of it shades
+   - The normals for terrain are wrong! this is why only part of it shades (fixed)
 
 ### Tree generation methods
 1. L-systems for branching skeletons
@@ -32,8 +36,7 @@ Example based terrain generation has been explored and GAN based models offer a 
 authoring experience. Going from sketch to terrain.
 
 ### Road Generation
-Roads serve the purpose of making the journey from point A to B easier. Road must follow grade limitations (imposed by the vehicles that travel on the road), and they are limited 
-by cost of construction. 
+Roads serve the purpose of making the journey from point A to B easier. Road must follow grade limitations (imposed by the vehicles that travel on the road), and they are limited by cost of construction. 
 
 ## The framework that ties it together
 From "A Proposal for a Procedural Terrain Modelling Framework"

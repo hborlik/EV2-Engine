@@ -36,8 +36,18 @@ void show_settings_editor_window() {
     ImGui::Begin("Settings");
     ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::Text("N Lights %i", ev2::renderer::Renderer::get_singleton().get_n_pointlights());
-    ImGui::DragFloat("SSAO radius", &(ev2::renderer::Renderer::get_singleton().ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f);
-    ImGui::DragInt("SSAO samples", (int32_t*)&(ev2::renderer::Renderer::get_singleton().ssao_kernel_samples), 1, 1, 64);
+    float ssao_radius = ev2::renderer::Renderer::get_singleton().get_ssao_radius();
+    if (ImGui::DragFloat("SSAO radius", &(ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f)) {
+        ev2::renderer::Renderer::get_singleton().set_ssao_radius(ssao_radius);
+    }
+    int ssao_samples = ev2::renderer::Renderer::get_singleton().get_ssao_kernel_samples();
+    if (ImGui::DragInt("SSAO samples", &ssao_samples, 1, 1, 64)) {
+        ev2::renderer::Renderer::get_singleton().set_ssao_kernel_samples(ssao_samples);
+    }
+    float ssao_bias = ev2::renderer::Renderer::get_singleton().get_ssao_bias();
+    if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
+        ev2::renderer::Renderer::get_singleton().set_ssao_bias(ssao_bias);
+    }
     ImGui::DragFloat("Exposure", &(ev2::renderer::Renderer::get_singleton().exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
     ImGui::DragFloat("Gamma", &(ev2::renderer::Renderer::get_singleton().gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
     ImGui::DragInt("Bloom Quality", &(ev2::renderer::Renderer::get_singleton().bloom_iterations), 1, 1, 6);

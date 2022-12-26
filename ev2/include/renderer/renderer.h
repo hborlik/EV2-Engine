@@ -319,9 +319,13 @@ public:
 
     Terrain& get_terrain() {return *m_terrain.get();}
 
-    float ssao_radius = 0.5f;
-    float ssao_bias = 0.025f;
-    uint32_t ssao_kernel_samples = 32;
+    float get_ssao_radius() const {return ssao_radius;}
+    float get_ssao_bias() const {return ssao_bias;}
+    int get_ssao_kernel_samples() const {return ssao_kernel_samples;}
+
+    void set_ssao_radius(float radius) {ssao_radius = radius; uniforms_dirty = true;}
+    void set_ssao_bias(float bias) {ssao_bias = bias; uniforms_dirty = true;}
+    void set_ssao_kernel_samples(int samples) {ssao_kernel_samples = abs(samples); uniforms_dirty = true;}
 
     float exposure      = .8f;
     float gamma         = 2.2f;
@@ -343,6 +347,14 @@ private:
     void draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
 
     void update_material(mat_id_t material_slot, const MaterialData& material);
+
+    void load_ssao_uniforms();
+
+    // uniform constants
+    bool uniforms_dirty = true;
+    float ssao_radius = 0.5f;
+    float ssao_bias = 0.025f;
+    uint32_t ssao_kernel_samples = 32;
 
     // material management
     std::unordered_map<int32_t, Material> materials;

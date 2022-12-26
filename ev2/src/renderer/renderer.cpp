@@ -347,6 +347,8 @@ void Renderer::init() {
     ssao_bias_loc      = ssao_program.getUniformInfo("bias").Location;
     ssao_nSamples_loc  = ssao_program.getUniformInfo("nSamples").Location;
 
+    load_ssao_uniforms();
+
 
     sky_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sky.glsl.vert", prep);
     sky_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "sky.glsl.frag", prep);
@@ -471,6 +473,12 @@ void Renderer::update_material(mat_id_t material_slot, const MaterialData& mater
     lighting_materials.sub_data(material.anisotropic,    material.anisotropic_offset);
     lighting_materials.sub_data(material.sheen,          material.sheen_offset);
     lighting_materials.sub_data(material.sheenTint,      material.sheenTint_offset);
+}
+
+void Renderer::load_ssao_uniforms() {
+    glProgramUniform1f(ssao_program.getHandle(), ssao_bias_loc, ssao_bias);
+    glProgramUniform1f(ssao_program.getHandle(), ssao_radius_loc, ssao_radius);
+    glProgramUniform1ui(ssao_program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
 Material* Renderer::create_material() {
@@ -678,6 +686,10 @@ void Renderer::render(const Camera &camera) {
 
     start = std::chrono::system_clock::now();
 
+    if (uniforms_dirty) {
+        load_ssao_uniforms();
+    }
+
     // pre render data updates
     for (auto& m : materials) {
         Material& material = m.second;
@@ -863,9 +875,10 @@ void Renderer::render(const Camera &camera) {
         gl::glUniformSampler(2, ssao_tex_noise_loc);
     }
 
-    gl::glUniformf(ssao_bias, ssao_bias_loc);
-    gl::glUniformf(ssao_radius, ssao_radius_loc);
-    gl::glUniformui(ssao_kernel_samples, ssao_nSamples_loc);
+    // moved to glProgramUniforms
+    // gl::glUniformf(ssao_bias, ssao_bias_loc);
+    // gl::glUniformf(ssao_radius, ssao_radius_loc);
+    // gl::glUniformui(ssao_kernel_samples, ssao_nSamples_loc);
 
     ssao_kernel_desc.bind_buffer(ssao_kernel_buffer);
 

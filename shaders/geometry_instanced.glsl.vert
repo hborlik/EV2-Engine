@@ -17,10 +17,10 @@ out vec2 tex_coord;     // passthrough
 uniform mat4 M;
 
 void main() {
-    vec4 vertV = View * M * InstanceMat * vec4(VertPos, 1.0);
+    vec4 vertV = M * InstanceMat * vec4(VertPos, 1.0);
     frag_pos = vertV.xyz;
-    gl_Position = P * vertV;
-    vert_normal = vec3(View * M * InstanceMat * vec4(Normal, 0.0));
+    gl_Position = VP * vertV;
+    vert_normal = (M * InstanceMat * vec4(Normal, 0.0)).xyz;
     vert_color = VertCol;
     tex_coord = TexPos;
 }

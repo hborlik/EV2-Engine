@@ -73,7 +73,7 @@ void main() {
 
     // mat4 inv_pv = LS * VInv;
     vec4 LSfPos = (LS * vec4(FragPos, 1.0));
-    float Shade = 0;//TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
+    float Shade = TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
     vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
     
