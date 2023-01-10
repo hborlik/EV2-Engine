@@ -18,7 +18,7 @@ layout (std140, binding = 1) uniform Samples {
 
 void main() {
     const vec2 noiseScale = textureSize(gPosition, 0) * 0.25;
-    vec3 fragPos   = (View * vec4(texture(gPosition, tex_coord).xyz, 1)).xyz;
+    vec3 fragPos   = texture(gPosition, tex_coord).xyz;
     vec3 normal    = normalize((View * vec4(texture(gNormal, tex_coord).rgb, 0)).xyz);
 
     vec3 randomVec = texture(texNoise, tex_coord * noiseScale).xyz;

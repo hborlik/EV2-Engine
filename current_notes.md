@@ -13,6 +13,8 @@ Modeling and rendering are two core research problems in computer graphics.
     - Or trees in Urban environments?
     - Data based?
 
+A framework for both plant and building placement. Procedural open world scene generation.
+
 3. by Dec 7
     - use a tree library
     - urban models library
@@ -21,9 +23,10 @@ Modeling and rendering are two core research problems in computer graphics.
     - Scene saving and loading? how to save scenes
 
 ### Other todos
-1. Convert gbuffers from view to world space only (reason: get rid of extra view matrix multiply for positions and normals) (done)
+1. Convert gbuffers to view space for position and world for normal
 2. BUGS:
    - The normals for terrain are wrong! this is why only part of it shades (fixed)
+3. How are volumes going to be represented? sdf, voxels, something else?
 
 ### Tree generation methods
 1. L-systems for branching skeletons

@@ -50,10 +50,9 @@ float TestShadow(vec3 LSfPos, vec3 Normal) {
 // BRDF shader interface
 
 void main() {
-    vec3 FragPos = texture(gPosition, tex_coord).rgb;
-    if (FragPos == vec3(0, 0, 0)) // no rendered geometry
+    vec3 FragPosView = texture(gPosition, tex_coord).rgb;
+    if (FragPosView == vec3(0, 0, 0)) // no rendered geometry
         discard;
-    vec3 FragPosView = (View * vec4(FragPos, 1)).xyz;
 
     vec3 Normal = texture(gNormal, tex_coord).rgb;
     vec3 vNormal = (View * vec4(Normal, 0)).xyz;
@@ -71,8 +70,8 @@ void main() {
 
     vec3 viewDir = normalize(-FragPosView);
 
-    // mat4 inv_pv = LS * VInv;
-    vec4 LSfPos = (LS * vec4(FragPos, 1.0));
+    mat4 inv_pv = LS * VInv;
+    vec4 LSfPos = (inv_pv * vec4(FragPosView, 1.0));
     float Shade = TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
     vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);

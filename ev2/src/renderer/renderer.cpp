@@ -292,6 +292,7 @@ void Renderer::init() {
     geometry_program.link();
 
     gp_m_location = geometry_program.getUniformInfo("M").Location;
+    gp_mv_location = geometry_program.getUniformInfo("MV").Location;
     gp_g_location = geometry_program.getUniformInfo("G").Location;
 
     geometry_program_instanced.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", prep);
@@ -455,7 +456,7 @@ void Renderer::init() {
         &g_buffer,
         &default_camera
     };
-    m_terrain = std::make_unique<Terrain>();
+    m_terrain = std::make_unique<TerrainRenderer>();
     m_terrain->init(terrain_target_state, prep);
 }
 
@@ -805,6 +806,7 @@ void Renderer::render(const Camera &camera) {
             const glm::mat3 G = glm::inverse(glm::transpose(glm::mat3(m.transform)));
 
             ev2::gl::glUniform(m.transform, gp_m_location);
+            ev2::gl::glUniform(V * m.transform, gp_mv_location);
             ev2::gl::glUniform(G, gp_g_location);
 
             draw(m.drawable.get(), geometry_program, true, m.gl_vao, m.material_id_override);

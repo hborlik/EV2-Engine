@@ -21,7 +21,7 @@
 #include <renderer/material.h>
 #include <renderer/debug_renderer.h>
 #include <renderer/render_state.hpp>
-#include <renderer/terrain.h>
+#include <renderer/terrain_renderer.h>
 
 namespace ev2::renderer {
 
@@ -265,7 +265,7 @@ private:
 };
 
 // forward declare rendering classes
-class Terrain;
+class TerrainRenderer;
 
 class Renderer : public Singleton<Renderer> {
 public:
@@ -317,7 +317,7 @@ public:
 
     // ======================
 
-    Terrain& get_terrain() {return *m_terrain.get();}
+    TerrainRenderer& get_terrain() {return *m_terrain.get();}
 
     float get_ssao_radius() const {return ssao_radius;}
     float get_ssao_bias() const {return ssao_bias;}
@@ -386,6 +386,7 @@ private:
 
     Program geometry_program;
     int gp_m_location;
+    int gp_mv_location;
     int gp_g_location;
 
     Program geometry_program_instanced;
@@ -466,7 +467,7 @@ private:
 
     int32_t default_material_id = 0;
 
-    std::unique_ptr<Terrain> m_terrain;
+    std::unique_ptr<TerrainRenderer> m_terrain;
 };
 
 }

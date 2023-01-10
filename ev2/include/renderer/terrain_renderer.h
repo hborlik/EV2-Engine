@@ -17,12 +17,11 @@ namespace ev2::renderer {
 
 struct OpenGLManager;
 
-class Terrain {
+class TerrainRenderer {
 public:
-    Terrain();
+    TerrainRenderer();
 
-    // note destructor is needed for std::unique_ptr<OpenGLManager> destruction
-    ~Terrain();
+    ~TerrainRenderer();
 
     void init(const RenderState& state, const ShaderPreprocessor& pre);
 
@@ -38,12 +37,14 @@ public:
 
     bool load_queries();
 
+    // world space x, y to height on terrain
     float height_query(float x, float y) const;
 
 private:
     std::unique_ptr<OpenGLManager> m_glmanager;
 
     std::unique_ptr<Image> m_heightmap;
+    glm::mat4 m_model;
 };
 
 }

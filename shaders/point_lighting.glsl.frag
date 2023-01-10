@@ -19,10 +19,9 @@ layout(std430, binding = 3) buffer lights_in {
 
 void main() {
     const vec2 tex_coord = gl_FragCoord.xy / textureSize(gPosition, 0);
-    vec3 FragPos = texture(gPosition, tex_coord).rgb;
-    if (FragPos == vec3(0, 0, 0)) // no rendered geometry
+    vec3 vFragPos = texture(gPosition, tex_coord).rgb;
+    if (vFragPos == vec3(0, 0, 0)) // no rendered geometry
         discard;
-    vec3 vFragPos = (View * vec4(FragPos, 1)).xyz;
     const vec3 vLightPos = vec3(View * vec4(lights[instance_id].position, 1.0f));
     float lD = length(vLightPos - vFragPos);
     if (lD > lights[instance_id].radius)

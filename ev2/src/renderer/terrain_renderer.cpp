@@ -1,4 +1,4 @@
-#include <renderer/terrain.h>
+#include <renderer/terrain_renderer.h>
 
 #include <stdio.h>
 #include <map>
@@ -765,8 +765,8 @@ bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
  */
 void LoadNmapTexture16(int smapID, const Image& dmap)
 {
-    int w = dmap.get_width();
-    int h = dmap.get_height();
+    int w = dmap.width();
+    int h = dmap.height();
     const uint16_t *texels = (const uint16_t *)dmap.data();
     int mipcnt = mip_count(w, h, 1);
 
@@ -817,8 +817,8 @@ void LoadNmapTexture16(int smapID, const Image& dmap)
 
 void LoadNmapTexture8(int smapID, const Image& dmap)
 {
-    int w = dmap.get_width();
-    int h = dmap.get_height();
+    int w = dmap.width();
+    int h = dmap.height();
     const uint8_t *texels = (const uint8_t *)dmap.data();
     int mipcnt = mip_count(w, h, 1);
 
@@ -878,8 +878,8 @@ std::unique_ptr<Image> LoadDmapTexture16(int dmapID, int smapID, const std::stri
     LOG("Loading {Dmap-Texture}\n");
     std::unique_ptr<Image> image = load_image_16(pathToFile);
 
-    int w = image->get_width();
-    int h = image->get_width();
+    int w = image->width();
+    int h = image->width();
     const uint16_t *texels = (const uint16_t*)image->data();
     int mipcnt = mip_count(w, h);
     std::vector<uint16_t> dmap(w * h * 2);
@@ -943,7 +943,7 @@ std::unique_ptr<ev2::Image> LoadDmapTexture()
 /**
  * Load All Textures
  */
-bool Terrain::load_textures() {
+bool TerrainRenderer::load_textures() {
     bool v = true;
 
     m_heightmap = LoadDmapTexture();
@@ -966,7 +966,7 @@ bool Terrain::load_textures() {
  *
  * This procedure updates the transformation matrices; it is updated each frame.
  */
-bool LoadTerrainVariables(const Camera& m_camera)
+bool LoadTerrainVariables(const Camera& m_camera, glm::mat4* m_model)
 {
     static bool first = true;
     struct PerFrameVariables {
@@ -996,8 +996,11 @@ bool LoadTerrainVariables(const Camera& m_camera)
     // m_camera.get_view
     glm::mat4 viewInv = m_camera.get_view_inv();
     glm::mat4 view = m_camera.get_view();
-    glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
-            * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
+    glm::mat4 t_model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
+            * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale));
+    if (m_model)
+        *m_model = t_model;
+    glm::mat4 model = t_model
             * glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
 
     // set transformations (column-major)
@@ -1196,10 +1199,10 @@ bool LoadMeshletBuffers()
  * Load All Buffers
  *
  */
-bool Terrain::load_buffers(const RenderState& state) {
+bool TerrainRenderer::load_buffers(const RenderState& state) {
     bool v = true;
 
-    if (v) v &= LoadTerrainVariables(*state.camera);
+    if (v) v &= LoadTerrainVariables(*state.camera, &m_model);
     if (v) v &= LoadLebBuffer();
     if (v) v &= LoadRenderCmdBuffer();
     if (v) v &= LoadMeshletBuffers();
@@ -1260,7 +1263,7 @@ bool LoadMeshletVertexArray()
  * Load All Vertex Arrays
  *
  */
-bool Terrain::load_vaos() {
+bool TerrainRenderer::load_vaos() {
     bool v = true;
 
     if (v) v &= LoadEmptyVertexArray();
@@ -1271,17 +1274,17 @@ bool Terrain::load_vaos() {
 
 //// Terrain 
 
-Terrain::Terrain() {
+TerrainRenderer::TerrainRenderer() {
     m_glmanager = std::make_unique<OpenGLManager>();
 
     g_gl = m_glmanager.get(); // no, im not happy about this
 }
 
-Terrain::~Terrain() {
+TerrainRenderer::~TerrainRenderer() {
     //
 }
 
-void Terrain::init(const RenderState& state, const ShaderPreprocessor& pre) {
+void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& pre) {
     bool v = true;
 
     if (v) v &= load_textures();
@@ -1292,15 +1295,28 @@ void Terrain::init(const RenderState& state, const ShaderPreprocessor& pre) {
 
     // TODO exception
     if (!v)
-        throw std::runtime_error{"Terrain::init failure"};
+        throw std::runtime_error{"TerrainRenderer::init failure"};
 }
 
-bool Terrain::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
+bool TerrainRenderer::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
     return LoadPrograms(state, pre);
 }
 
-bool Terrain::load_queries() {
+bool TerrainRenderer::load_queries() {
     return true;
+}
+
+float TerrainRenderer::height_query(float x, float y) const {
+    glm::mat4 inv_model = glm::inverse(m_model);
+    glm::vec3 terrain_pos = inv_model * glm::vec4(x, y, 0, 1);
+
+    int width = m_heightmap->width();
+    int height = m_heightmap->height();
+    int bytes_per_pixel = m_heightmap->bytes_per_pixel();
+
+    float heightmap = g_terrain.dmap.scale * m_heightmap->data()[bytes_per_pixel * (int(y * height) * width + int(x * width))];
+
+    return heightmap;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1326,7 +1342,7 @@ void renderTopView(const RenderState& render_state)
         glPatchParameteri(GL_PATCH_VERTICES, 1);
 
         glUseProgram(g_gl->programs[PROGRAM_TOPVIEW]->getHandle());
-            glDrawArraysIndirect(GL_PATCHES, 0);
+        glDrawArraysIndirect(GL_PATCHES, 0);
 
         glBindVertexArray(0);
         glViewport(0, 0, render_state.target_fbo->get_width(), render_state.target_fbo->get_height());
@@ -1617,7 +1633,7 @@ void renderTerrain(const Camera& camera)
 {
     // djgc_start(g_gl->clocks[CLOCK_ALL]);
 
-    LoadTerrainVariables(camera);
+    LoadTerrainVariables(camera, nullptr);
     lebUpdate();
     lebReductionPass();
     lebBatchingPass();
@@ -1633,7 +1649,7 @@ void renderScene(const Camera& camera)
     // renderSky();
 }
 
-void Terrain::render(const RenderState& state)
+void TerrainRenderer::render(const RenderState& state)
 {
     state.target_fbo->bind();
     glViewport(0, 0, state.target_fbo->get_width(), state.target_fbo->get_height());

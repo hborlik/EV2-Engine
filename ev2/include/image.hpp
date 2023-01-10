@@ -35,23 +35,30 @@ public:
     Image& operator=(const Image& o) noexcept;
     Image& operator=(Image&& o) noexcept;
 
-    int get_width()  const noexcept {return m_width;}
+    int width() const noexcept {return m_width;}
 
-    int get_height()  const noexcept {return m_height;}
+    int height() const noexcept {return m_height;}
 
     /**
      * @brief The number of color channels
      * 
      * @return int 
      */
-    int get_comp() const noexcept {return m_comp;}
+    int comp() const noexcept {return m_comp;}
 
     /**
      * @brief bytes per color channel
      * 
      * @return int 
      */
-    int get_pf() const noexcept {return m_pf;}
+    int pf() const noexcept {return m_pf;}
+
+    /**
+     * @brief Image Pixel stride. Bytes per pixel
+     * 
+     * @return int 
+     */
+    int bytes_per_pixel() const noexcept {return m_pf * m_comp;}
 
     /**
      * @brief 
@@ -70,14 +77,16 @@ public:
      * @param width 
      * @param height 
      * @param n_comps   number of channels in the image
-     * @param pf        bytes per pixel
+     * @param pf        bytes per pixel color component
      * @param data 
      */
     void set_image(int width, int height, int n_comps, int pf, uint8_t* data);
 
 private:
     uint8_t* m_texels = nullptr;
+    // height and width
     int m_height = -1, m_width = -1;
+    // number of components per pixel and bytes per pixel color component
     int m_comp = -1, m_pf = -1;
 
     Image* next = nullptr;
