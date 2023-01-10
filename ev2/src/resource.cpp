@@ -726,6 +726,8 @@ std::shared_ptr<Texture> ResourceManager::get_texture(const std::filesystem::pat
         }
 
         std::shared_ptr<Texture> texture = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR);
+        texture->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
+        texture->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
         texture->set_image2D(internal_format, w, h, pixel_format, gl::PixelType::UNSIGNED_BYTE, data);
         texture->generate_mips();
         stbi_image_free(data);
