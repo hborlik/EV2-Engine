@@ -11,7 +11,7 @@
 #include <map>
 
 #include <renderer/ev_gl.h>
-#include <renderer/model.h>
+#include <renderer/mesh.h>
 
 namespace ev2::renderer {
 

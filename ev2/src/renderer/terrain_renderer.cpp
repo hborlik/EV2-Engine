@@ -97,6 +97,7 @@ enum {
     UNIFORM_TERRAIN_INSCATTER_SAMPLER,
     UNIFORM_TERRAIN_IRRADIANCE_SAMPLER,
     UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER,
+    UNIFORM_TERRAIN_MATERIALID,
 
     UNIFORM_SPLIT_DMAP_SAMPLER,
     UNIFORM_SPLIT_SMAP_SAMPLER,
@@ -110,6 +111,7 @@ enum {
     UNIFORM_SPLIT_INSCATTER_SAMPLER,
     UNIFORM_SPLIT_IRRADIANCE_SAMPLER,
     UNIFORM_SPLIT_TRANSMITTANCE_SAMPLER,
+    UNIFORM_SPLIT_MATERIALID,
 
     UNIFORM_MERGE_DMAP_SAMPLER,
     UNIFORM_MERGE_SMAP_SAMPLER,
@@ -123,6 +125,7 @@ enum {
     UNIFORM_MERGE_INSCATTER_SAMPLER,
     UNIFORM_MERGE_IRRADIANCE_SAMPLER,
     UNIFORM_MERGE_TRANSMITTANCE_SAMPLER,
+    UNIFORM_MERGE_MATERIALID,
 
     UNIFORM_RENDER_DMAP_SAMPLER,
     UNIFORM_RENDER_SMAP_SAMPLER,
@@ -136,6 +139,7 @@ enum {
     UNIFORM_RENDER_INSCATTER_SAMPLER,
     UNIFORM_RENDER_IRRADIANCE_SAMPLER,
     UNIFORM_RENDER_TRANSMITTANCE_SAMPLER,
+    UNIFORM_RENDER_MATERIALID,
 
     UNIFORM_TOPVIEW_DMAP_SAMPLER,
     UNIFORM_TOPVIEW_DMAP_FACTOR,
@@ -231,7 +235,7 @@ float computeLodFactor(const RenderState& state)
     return 1.0f;
 }
 
-void ConfigureTerrainProgram(const RenderState& state, GLuint glp, GLuint offset)
+void ConfigureTerrainProgram(const RenderState& state, GLuint glp, GLuint offset, GLuint matid)
 {
     float lodFactor = computeLodFactor(state);
 
@@ -271,19 +275,25 @@ void ConfigureTerrainProgram(const RenderState& state, GLuint glp, GLuint offset
     glProgramUniform1i(glp,
         g_gl->uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + offset],
         TEXTURE_ATMOSPHERE_TRANSMITTANCE);
+    glProgramUniform1ui(glp,
+        g_gl->uniforms[UNIFORM_TERRAIN_MATERIALID + offset],
+        matid);
 }
 
-void ConfigureTerrainPrograms(const RenderState& state)
+void ConfigureTerrainPrograms(const RenderState& state, GLuint matid)
 {
     ConfigureTerrainProgram(state,
                             g_gl->programs[PROGRAM_SPLIT]->getHandle(),
-                            UNIFORM_SPLIT_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
+                            UNIFORM_SPLIT_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER,
+                            matid);
     ConfigureTerrainProgram(state,
                             g_gl->programs[PROGRAM_MERGE]->getHandle(),
-                            UNIFORM_MERGE_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
+                            UNIFORM_MERGE_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER,
+                            matid);
     ConfigureTerrainProgram(state,
                             g_gl->programs[PROGRAM_RENDER_ONLY]->getHandle(),
-                            UNIFORM_RENDER_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER);
+                            UNIFORM_RENDER_DMAP_SAMPLER - UNIFORM_TERRAIN_DMAP_SAMPLER,
+                            matid);
 }
 
 // -----------------------------------------------------------------------------
@@ -324,7 +334,7 @@ void ConfigureSkyProgram()
  *
  * This program is responsible for updating and rendering the terrain.
  */
-std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std::string& flag, GLuint uniformOffset, const ShaderPreprocessor& pre)
+std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std::string& flag, GLuint uniformOffset, const ShaderPreprocessor& pre, GLuint matid)
 {
     std::unique_ptr<Program> djp = std::make_unique<Program>("Terrain Program");
 
@@ -446,29 +456,34 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
         glGetUniformLocation(djp->getHandle(), "inscatterSampler");
     g_gl->uniforms[UNIFORM_TERRAIN_TRANSMITTANCE_SAMPLER + uniformOffset] =
         glGetUniformLocation(djp->getHandle(), "transmittanceSampler");
+    g_gl->uniforms[UNIFORM_TERRAIN_MATERIALID + uniformOffset] =
+        glGetUniformLocation(djp->getHandle(), "u_MaterialID");
 
-    ConfigureTerrainProgram(state, djp->getHandle(), uniformOffset);
+    ConfigureTerrainProgram(state, djp->getHandle(), uniformOffset, matid);
 
     assert(glGetError() == GL_NO_ERROR);
     return std::move(djp); 
 }
 
-bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre)
+bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre, GLuint matid)
 {
     bool v = true;
 
     if (v) v = v && (g_gl->programs[PROGRAM_SPLIT] = LoadTerrainProgram(state,
                                        "#define FLAG_SPLIT 1\n",
                                        UNIFORM_SPLIT_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
-                                       pre));
+                                       pre,
+                                       matid));
     if (v) v = v && (g_gl->programs[PROGRAM_MERGE] = LoadTerrainProgram(state,
                                        "#define FLAG_MERGE 1\n",
                                        UNIFORM_MERGE_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
-                                       pre));
+                                       pre,
+                                       matid));
     if (v) v = v && (g_gl->programs[PROGRAM_RENDER_ONLY] = LoadTerrainProgram(state,
                                        "/* thisIsAHackForComputePass */\n",
                                        UNIFORM_RENDER_DMAP_FACTOR - UNIFORM_TERRAIN_DMAP_FACTOR,
-                                       pre));
+                                       pre,
+                                       matid));
 
     return v;
 }
@@ -651,12 +666,12 @@ bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
  * Load All Programs
  *
  */
-bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre)
+bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre, GLuint matid)
 {
     bool v = true;
 
     // if (v) v &= LoadViewerProgram(pre);
-    if (v) v &= LoadTerrainPrograms(state, pre);
+    if (v) v &= LoadTerrainPrograms(state, pre, matid);
     if (v) v &= LoadLebReductionProgram(pre);
     if (v) v &= LoadLebReductionPrepassProgram(pre);
     if (v) v &= LoadBatchProgram(pre);
@@ -1277,7 +1292,7 @@ bool TerrainRenderer::load_vaos() {
 TerrainRenderer::TerrainRenderer() {
     m_glmanager = std::make_unique<OpenGLManager>();
 
-    g_gl = m_glmanager.get(); // no, im not happy about this
+    g_gl = m_glmanager.get();
 }
 
 TerrainRenderer::~TerrainRenderer() {
@@ -1287,19 +1302,24 @@ TerrainRenderer::~TerrainRenderer() {
 void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& pre) {
     bool v = true;
 
+    m_terrain_mat = Renderer::get_singleton().create_material();
+
     if (v) v &= load_textures();
     if (v) v &= load_buffers(state);
     if (v) v &= load_vaos();
     if (v) v &= load_programs(state, pre);
     if (v) v &= load_queries();
 
-    // TODO exception
     if (!v)
         throw std::runtime_error{"TerrainRenderer::init failure"};
 }
 
 bool TerrainRenderer::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
-    return LoadPrograms(state, pre);
+    GLuint matid = 0;
+    if (m_terrain_mat->get_material_id() >= 0)
+        matid = m_terrain_mat->get_material_id();
+
+    return LoadPrograms(state, pre, matid);
 }
 
 bool TerrainRenderer::load_queries() {
@@ -1619,6 +1639,7 @@ void lebRenderCs()
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 }
+
 void lebRender()
 {
     // djgc_start(g_gl->clocks[CLOCK_RENDER]);

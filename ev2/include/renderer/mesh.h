@@ -1,11 +1,11 @@
 /**
- * @file model.h
+ * @file mesh.h
  * @brief 
  * @date 2022-04-18
  * 
  */
-#ifndef EV2_MODEL_H
-#define EV2_MODEL_H
+#ifndef EV2_MESH_H
+#define EV2_MESH_H
 
 #include <memory>
 

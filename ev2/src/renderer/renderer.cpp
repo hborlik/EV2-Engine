@@ -21,13 +21,13 @@ struct PointLight {
     float radius;
 };
 
-void ModelInstance::set_material_override(Material* material) {
-    if (material == nullptr) {
-        material_id_override = -1;
+void ModelInstance::set_material_override(Ref<Material> material) {
+    if (!material) {
+        material_override = nullptr;
         return;
     }
     assert (material->is_registered());
-    material_id_override = material->get_material_id();
+    material_override = material;
 }
 
 void ModelInstance::set_drawable(std::shared_ptr<Drawable> drawable) {
@@ -69,15 +69,17 @@ void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuin
     for (auto& m : dr->primitives) {
         Material* material_ptr = nullptr;
         if (use_materials) {
-            mat_id_t material_slot = 0;
+            mat_slot_t material_slot = 0;
             if (m.material_ind >= 0 && material_override < 0) {
-                material_ptr = &materials.at(dr->materials[m.material_ind]->material_id);
+                material_ptr = dr->materials[m.material_ind].get();
+                material_slot = material_ptr->material_slot;
             } else if (material_override >= 0) {
-                material_ptr = &materials.at(material_override);
-            } else { // use default if no material is set
-                material_ptr = &materials.at(default_material_id);
+                material_ptr = materials.at(material_override);
+                material_slot = material_ptr->material_slot;
+            } else { // use error material if not set
+                material_ptr = nullptr;
+                material_slot = default_material_slot;
             }
-            material_slot = material_ptr->material_slot;
 
             // TODO does this go here?
             // update the program material index
@@ -143,13 +145,13 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     height{height} {
 
     // material id queue
-    for (mat_id_t i = 0; i < MAX_N_MATERIALS; i++) {
+    for (mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {
         free_material_slots.push(i);
     }
 
-    // create default material
-    default_material_id = create_material()->material_id;
-    materials[default_material_id].diffuse = {1.00,0.00,1.00};
+    // create default material in material data
+    default_material_slot = alloc_material_slot();
+    material_data_buffer[default_material_slot].diffuse = {1.00,0.00,1.00};
 
     for (auto& mat : material_data_buffer) {
         mat = {};
@@ -460,7 +462,7 @@ void Renderer::init() {
     m_terrain->init(terrain_target_state, prep);
 }
 
-void Renderer::update_material(mat_id_t material_slot, const MaterialData& material) {
+void Renderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
     material_data_buffer[material_slot] = material;
     lighting_materials.sub_data(material.diffuse,        material.diffuse_offset);
     lighting_materials.sub_data(material.emissive,       material.emissive_offset);
@@ -482,17 +484,27 @@ void Renderer::load_ssao_uniforms() {
     glProgramUniform1ui(ssao_program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
-Material* Renderer::create_material() {
-    if (free_material_slots.size() > 0) {
+Ref<Material> Renderer::create_material() {
+    int32_t new_mat_slot = alloc_material_slot();
+    if (new_mat_slot >= 0) {
         int32_t id = next_material_id++;
-        mat_id_t slot = free_material_slots.front();
-        free_material_slots.pop();
-        Material* new_material = &materials[id];
+        Ref<Material> new_material = make_referenced<Material>();
+        materials[id] = new_material.get();
         new_material->material_id = id;
-        new_material->material_slot = slot;
+        new_material->material_slot = new_mat_slot;
         return new_material;
     }
     return nullptr;
+}
+
+int32_t Renderer::alloc_material_slot() {
+    if (free_material_slots.size() > 0) {
+        mat_slot_t slot = free_material_slots.front();
+        free_material_slots.pop();
+        return slot;
+    } else {
+        return -1;
+    }
 }
 
 void Renderer::destroy_material(Material* material) {
@@ -693,11 +705,11 @@ void Renderer::render(const Camera &camera) {
 
     // pre render data updates
     for (auto& m : materials) {
-        Material& material = m.second;
-        material_data_buffer[material.material_slot].update_from(&material);
+        Material* material = m.second;
+        material_data_buffer[material->material_slot].update_from(material);
     }
 
-    for(mat_id_t i = 0; i < MAX_N_MATERIALS; i++) {
+    for(mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {
         if (material_data_buffer[i].changed)
             update_material(i, material_data_buffer[i]);
     }
@@ -809,7 +821,9 @@ void Renderer::render(const Camera &camera) {
             ev2::gl::glUniform(V * m.transform, gp_mv_location);
             ev2::gl::glUniform(G, gp_g_location);
 
-            draw(m.drawable.get(), geometry_program, true, m.gl_vao, m.material_id_override);
+            int32_t mat_id_override = m.material_override ? m.material_override->get_material_id() : -1;
+
+            draw(m.drawable.get(), geometry_program, true, m.gl_vao, mat_id_override);
         }
     }
     geometry_program.unbind();

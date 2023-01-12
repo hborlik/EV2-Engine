@@ -14,7 +14,7 @@
 #include <queue>
 
 #include <singleton.h>
-#include <renderer/model.h>
+#include <renderer/mesh.h>
 #include <renderer/shader.h>
 #include <renderer/texture.h>
 #include <renderer/camera.h>
@@ -27,7 +27,7 @@ namespace ev2::renderer {
 
 constexpr uint16_t MAX_N_MATERIALS = 255;
 
-using mat_id_t = uint8_t;
+using mat_slot_t = uint8_t;
 
 /**
  * @brief light id
@@ -185,7 +185,7 @@ struct Drawable {
 
     Drawable(VertexBuffer &&vb,
              std::vector<Primitive> primitives,
-             std::vector<Material *> materials,
+             std::vector<Ref<Material>> materials,
              glm::vec3 bmin,
              glm::vec3 bmax,
              gl::CullMode cull,
@@ -201,7 +201,7 @@ struct Drawable {
 
     VertexBuffer            vertex_buffer;
     std::vector<Primitive>  primitives;
-    std::vector<Material*>  materials;
+    std::vector<Ref<Material>>  materials;
 
     glm::vec3 bmin, bmax;
 
@@ -214,7 +214,7 @@ struct Drawable {
 struct ModelInstance {
     glm::mat4   transform = glm::identity<glm::mat4>();
 
-    void set_material_override(Material* material);
+    void set_material_override(Ref<Material> material);
 
     void set_drawable(std::shared_ptr<Drawable> drawable);
 
@@ -228,7 +228,8 @@ struct ModelInstance {
 private:
     friend class Renderer;
 
-    int32_t                     material_id_override = -1;
+    Ref<Material>               material_override;
+
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
     GLuint                      gl_vao = 0;
@@ -264,9 +265,6 @@ private:
     GLuint                      gl_vao = 0;
 };
 
-// forward declare rendering classes
-class TerrainRenderer;
-
 class Renderer : public Singleton<Renderer> {
 public:
     Renderer(uint32_t width, uint32_t height);
@@ -274,7 +272,7 @@ public:
 
     void init();
 
-    Material* create_material();
+    Ref<Material> create_material();
     void destroy_material(Material* material);
 
     LID create_point_light();
@@ -346,9 +344,11 @@ private:
 
     void draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
 
-    void update_material(mat_id_t material_slot, const MaterialData& material);
+    void update_material(mat_slot_t material_slot, const MaterialData& material);
 
     void load_ssao_uniforms();
+
+    int32_t alloc_material_slot();
 
     // uniform constants
     bool uniforms_dirty = true;
@@ -357,11 +357,11 @@ private:
     uint32_t ssao_kernel_samples = 32;
 
     // material management
-    std::unordered_map<int32_t, Material> materials;
+    std::unordered_map<int32_t, Material*> materials;
     int32_t next_material_id = 1234;
 
     std::array<MaterialData, MAX_N_MATERIALS> material_data_buffer; // cpu side material data array
-    std::queue<mat_id_t> free_material_slots;
+    std::queue<mat_slot_t> free_material_slots; // queue of free slots in material_data_buffer
 
     // single instance of a drawable
     std::unordered_map<int32_t, ModelInstance> model_instances;
@@ -465,7 +465,7 @@ private:
     std::shared_ptr<Drawable> point_light_drawable;
     GLuint point_light_gl_vao = 0;
 
-    int32_t default_material_id = 0;
+    int32_t default_material_slot = 0;
 
     std::unique_ptr<TerrainRenderer> m_terrain;
 };

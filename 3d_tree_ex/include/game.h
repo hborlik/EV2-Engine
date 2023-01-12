@@ -25,11 +25,11 @@ public:
     glm::vec3 night_ambient{0.13, 0.16, 0.21};
 
     Ref<Scene> scene;
-    ev2::Ref<ev2::MaterialResource> tree_bark;
-    ev2::Ref<ev2::MaterialResource> highlight_material;
+    ev2::Ref<ev2::renderer::Material> tree_bark;
+    ev2::Ref<ev2::renderer::Material> highlight_material;
 
-    ev2::Ref<ev2::MaterialResource> default_fruit_material;
-    ev2::Ref<ev2::MaterialResource> default_leaf_material;
+    ev2::Ref<ev2::renderer::Material> default_fruit_material;
+    ev2::Ref<ev2::renderer::Material> default_leaf_material;
 
     ev2::Ref<ev2::CameraNode> cam_first_person{};
     ev2::Ref<ev2::VisualInstance> marker{};
@@ -52,7 +52,7 @@ public:
 
     void spawn_tree(const glm::vec3& position, float rotation, const std::map<std::string, float>& params, 
                         int iterations, glm::vec3 color_0, glm::vec3 color_1, float starting_growth, float adjusted_leaf_scale, 
-                        ev2::Ref<ev2::MaterialResource> new_leaf_material, ev2::Ref<ev2::MaterialResource> new_fruit_material, 
+                        ev2::Ref<ev2::renderer::Material> new_leaf_material, ev2::Ref<ev2::renderer::Material> new_fruit_material, 
                         float fruit_spawn_rate, bool breedable);
     void spawn_mountain_tree(const glm::vec3& position, float range_extent, int iterations);
     void spawn_random_tree(const glm::vec3& position, float range_extent, int iterations, float starting_growth);

@@ -4,7 +4,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-namespace ev2 {
+namespace ev2::renderer {
 
 Texture::Texture(gl::TextureType texture_type) : texture_type{texture_type} {
     GL_CHECKED_CALL(glGenTextures(1, &handle));

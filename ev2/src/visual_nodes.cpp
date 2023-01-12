@@ -29,7 +29,7 @@ void VisualInstance::set_model(std::shared_ptr<renderer::Drawable> model) {
     iid->set_drawable(model);
 }
 
-void VisualInstance::set_material_override(renderer::Material* material_override) {
+void VisualInstance::set_material_override(Ref<renderer::Material> material_override) {
     iid->set_material_override(material_override);
 }
 
@@ -62,7 +62,7 @@ void InstancedGeometry::on_init() {
             },
             quad_layout),
         std::vector<renderer::Primitive>{renderer::Primitive{0, 12, -1}},
-        std::vector<renderer::Material*>{},
+        std::vector<Ref<renderer::Material>>{},
         glm::vec3{},
         glm::vec3{},
         gl::CullMode::BACK,
@@ -84,7 +84,7 @@ void InstancedGeometry::pre_render() {
     }
 }
 
-void InstancedGeometry::set_material_override(renderer::Material* material_override) {
+void InstancedGeometry::set_material_override(Ref<renderer::Material> material_override) {
     assert(geometry);
     if (material_override) {
         geometry->materials.resize(1);

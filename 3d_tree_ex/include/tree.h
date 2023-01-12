@@ -8,7 +8,7 @@
 #define PLANT_GAME_TREE_H
 
 #include <visual_nodes.h>
-#include <renderer/model.h>
+#include <renderer/mesh.h>
 
 #include <Sphere.h>
 
@@ -74,8 +74,8 @@ public:
 class TreeNode : public ev2::VisualInstance {
 public:
     explicit TreeNode(class GameState* game, const std::string& name, bool has_leafs = false, int u_id = -1,
-                     ev2::Ref<ev2::MaterialResource> fruit_material = nullptr,
-                     ev2::Ref<ev2::MaterialResource> leaf_material = nullptr);
+                     ev2::Ref<ev2::renderer::Material> fruit_material = nullptr,
+                     ev2::Ref<ev2::renderer::Material> leaf_material = nullptr);
 
     void on_init() override;
     void on_destroy() override;
@@ -84,8 +84,8 @@ public:
     void setParams(const std::map<std::string, float>& paramsNew, int iterations, float growth);
     void spawn_fruit(const glm::vec3& position);
     std::map<std::string, float> getParams() {return params;}
-    ev2::Ref<ev2::MaterialResource> fruit_material;
-    ev2::Ref<ev2::MaterialResource> leaf_material;
+    ev2::Ref<ev2::renderer::Material> fruit_material;
+    ev2::Ref<ev2::renderer::Material> leaf_material;
     
     bool breedable = true;
     float growth_current = 0;

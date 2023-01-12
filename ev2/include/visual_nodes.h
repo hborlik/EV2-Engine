@@ -8,7 +8,7 @@
 #define EV2_VISUAL_INSTANCE_H
 
 #include <node.h>
-#include <renderer/model.h>
+#include <renderer/mesh.h>
 #include <renderer/buffer.h>
 #include <renderer/renderer.h>
 
@@ -26,7 +26,7 @@ public:
     void pre_render() override;
 
     void set_model(std::shared_ptr<renderer::Drawable> model);
-    void set_material_override(renderer::Material* material_override);
+    void set_material_override(Ref<renderer::Material> material_override);
 
 private:
     renderer::ModelInstance* iid{};
@@ -40,7 +40,7 @@ public:
     void on_destroy() override;
     void pre_render() override;
 
-    void set_material_override(renderer::Material* material_override);
+    void set_material_override(Ref<renderer::Material> material_override);
 
     std::vector<glm::mat4> instance_transforms{};
 

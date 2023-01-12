@@ -20,7 +20,7 @@
 #include <application.h>
 #include <renderer/camera.h>
 #include <window.h>
-#include <renderer/model.h>
+#include <renderer/mesh.h>
 #include <resource.h>
 #include <Sphere.h>
 #include <physics.h>
@@ -72,8 +72,7 @@ public:
 
         if (show_debug) {
             show_material_editor_window();
-            show_settings_editor_window();
-            show_game_debug_window(game.get());
+            show_settings_editor_window(game.get());
         }
         if (game->selected_tree_1) {
             ImGui::SetNextWindowSize(ImVec2(window_width/5, window_height/5));

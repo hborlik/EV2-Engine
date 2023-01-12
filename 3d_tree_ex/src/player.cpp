@@ -61,16 +61,16 @@ void Player::on_process(float dt) {
             {
                 if (game->selected_tree_1 != tree && game->selected_tree_2 != tree) {
                     if (game->selected_tree_2 != nullptr) {
-                        game->selected_tree_2->set_material_override(game->tree_bark->get_material());
+                        game->selected_tree_2->set_material_override(game->tree_bark);
                     }
                     game->selected_tree_2 = game->selected_tree_1;
                     game->selected_tree_1 = tree;
-                    tree->set_material_override(game->highlight_material->get_material());
+                    tree->set_material_override(game->highlight_material);
                 }               
             }
         } else if (fruit) 
         {
-            fruit->set_material_override(game->highlight_material->get_material());
+            fruit->set_material_override(game->highlight_material);
         } else {
             if (ev2::input::GetKeyDown(ev2::input::Key::KeyL))
                 game->spawn_random_tree(si->point, 0, 9, 0.0f);

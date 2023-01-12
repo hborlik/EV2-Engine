@@ -13,10 +13,11 @@
 #include <cstdint>
 
 #include <renderer/texture.h>
+#include <ev.h>
 
 namespace ev2::renderer {
 
-struct Material {
+struct Material : public Object {
     std::string name = "default";
 
     glm::vec3 diffuse   = {1.00f,0.10f,0.85f};
@@ -41,18 +42,19 @@ struct Material {
     std::shared_ptr<Texture> alpha_tex;               // map_d
     std::shared_ptr<Texture> reflection_tex;          // refl
 
-    Material& operator=(const Material&) = default;
-    Material& operator=(Material&&) noexcept = default;
-
-    bool is_registered() noexcept {return material_id != -1 && material_slot != -1;}
-
-    int32_t get_material_id() const noexcept {return material_id;}
-
     Material() = default;
     Material(std::string name) : name{std::move(name)} {}
 
-    Material(const Material&) = default;
-    Material(Material&&) = default;
+    virtual ~Material();
+
+    Material(const Material&) = delete;
+    Material& operator=(const Material&) = delete;
+    
+    Material(Material&&) = delete;
+    Material& operator=(Material&&) = delete;
+
+    int32_t get_material_id() const noexcept {return material_id;}
+    bool is_registered() noexcept {return material_id != -1 && material_slot != -1;}
 
 private:
     friend class Renderer;

@@ -71,7 +71,7 @@ void main()
     NormalAlbedo na = ShadeFragmentGbuf(i_TexCoord, i_WorldPos);
     gAlbedoSpec = vec4(na.albedo, 0.0f);
     gPosition = i_frag_pos;
-    gMaterialTex = 7;
+    gMaterialTex = u_MaterialID;
     gNormal = na.normal;
     gEmissive = vec4(0.0);
 }

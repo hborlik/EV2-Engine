@@ -24,6 +24,7 @@ uniform sampler2D u_SmapRockSampler;
 uniform float u_DmapFactor;
 uniform float u_MinLodVariance;
 #endif
+uniform uint u_MaterialID;
 
 
 /*******************************************************************************
@@ -376,7 +377,7 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
     vec3 n = normalize(vec3(u_DmapFactor * 0.03 / filterSize * 0.5f * vec2(-sx, -sy), 1));
 #endif
 #else
-    vec3 n = vec3(0, 0, 1);
+    vec3 n = vec3(0, 1, 0);
 #endif
 
 #if SHADING_SNOWY

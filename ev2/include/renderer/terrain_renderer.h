@@ -11,6 +11,7 @@
 
 #include <renderer/render_state.hpp>
 #include <renderer/shader.h>
+#include <renderer/material.h>
 #include <image.hpp>
 
 namespace ev2::renderer {
@@ -45,8 +46,10 @@ private:
 
     std::unique_ptr<Image> m_heightmap;
     glm::mat4 m_model;
+
+    Ref<Material> m_terrain_mat;
 };
 
-}
+} // namespace ev2::renderer
 
 #endif // EV2_RENDERER_TERRAIN_H

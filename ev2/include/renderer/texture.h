@@ -13,7 +13,7 @@
 
 #include <renderer/ev_gl.h>
 
-namespace ev2 {
+namespace ev2::renderer {
 
 class Texture {
 public:
@@ -25,8 +25,7 @@ public:
             glDeleteTextures(1, &handle);
     }
 
-    Texture(Texture &&o)
-    {
+    Texture(Texture &&o) {
         std::swap(texture_type, o.texture_type);
         std::swap(internal_format, o.internal_format);
         std::swap(pixel_type, o.pixel_type);
@@ -286,6 +285,6 @@ private:
     std::unordered_map<gl::FBOAttachment, RenderBuffer> rb_attachments;
 };
 
-}
+} // namespace ev2::renderer
 
 #endif // EV2_TEXTURE_H
