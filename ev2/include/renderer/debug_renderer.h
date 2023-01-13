@@ -10,6 +10,7 @@
 
 #include <renderer/ev_gl.h>
 #include <renderer/camera.h>
+#include <renderer/render_state.hpp>
 
 namespace ev2::renderer {
 
@@ -18,7 +19,9 @@ public:
 
     void init();
 
-    void draw_bounding_box(const Camera& camera, const glm::vec3& bmin, const glm::vec3& bmax);
+    void render(const RenderState& state);
+
+    void draw_bounding_box(const RenderState& state, const glm::vec3& bmin, const glm::vec3& bmax);
 };
 
 }

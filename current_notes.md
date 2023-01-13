@@ -27,6 +27,7 @@ A framework for both plant and building placement. Procedural open world scene g
 2. BUGS:
    - The normals for terrain are wrong! this is why only part of it shades (fixed)
 3. How are volumes going to be represented? sdf, voxels, something else?
+4. Fix shutdown order! Terrain Renderer needs to be destroyed before Renderer and should be moved out of the class
 
 ### Tree generation methods
 1. L-systems for branching skeletons

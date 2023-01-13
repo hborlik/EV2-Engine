@@ -6,7 +6,7 @@ void DebugRenderer::init() {
 
 }
 
-void DebugRenderer::draw_bounding_box(const Camera& camera, const glm::vec3& bmin, const glm::vec3& bmax) {
+void DebugRenderer::draw_bounding_box(const RenderState& state, const glm::vec3& bmin, const glm::vec3& bmax) {
     
 }
 

@@ -99,14 +99,14 @@ public:
     
     int get_indexed() const {return indexed;}
 
-    void add_buffer(uint32_t buffer_id, Buffer&& buffer) {
-        if (buffer.get_binding_target() == gl::BindingTarget::ELEMENT_ARRAY) {
+    void add_buffer(uint32_t buffer_id, std::shared_ptr<Buffer> buffer) {
+        if (buffer->get_binding_target() == gl::BindingTarget::ELEMENT_ARRAY) {
             indexed = buffer_id;
         }
         buffers.emplace(buffer_id, std::move(buffer));
     }
 
-    Buffer& get_buffer(uint32_t buffer_id) {
+    std::shared_ptr<Buffer> get_buffer(uint32_t buffer_id) {
         return buffers.at(buffer_id);
     }
 
@@ -175,7 +175,7 @@ public:
     std::map<VertexAttributeLabel, VertexBufferAccessor> accessors;
 
 private:
-    std::unordered_map<int, Buffer> buffers;
+    std::unordered_map<int, std::shared_ptr<Buffer>> buffers;
 
     int indexed = -1;
 };
