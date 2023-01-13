@@ -87,8 +87,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <imgui.h>
-#include <imgui_impl_opengl3.h>
+#include <ui/imgui.h>
+#include <ui/imgui_impl_opengl3.h>
 #include <stdio.h>
 #if defined(_MSC_VER) && _MSC_VER <= 1500 // MSVC 2008 or earlier
 #include <stddef.h>     // intptr_t
@@ -137,7 +137,7 @@
 // - You can temporarily use an unstripped version. See https://github.com/dearimgui/gl3w_stripped/releases
 // Changes to this backend using new APIs should be accompanied by a regenerated stripped loader version.
 #define IMGL3W_IMPL
-#include <imgui_impl_opengl3_loader.h>
+#include <ui/imgui_impl_opengl3_loader.h>
 #endif
 
 // Vertex arrays are not supported on ES2/WebGL1 unless Emscripten which uses an extension

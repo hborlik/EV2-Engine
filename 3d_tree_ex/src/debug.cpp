@@ -3,7 +3,7 @@
 #include <resource.h>
 #include <physics.h>
 
-#include <imgui.h>
+#include <ui/imgui.h>
 
 static bool enable_physics_timestep = true;
 

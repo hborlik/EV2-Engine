@@ -39,7 +39,7 @@ void main() {
         offset.xyz /= offset.w;               // perspective divide
         offset.xyz  = offset.xyz * 0.5 + vec3(0.5); // transform to range 0.0 - 1.0
 
-        float sampleDepth = (View * vec4(texture(gPosition, offset.xy).xyz, 1)).z;
+        float sampleDepth = texture(gPosition, offset.xy).z;
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
         occlusion       += (sampleDepth > samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }

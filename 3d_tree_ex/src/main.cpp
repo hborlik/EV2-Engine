@@ -4,9 +4,9 @@
 
 #include <tests.h>
 #include <tree.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#include <ui/imgui.h>
+#include <ui/imgui_impl_glfw.h>
+#include <ui/imgui_impl_opengl3.h>
 //#define DR_MP3_IMPLEMENTATION
 //#include "../extras/dr_mp3.h"   /* Enables MP3 decoding. */
 
