@@ -350,6 +350,7 @@ struct NormalAlbedo {
     vec3 normal;
     vec3 albedo;
 };
+
 NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
 {
 #if FLAG_WIRE
@@ -364,7 +365,7 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
 #if 1
     // slope
     vec2 smap = texture(u_SmapSampler, texCoord).rg * u_DmapFactor * 0.03;
-    vec3 n = normalize(vec3(-smap, 1));
+    vec3 n = normalize(vec3(-smap.r, 1, smap.g));
 #else // compute the slope from the dmap directly
     float filterSize = 1.0f / float(textureSize(u_DmapSampler, 0).x);// sqrt(dot(dFdx(texCoord), dFdy(texCoord)));
     float sx0 = textureLod(u_DmapSampler, texCoord - vec2(filterSize, 0.0), 0.0).r;
@@ -374,7 +375,8 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
     float sx = sx1 - sx0;
     float sy = sy1 - sy0;
 
-    vec3 n = normalize(vec3(u_DmapFactor * 0.03 / filterSize * 0.5f * vec2(-sx, -sy), 1));
+    vec2 s = u_DmapFactor * 0.03 / filterSize * 0.5f * vec2(-sx, -sy);
+    vec3 n = normalize(vec3(s.x, 1, -s.y));
 #endif
 #else
     vec3 n = vec3(0, 1, 0);

@@ -2,6 +2,20 @@
 
 Modeling and rendering are two core research problems in computer graphics.
 
+### Schedule
+
+2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
+    1.  Think about the data structures that will be used to generate a scene graph.
+    2.  Zones are fundamental constructs of a city. They define the size and placement of buildings. Computational geometry, polygon operations. https://en.wikipedia.org/wiki/Greiner%E2%80%93Hormann_clipping_algorithm. Nodes of this data should be editable. Drag, delete, and create polygon vertices.
+3.  Jan 27 : 
+4.  Feb 03 : 
+5.  Feb 10 : 
+6.  Feb 17 : 
+7.  Feb 24 : 
+8.  Mar 03 : 
+9.  Mar 10 : 
+10. Mar 17 : 
+
 ### current milestones
 1. implement terrain rendering
    - geometry (done)
@@ -58,3 +72,5 @@ Thoughts: these limitations are similar to the limitations of destructive modeli
 processes. Iterative editing relies on making small changes to the input and, in the case
 of the above limitations, being unaware of how the change will affect the output. A user needs to know how their changes will affect the output and need to be in control of the scale of that change. Since changes are made to affect the output, the structure of the input is less meaningful. 
 The user can pick which parts / aspects (?) of the output they want to keep.
+
+### What is the contribution?
