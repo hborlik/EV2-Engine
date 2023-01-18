@@ -318,6 +318,7 @@ void TreeNode::generate(int iterations) {
             fruits->set_material_override(fruit_material);
             fruits->generate(1.0f);
 
+            #if 0
             for (const auto& ind : tree_skeleton.endpoints) {
                 if (randomFloatRange(0.f, 1.f) <= fruit_spawn_rate)
                 {
@@ -325,6 +326,7 @@ void TreeNode::generate(int iterations) {
                     spawn_fruit(pos);
                 }
             }
+            #endif // 0
             fruits_spawned = true;
         }
 

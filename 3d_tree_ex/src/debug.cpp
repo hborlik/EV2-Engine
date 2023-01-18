@@ -4,6 +4,7 @@
 #include <physics.h>
 
 #include <ui/imgui.h>
+#include <ui/ui.hpp>
 
 static bool enable_physics_timestep = true;
 
@@ -143,5 +144,13 @@ void show_tree_window(GameState* game, ev2::Ref<TreeNode> selected_tree) {
     }
 
     ImGui::Text("P = %d", selected_tree->plantInfo.iterations);
+    ImGui::End();
+}
+
+void show_scene_window(GameState* game) {
+    SceneExplorer se{};
+
+    ImGui::Begin("Scene Window");
+    se.show_scene_explorer(game->scene.get());
     ImGui::End();
 }

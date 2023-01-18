@@ -2,6 +2,33 @@
 
 Modeling and rendering are two core research problems in computer graphics.
 
+Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
+
+### Reading
+2.  Jan 20 : 
+
+    [Compositional procedural content generation](https://dl.acm.org/doi/pdf/10.1145/2538528.2538541)
+        need to read.
+
+    [Procedural content generation using neuroevolution and novelty search for diverse video game levels 2022](https://dl.acm.org/doi/pdf/10.1145/3512290.3528701)
+        Genetic algorithm (NEAT) to create novel tile based video game levels. Authors focus on speed of the algorithm. Fitness functions introduced for novelty, and solvability.
+
+    [Automatic Generation of Game Content using a Graph-based Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
+        Extends WFC to Voroni cells and volumes. WFC rules based on neighbors that "contact" cell. 
+
+    [Automatic Generation of Game Levels Based on Controllable Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
+
+    [PCG Workshop Paper Database](https://pcgworkshop.com/database.php)
+        Some cool stuff on WFC
+3.  Jan 27 : 
+4.  Feb 03 : 
+5.  Feb 10 : 
+6.  Feb 17 : 
+7.  Feb 24 : 
+8.  Mar 03 : 
+9.  Mar 10 : 
+10. Mar 17 : 
+
 ### Schedule
 
 2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.

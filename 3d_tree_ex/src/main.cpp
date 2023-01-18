@@ -73,6 +73,7 @@ public:
         if (show_debug) {
             show_material_editor_window();
             show_settings_editor_window(game.get());
+            show_scene_window(game.get());
         }
         if (game->selected_tree_1) {
             ImGui::SetNextWindowSize(ImVec2(window_width/5, window_height/5));

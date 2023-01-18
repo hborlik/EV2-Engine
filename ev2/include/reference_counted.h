@@ -98,6 +98,10 @@ struct Ref {
         return this->operator->();
     }
 
+    const T* get() const noexcept {
+        return this->operator->();
+    }
+
     bool operator==(const Ref<T>& o) noexcept {return o._ref == _ref;}
     bool operator!=(const Ref<T>& o) noexcept {return !this->operator==(o);}
 
