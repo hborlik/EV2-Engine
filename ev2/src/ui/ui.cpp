@@ -4,9 +4,6 @@
 namespace ev2 {
 
 void SceneEditor::show_scene_explorer(Scene* scene) {
-    if (!ImGui::CollapsingHeader("Scene") || scene == nullptr)
-        return;
-
     show_scene_node_widget(0, (Node*)scene);
 }
 
@@ -26,6 +23,9 @@ void SceneEditor::show_scene_node_widget(int id, Node* node) {
     const bool is_selected = selected_node == node;
     if (is_selected)
         node_flags |= ImGuiTreeNodeFlags_Selected;
+
+    if (node->get_n_children() == 0)
+        node_flags |= ImGuiTreeNodeFlags_Leaf;
 
     bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)id, node_flags, node_name.c_str());
     
@@ -60,9 +60,9 @@ void SceneEditor::show_scene_node_widget(int id, Node* node) {
         //     selection_mask = (1 << node_clicked);           // Click to single-select
     }
 
-    int i = 0;
 
     if (node_open) {
+        int i = 0;
         for (auto& node : node->get_children()) {
             show_scene_node_widget(i, node.get());
             i++;
