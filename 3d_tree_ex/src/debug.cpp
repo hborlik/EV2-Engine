@@ -148,7 +148,7 @@ void show_tree_window(GameState* game, ev2::Ref<TreeNode> selected_tree) {
 }
 
 void show_scene_window(GameState* game) {
-    SceneExplorer se{};
+    static SceneEditor se{};
 
     ImGui::Begin("Scene Window");
     se.show_scene_explorer(game->scene.get());
