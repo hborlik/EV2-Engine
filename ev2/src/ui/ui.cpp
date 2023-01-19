@@ -3,11 +3,60 @@
 
 namespace ev2 {
 
-void SceneEditor::show_scene_explorer(Scene* scene) {
-    show_scene_node_widget(0, (Node*)scene);
+void SceneEditor::editor(Scene* scene) {
+    show_scene_explorer(scene);
+
+    ImGui::BeginMainMenuBar();
+
+    if (ImGui::MenuItem("Item")) {
+        ImGui::Text("Blah");
+    }
+
+    ImGui::EndMainMenuBar();
 }
 
-void SceneEditor::show_scene_node_widget(int id, Node* node) {
+void SceneEditor::show_scene_explorer(Scene* scene) {
+    ImGui::SetNextWindowSize(ImVec2(500, 450), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
+    if (!ImGui::Begin("Scene Window", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::End();
+        return;
+    }
+
+    // Left side
+    ImGui::BeginChild("left pane", ImVec2(250, 0), true);
+    show_scene_tree_widget(0, (Node*)scene);
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    // Right Side
+    if (selected_node != nullptr)
+    {
+        ImGui::BeginGroup();
+
+        ImVec2 child_size = ImVec2(300, -ImGui::GetFrameHeightWithSpacing());
+        ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiWindowFlags_NoMove);
+
+        ImGui::Text("Node %s (%s)", selected_node->name.c_str(), selected_node->get_path().c_str());
+        ImGui::Separator();
+
+        show_node_editor_widget(selected_node);
+
+        ImGui::EndChild();
+        
+        ImGui::EndGroup();
+    }
+
+    ImGui::End();
+}
+
+void SceneEditor::show_node_editor_widget(Node* node) {
+    ImGui::Text("Transform");
+    show_transform_editor(&node->transform);
+}
+
+void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     if (!node)
         return;
     const std::string node_name = std::to_string(id) + " " + node->name;
@@ -53,7 +102,10 @@ void SceneEditor::show_scene_node_widget(int id, Node* node) {
     {
         // Update selection state
         // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
-        selected_node = node;
+        if (is_selected)
+            selected_node = nullptr;
+        else
+            selected_node = node;
         // if (ImGui::GetIO().KeyCtrl)
         //     selection_mask ^= (1 << node_clicked);          // CTRL+click to toggle
         // else //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection
@@ -64,7 +116,7 @@ void SceneEditor::show_scene_node_widget(int id, Node* node) {
     if (node_open) {
         int i = 0;
         for (auto& node : node->get_children()) {
-            show_scene_node_widget(i, node.get());
+            show_scene_tree_widget(i, node.get());
             i++;
         }
         ImGui::TreePop();

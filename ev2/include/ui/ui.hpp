@@ -13,10 +13,11 @@ namespace ev2 {
 
 class SceneEditor {
 public:
+    void editor(Scene* scene);
     void show_scene_explorer(Scene* scene);
-    void show_node_editor(Node* node);
+    void show_node_editor_widget(Node* node);
 private:
-    void show_scene_node_widget(int id, Node* node);
+    void show_scene_tree_widget(int id, Node* node);
     void show_transform_editor(Transform* tr);
 
     Node* selected_node;
