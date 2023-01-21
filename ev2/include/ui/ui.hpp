@@ -25,6 +25,7 @@ private:
     Node* selected_node;
 
     bool m_scene_editor_open = false;
+    bool m_show_settings = false;
     bool m_material_editor_open = false;
     bool m_demo_open = false;
 };

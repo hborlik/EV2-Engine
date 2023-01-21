@@ -1334,14 +1334,14 @@ float TerrainRenderer::height_query(float x, float y) const {
     int height = m_heightmap->height();
     int bytes_per_pixel = m_heightmap->bytes_per_pixel();
 
-    float fx = terrain_pos.x * width;
-    float fy = terrain_pos.y * height - 1;
+    float fx = terrain_pos.x * width - 0.5f;
+    float fy = terrain_pos.y * height - 0.5f;
 
     // pixel points in image to sample
-    int px1 = glm::clamp((int)fx, 0, width);
-    int px2 = glm::clamp((int)fx + 1, 0, width);
-    int py1 = glm::clamp((int)fy, 0, height);
-    int py2 = glm::clamp((int)fy + 1, 0, height);
+    int px1 = glm::clamp((int)fx, 0, width - 1);
+    int px2 = glm::clamp((int)fx + 1, 0, width - 1);
+    int py1 = glm::clamp((int)fy, 0, height - 1);
+    int py2 = glm::clamp((int)fy + 1, 0, height - 1);
 
     // bilinear blend factor
     fx = fx - (int)fx;
@@ -1354,10 +1354,10 @@ float TerrainRenderer::height_query(float x, float y) const {
 
     const uint16_t *texels = (const uint16_t*)m_heightmap->data();
 
-    float a = texels[py1 * width + px1] / float((1 << 16) - 1);
-    float b = texels[py1 * width + px2] / float((1 << 16) - 1);
-    float c = texels[py2 * width + px1] / float((1 << 16) - 1);
-    float d = texels[py2 * width + px2] / float((1 << 16) - 1);
+    float a = float(texels[py1 * width + px1]) / float((1 << 16) - 1);
+    float b = float(texels[py1 * width + px2]) / float((1 << 16) - 1);
+    float c = float(texels[py2 * width + px1]) / float((1 << 16) - 1);
+    float d = float(texels[py2 * width + px2]) / float((1 << 16) - 1);
 
     float heightmap = wa * a + wb * b + wc * c + wd * d;
 

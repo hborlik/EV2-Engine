@@ -6,33 +6,6 @@
 #include <ui/imgui.h>
 #include <ui/ui.hpp>
 
-static bool enable_physics_timestep = true;
-
-void show_material_editor_window() {
-    ImGui::Begin("Material Editor");
-    for (auto& mas : ev2::ResourceManager::get_singleton().get_materials()) {
-        if (ImGui::CollapsingHeader(("Material " + mas.second->name + " " + mas.first).c_str())) {
-            
-            if (ImGui::TreeNode("Color")) {
-                ImGui::ColorPicker3("diffuse", glm::value_ptr(mas.second->diffuse), ImGuiColorEditFlags_InputRGB);
-                ImGui::ColorPicker3("emissive", glm::value_ptr(mas.second->emissive), ImGuiColorEditFlags_InputRGB);
-                ImGui::TreePop();
-            }
-            ImGui::DragFloat("metallic",    &mas.second->metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("subsurface",  &mas.second->subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specular",    &mas.second->specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("roughness",   &mas.second->roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specularTint",&mas.second->specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoat",   &mas.second->clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoatGloss", &mas.second->clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("anisotropic", &mas.second->anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheen",       &mas.second->sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheenTint",   &mas.second->sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-        }
-    }
-    ImGui::End();
-}
-
 void show_settings_editor_window(GameState* game) {
     ImGui::Begin("Settings");
     ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

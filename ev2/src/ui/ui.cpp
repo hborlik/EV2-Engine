@@ -1,7 +1,35 @@
 #include <ui/ui.hpp>
 #include <ui/imgui.h>
 
+#include <physics.h>
+#include <resource.h>
+
 namespace ev2 {
+
+void show_material_editor_window(bool* p_open) {
+    ImGui::Begin("Material Editor", p_open);
+    for (auto& mas : ev2::ResourceManager::get_singleton().get_materials()) {
+        if (ImGui::CollapsingHeader(("Material " + mas.second->name + " " + mas.first).c_str())) {
+            
+            if (ImGui::TreeNode("Color")) {
+                ImGui::ColorPicker3("diffuse", glm::value_ptr(mas.second->diffuse), ImGuiColorEditFlags_InputRGB);
+                ImGui::ColorPicker3("emissive", glm::value_ptr(mas.second->emissive), ImGuiColorEditFlags_InputRGB);
+                ImGui::TreePop();
+            }
+            ImGui::DragFloat("metallic",    &mas.second->metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("subsurface",  &mas.second->subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("specular",    &mas.second->specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("roughness",   &mas.second->roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("specularTint",&mas.second->specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("clearcoat",   &mas.second->clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("clearcoatGloss", &mas.second->clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("anisotropic", &mas.second->anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("sheen",       &mas.second->sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("sheenTint",   &mas.second->sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+        }
+    }
+    ImGui::End();
+}
 
 void show_settings_window(bool* p_open) {
     if (ImGui::Begin("Render Settings", p_open)) {
@@ -26,9 +54,11 @@ void show_settings_window(bool* p_open) {
         ImGui::DragFloat("Shadow Bias World", &(ev2::renderer::Renderer::get_singleton().shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
         ImGui::Separator();
         ImGui::Text("World");
-        // if (ImGui::Checkbox("Enable Physics Timestep", &enable_physics_timestep)) {
-        //     ev2::Physics::get_singleton().enable_simulation(enable_physics_timestep);
-        // }
+
+        bool enable_physics_timestep = ev2::Physics::get_singleton().is_simulation_enabled();
+        if (ImGui::Checkbox("Enable Physics Timestep", &enable_physics_timestep)) {
+            ev2::Physics::get_singleton().enable_simulation(enable_physics_timestep);
+        }
         ImGui::Separator();
         ImGui::DragFloat("Sky Brightness", &(ev2::renderer::Renderer::get_singleton().sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
     }
@@ -39,6 +69,10 @@ void SceneEditor::editor(Scene* scene) {
 
     if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open);
 
+    if (m_show_settings)        show_settings_window(&m_show_settings);
+
+    if (m_material_editor_open) show_material_editor_window(&m_material_editor_open);
+
     if (m_demo_open)            ImGui::ShowDemoWindow();
 
     if (ImGui::BeginMainMenuBar()) {
@@ -46,9 +80,10 @@ void SceneEditor::editor(Scene* scene) {
         if (ImGui::BeginMenu("Editor"))
         {
             // if (ImGui::MenuItem("New")) {}
-            if (ImGui::MenuItem("Scene Tree")) {m_scene_editor_open = !m_scene_editor_open;}
-
-            if (ImGui::MenuItem("ImGui Demo")) {m_demo_open = !m_demo_open;}
+            if (ImGui::MenuItem("Scene Tree"))  {m_scene_editor_open = !m_scene_editor_open;}
+            if (ImGui::MenuItem("Material Editor"))  {m_material_editor_open = !m_material_editor_open;}
+            if (ImGui::MenuItem("Settings"))    {m_show_settings = !m_show_settings;}
+            if (ImGui::MenuItem("ImGui Demo"))  {m_demo_open = !m_demo_open;}
             ImGui::EndMenu();
         }
 

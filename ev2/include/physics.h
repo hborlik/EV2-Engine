@@ -35,6 +35,7 @@ public:
     double get_frame_interpolation() const {return interp_factor;}
 
     void enable_simulation(bool enable) noexcept {enable_timestep = enable;}
+    bool is_simulation_enabled() const noexcept {return enable_timestep;}
 
     void enable_debug_renderer(bool enable);
 
