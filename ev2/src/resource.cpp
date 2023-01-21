@@ -668,7 +668,7 @@ void ResourceManager::pre_render() {
 std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesystem::path& filename, bool cache) {
     auto itr = model_lookup.find(filename.generic_string());
     // check that the cached pointer is still good if it has been deleted
-    if (itr != model_lookup.end() && !cache && !itr->second.expired()) {
+    if (itr != model_lookup.end() && cache && !itr->second.expired()) {
         return itr->second.lock();
     }
     auto base_dir = filename;

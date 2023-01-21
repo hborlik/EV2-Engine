@@ -31,6 +31,9 @@ public:
     ev2::Ref<ev2::renderer::Material> default_fruit_material;
     ev2::Ref<ev2::renderer::Material> default_leaf_material;
 
+    ev2::Ref<ev2::renderer::Material> leaf_material;
+    ev2::Ref<ev2::renderer::Material> fruit_material;
+
     ev2::Ref<ev2::CameraNode> cam_first_person{};
     ev2::Ref<ev2::VisualInstance> marker{};
     ev2::Ref<Player> player;

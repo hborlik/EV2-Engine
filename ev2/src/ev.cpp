@@ -36,6 +36,11 @@ std::string formatted_current_time() {
     return str;
 }
 
+Object::Object() : 
+    uuid{util::get_unique_id()} {
+
+}
+
 const Engine& Engine::get() {
     return engine;
 }

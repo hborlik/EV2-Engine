@@ -46,7 +46,10 @@ void Engine::log_file(const std::string& message) {
 
 class Object : public ReferenceCounted<Object> {
 public:
+    Object();
     virtual ~Object() = default;
+
+    const std::string uuid;
 };
 
 class engine_exception : public std::exception {

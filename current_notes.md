@@ -4,6 +4,13 @@ Modeling and rendering are two core research problems in computer graphics.
 
 Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
 
+
+Jan 20 meeting notes: data structures for graph representation and understand WFC.
+    Write an abstract! (three week deadline) Feb 10
+    Graph queries needed for neighbors.
+    OpenMesh??
+    Asset Library for buildings
+
 ### Reading
 2.  Jan 20 : 
 
@@ -14,13 +21,15 @@ Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (cla
         Genetic algorithm (NEAT) to create novel tile based video game levels. Authors focus on speed of the algorithm. Fitness functions introduced for novelty, and solvability.
 
     [Automatic Generation of Game Content using a Graph-based Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
-        Extends WFC to Voroni cells and volumes. WFC rules based on neighbors that "contact" cell. 
+        Extends WFC to Voronoi cells and volumes. WFC rules based on neighbors that "contact" cell. 
 
     [Automatic Generation of Game Levels Based on Controllable Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
 
     [PCG Workshop Paper Database](https://pcgworkshop.com/database.php)
         Some cool stuff on WFC
+
 3.  Jan 27 : 
+    [A Procedural Model for Diverse Tree Species 2022](https://pcgworkshop.com/archive/hoetzlein2022aprocedural.pdf)
 4.  Feb 03 : 
 5.  Feb 10 : 
 6.  Feb 17 : 
@@ -33,7 +42,7 @@ Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (cla
 
 2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
     1.  Think about the data structures that will be used to generate a scene graph.
-    2.  Zones are fundamental constructs of a city. They define the size and placement of buildings. Computational geometry, polygon operations. https://en.wikipedia.org/wiki/Greiner%E2%80%93Hormann_clipping_algorithm. Nodes of this data should be editable. Drag, delete, and create polygon vertices.
+   
 3.  Jan 27 : 
 4.  Feb 03 : 
 5.  Feb 10 : 
@@ -46,17 +55,16 @@ Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (cla
 ### current milestones
 1. implement terrain rendering
    - geometry (done)
-   - normals
+   - normals (done)
    - texture
 2. Vegetation and terrain rendering (focus)
-    - what exactly is the problem?
-    - procedural geometry or scene placement?
-    - Or trees in Urban environments?
-    - Data based?
+    - scene object placement.
+    - what exactly is the problem
+    - Example based?
 
 A framework for both plant and building placement. Procedural open world scene generation.
 
-3. by Dec 7
+1. by Dec 7
     - use a tree library
     - urban models library
     - define the constraints
@@ -64,17 +72,10 @@ A framework for both plant and building placement. Procedural open world scene g
     - Scene saving and loading? how to save scenes
 
 ### Other todos
-1. Convert gbuffers to view space for position and world for normal
-2. BUGS:
+1. BUGS:
    - The normals for terrain are wrong! this is why only part of it shades (fixed)
-3. How are volumes going to be represented? sdf, voxels, something else?
-4. Fix shutdown order! Terrain Renderer needs to be destroyed before Renderer and should be moved out of the class
-
-### Tree generation methods
-1. L-systems for branching skeletons
-
-2. See *Modeling* *the* *Mighty* *Maple* for Ramiform geometry that is
-used to model intersecting branches
+2. How are volumes going to be represented? sdf, voxels, AABB, something else?
+3. Fix shutdown order! Terrain Renderer needs to be destroyed before Renderer and should be moved out of the class
 
 ### Terrain Generation
 Example based terrain generation has been explored and GAN based models offer a smooth
@@ -101,3 +102,7 @@ of the above limitations, being unaware of how the change will affect the output
 The user can pick which parts / aspects (?) of the output they want to keep.
 
 ### What is the contribution?
+
+Things that have already been done:
+    Rendering/shadows/scene graph.
+    Shader preprocessing, Shader queries, Material management,

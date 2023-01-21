@@ -88,6 +88,11 @@ struct MaterialData {
 
     bool changed = false;
 
+    /**
+     * @brief copy material data attributes from Material
+     * 
+     * @param material 
+     */
     void update_from(Material* material) noexcept {
         if (material) {
             if (
@@ -273,7 +278,6 @@ public:
     void init();
 
     Ref<Material> create_material();
-    void destroy_material(Material* material);
 
     LID create_point_light();
     LID create_directional_light();
@@ -341,6 +345,7 @@ public:
     float bloom_threshold = 2.17f;
 
 private:
+    friend Material;
 
     void draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
 
@@ -349,6 +354,13 @@ private:
     void load_ssao_uniforms();
 
     int32_t alloc_material_slot();
+
+    /**
+     * @brief internal function for Material object to remove itself before deletion
+     * 
+     * @param material 
+     */
+    void destroy_material(Material* material);
 
     // uniform constants
     bool uniforms_dirty = true;

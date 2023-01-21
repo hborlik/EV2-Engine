@@ -3,22 +3,63 @@
 
 namespace ev2 {
 
-void SceneEditor::editor(Scene* scene) {
-    show_scene_explorer(scene);
-
-    ImGui::BeginMainMenuBar();
-
-    if (ImGui::MenuItem("Item")) {
-        ImGui::Text("Blah");
+void show_settings_window(bool* p_open) {
+    if (ImGui::Begin("Render Settings", p_open)) {
+        ImGui::Text("N Lights %i", ev2::renderer::Renderer::get_singleton().get_n_pointlights());
+        float ssao_radius = ev2::renderer::Renderer::get_singleton().get_ssao_radius();
+        if (ImGui::DragFloat("SSAO radius", &(ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f)) {
+            ev2::renderer::Renderer::get_singleton().set_ssao_radius(ssao_radius);
+        }
+        int ssao_samples = ev2::renderer::Renderer::get_singleton().get_ssao_kernel_samples();
+        if (ImGui::DragInt("SSAO samples", &ssao_samples, 1, 1, 64)) {
+            ev2::renderer::Renderer::get_singleton().set_ssao_kernel_samples(ssao_samples);
+        }
+        float ssao_bias = ev2::renderer::Renderer::get_singleton().get_ssao_bias();
+        if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
+            ev2::renderer::Renderer::get_singleton().set_ssao_bias(ssao_bias);
+        }
+        ImGui::DragFloat("Exposure", &(ev2::renderer::Renderer::get_singleton().exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
+        ImGui::DragFloat("Gamma", &(ev2::renderer::Renderer::get_singleton().gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
+        ImGui::DragInt("Bloom Quality", &(ev2::renderer::Renderer::get_singleton().bloom_iterations), 1, 1, 6);
+        ImGui::DragFloat("Bloom Threshold", &(ev2::renderer::Renderer::get_singleton().bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
+        ImGui::DragFloat("Bloom Falloff", &(ev2::renderer::Renderer::get_singleton().bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
+        ImGui::DragFloat("Shadow Bias World", &(ev2::renderer::Renderer::get_singleton().shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
+        ImGui::Separator();
+        ImGui::Text("World");
+        // if (ImGui::Checkbox("Enable Physics Timestep", &enable_physics_timestep)) {
+        //     ev2::Physics::get_singleton().enable_simulation(enable_physics_timestep);
+        // }
+        ImGui::Separator();
+        ImGui::DragFloat("Sky Brightness", &(ev2::renderer::Renderer::get_singleton().sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
     }
-
-    ImGui::EndMainMenuBar();
+    ImGui::End();
 }
 
-void SceneEditor::show_scene_explorer(Scene* scene) {
+void SceneEditor::editor(Scene* scene) {
+
+    if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open);
+
+    if (m_demo_open)            ImGui::ShowDemoWindow();
+
+    if (ImGui::BeginMainMenuBar()) {
+
+        if (ImGui::BeginMenu("Editor"))
+        {
+            // if (ImGui::MenuItem("New")) {}
+            if (ImGui::MenuItem("Scene Tree")) {m_scene_editor_open = !m_scene_editor_open;}
+
+            if (ImGui::MenuItem("ImGui Demo")) {m_demo_open = !m_demo_open;}
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void SceneEditor::show_scene_explorer(Scene* scene, bool* p_open) {
     ImGui::SetNextWindowSize(ImVec2(500, 450), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
-    if (!ImGui::Begin("Scene Window", nullptr, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (!ImGui::Begin("Scene Window", p_open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::End();
         return;
     }
@@ -52,6 +93,11 @@ void SceneEditor::show_scene_explorer(Scene* scene) {
 }
 
 void SceneEditor::show_node_editor_widget(Node* node) {
+    if (!node)
+        return;
+    std::string uuid_text = "UUID: " + node->uuid;
+    ImGui::Text(uuid_text.c_str());
+    ImGui::Separator();
     ImGui::Text("Transform");
     show_transform_editor(&node->transform);
 }

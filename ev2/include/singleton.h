@@ -38,7 +38,7 @@ public:
 
     inline static T& get_singleton() {
         if (!m_singleton)
-            throw engine_exception{"Singleton " + util::type_name<T>() + " was used without initialization"};
+            throw engine_exception{"Singleton " + util::type_name<T>() + " is not initialized, or has already been shut down"};
         return *m_singleton.get();
     }
 

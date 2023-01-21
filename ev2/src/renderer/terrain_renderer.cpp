@@ -894,7 +894,7 @@ std::unique_ptr<Image> LoadDmapTexture16(int dmapID, int smapID, const std::stri
     std::unique_ptr<Image> image = load_image_16(pathToFile);
 
     int w = image->width();
-    int h = image->width();
+    int h = image->height();
     const uint16_t *texels = (const uint16_t*)image->data();
     int mipcnt = mip_count(w, h);
     std::vector<uint16_t> dmap(w * h * 2);
@@ -1011,12 +1011,12 @@ bool LoadTerrainVariables(const Camera& m_camera, glm::mat4* m_model)
     // m_camera.get_view
     glm::mat4 viewInv = m_camera.get_view_inv();
     glm::mat4 view = m_camera.get_view();
-    glm::mat4 t_model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
-            * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale));
-    if (m_model)
-        *m_model = t_model;
-    glm::mat4 model = t_model
+
+    glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
+            * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
             * glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
+    if (m_model)
+        *m_model = model;
 
     // set transformations (column-major)
     variables.model = model;
@@ -1328,15 +1328,42 @@ bool TerrainRenderer::load_queries() {
 
 float TerrainRenderer::height_query(float x, float y) const {
     glm::mat4 inv_model = glm::inverse(m_model);
-    glm::vec3 terrain_pos = inv_model * glm::vec4(x, y, 0, 1);
+    glm::vec3 terrain_pos = inv_model * glm::vec4(x, 0, y, 1);
 
     int width = m_heightmap->width();
     int height = m_heightmap->height();
     int bytes_per_pixel = m_heightmap->bytes_per_pixel();
 
-    float heightmap = g_terrain.dmap.scale * m_heightmap->data()[bytes_per_pixel * (int(y * height) * width + int(x * width))];
+    float fx = terrain_pos.x * width;
+    float fy = terrain_pos.y * height - 1;
 
-    return heightmap;
+    // pixel points in image to sample
+    int px1 = glm::clamp((int)fx, 0, width);
+    int px2 = glm::clamp((int)fx + 1, 0, width);
+    int py1 = glm::clamp((int)fy, 0, height);
+    int py2 = glm::clamp((int)fy + 1, 0, height);
+
+    // bilinear blend factor
+    fx = fx - (int)fx;
+    fy = fy - (int)fy;
+
+    float wa = (1 - fx) * (1 - fy);
+    float wb = fx * (1 - fy);
+    float wc = (1 - fx) * fy;
+    float wd = fx * fy;
+
+    const uint16_t *texels = (const uint16_t*)m_heightmap->data();
+
+    float a = texels[py1 * width + px1] / float((1 << 16) - 1);
+    float b = texels[py1 * width + px2] / float((1 << 16) - 1);
+    float c = texels[py2 * width + px1] / float((1 << 16) - 1);
+    float d = texels[py2 * width + px2] / float((1 << 16) - 1);
+
+    float heightmap = wa * a + wb * b + wc * c + wd * d;
+
+    glm::vec3 final_pos = m_model * glm::vec4{terrain_pos.x, terrain_pos.y, g_terrain.dmap.scale * heightmap, 1};
+    float out = final_pos.y;
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
