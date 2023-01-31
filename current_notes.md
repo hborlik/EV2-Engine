@@ -1,9 +1,23 @@
 ## Thesis Notes
 
-Modeling and rendering are two core research problems in computer graphics.
+Modeling and rendering are two core research problems in computer graphics. Show how this tool can add to existing work. How it integrates with another project. Can find a paper to build on.
+
+!!!WFC!!!
+
+1. Break input image into tiles
+2. Interpret tiles as values that can appear in a given neighborhood 
+3. Build adjacency matrix (neighborhoods and values)
+   1. associated weight for how often they appear in the input image
 
 Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
 
+Notes about good papers:
+[example](https://ieeexplore-ieee-org.ezproxy.lib.calpoly.edu/stamp/stamp.jsp?tp=&arnumber=9709532)
+2-3 pages on results, Introduction clearly states contributions and motivations. 
+
+## Abstract
+This thesis presents a method to experiment with Wave Function Collapse in a 3d environment. 
+Implement a flexible WFC graph algorithm in C++.
 
 Jan 20 meeting notes: data structures for graph representation and understand WFC.
     Write an abstract! (three week deadline) Feb 10
@@ -20,17 +34,22 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
     [Procedural content generation using neuroevolution and novelty search for diverse video game levels 2022](https://dl.acm.org/doi/pdf/10.1145/3512290.3528701)
         Genetic algorithm (NEAT) to create novel tile based video game levels. Authors focus on speed of the algorithm. Fitness functions introduced for novelty, and solvability.
 
-    [Automatic Generation of Game Content using a Graph-based Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
-        Extends WFC to Voronoi cells and volumes. WFC rules based on neighbors that "contact" cell. 
+    *[Automatic Generation of Game Content using a Graph-based Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
+        Extends WFC to Voronoi cells and volumes. WFC rules based on neighbors that "contact" cell. Graph based WFC
 
-    [Automatic Generation of Game Levels Based on Controllable Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
+    *[Automatic Generation of Game Levels Based on Controllable Wave Function Collapse Algorithm 2019](https://dl.acm.org/doi/10.1109/CIG.2019.8848019)
 
-    [PCG Workshop Paper Database](https://pcgworkshop.com/database.php)
+    *[PCG Workshop Paper Database](https://pcgworkshop.com/database.php)
         Some cool stuff on WFC
 
 3.  Jan 27 : 
     [A Procedural Model for Diverse Tree Species 2022](https://pcgworkshop.com/archive/hoetzlein2022aprocedural.pdf)
+
+    *[Tessera: A Practical System for Extended WaveFunctionCollapse](https://pcgworkshop.com/archive/newgas2021tessera.pdf)
+
 4.  Feb 03 : 
+    *[WaveFunctionCollapse_Content_Generation_via_Constraint_Solving_and_Machine_Learning](file:///run/media/hborlik/T7/grad%20stuff/research/WaveFunctionCollapse_Content_Generation_via_Constraint_Solving_and_Machine_Learning.pdf)
+        More detailed description of the WFC algorithm and some experiments that validate certain design decisions made by the original creator.
 5.  Feb 10 : 
 6.  Feb 17 : 
 7.  Feb 24 : 
