@@ -8,8 +8,7 @@ Modeling and rendering are two core research problems in computer graphics. Show
 2. Interpret tiles as values that can appear in a given neighborhood 
 3. Build adjacency matrix (neighborhoods and values)
    1. associated weight for how often they appear in the input image
-
-Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
+Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic/constrain driven modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
 
 Notes about good papers:
 [example](https://ieeexplore-ieee-org.ezproxy.lib.calpoly.edu/stamp/stamp.jsp?tp=&arnumber=9709532)
@@ -18,6 +17,15 @@ Notes about good papers:
 ## Abstract
 This thesis presents a method to experiment with Wave Function Collapse in a 3d environment. 
 Implement a flexible WFC graph algorithm in C++.
+
+## Design Goals
+
+1. Flexible WFC for 3d irregular scenes
+2. Easily reconfigurable and data defined behavior
+
+## Research Questions
+
+1. Is it possible to extend WFC to an unstructured 3d environment?
 
 Jan 20 meeting notes: data structures for graph representation and understand WFC.
     Write an abstract! (three week deadline) Feb 10
@@ -50,7 +58,11 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
 4.  Feb 03 : 
     *[WaveFunctionCollapse_Content_Generation_via_Constraint_Solving_and_Machine_Learning](file:///run/media/hborlik/T7/grad%20stuff/research/WaveFunctionCollapse_Content_Generation_via_Constraint_Solving_and_Machine_Learning.pdf)
         More detailed description of the WFC algorithm and some experiments that validate certain design decisions made by the original creator.
-5.  Feb 10 : 
+    
+    *[Constraint Satisfaction Problems](file:///run/media/hborlik/T7/grad%20stuff/research/graph_theory/ConstraintSatisfactionProblems.pdf)
+
+    
+5.  Feb 10 : Abstract due!
 6.  Feb 17 : 
 7.  Feb 24 : 
 8.  Mar 03 : 
@@ -63,7 +75,7 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
     1.  Think about the data structures that will be used to generate a scene graph.
    
 3.  Jan 27 : 
-4.  Feb 03 : 
+4.  Feb 03 : *Graph progress* Data structures for WFC
 5.  Feb 10 : 
 6.  Feb 17 : 
 7.  Feb 24 : 
