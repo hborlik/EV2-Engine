@@ -51,6 +51,11 @@ struct Ray {
     }
 
     glm::vec3 eval(float t) const {return origin + t * direction;}
+
+private:
+    friend Ray operator*(const glm::mat4& tr, const Ray& r) {
+        return r.transform(tr);
+    }
 };
 
 struct Sphere {
@@ -60,7 +65,7 @@ struct Sphere {
     Sphere() = default;
     Sphere(const glm::vec3& center, float radius) noexcept : center{center}, radius{radius} {}
 
-    bool intersect(const Ray& ray, SurfaceInteraction& hit) {
+    bool ray_cast(const Ray& ray, SurfaceInteraction& hit) {
         using namespace glm;
 
         vec3 e_c = (ray.origin - center);
@@ -98,7 +103,7 @@ private:
 struct Plane {
     glm::vec4 p = {0, 1, 0, 0};
 
-    Plane() {};
+    Plane() = default;
 
     Plane(glm::vec3 normal, float d) noexcept : p{normal.x, normal.y, normal.z, d} {
         normalize();
@@ -112,7 +117,7 @@ struct Plane {
         normalize();
     }
 
-    Plane(const glm::vec4& p) noexcept : p{p} {
+    explicit Plane(const glm::vec4& p) noexcept : p{p} {
         normalize();
     }
 
@@ -126,7 +131,7 @@ struct Plane {
      * @param point 
      * @return float 
      */
-    inline float distanceFromPlane(glm::vec3 point) const noexcept {
+    inline float distance_from_plane(glm::vec3 point) const noexcept {
         return glm::dot(p, glm::vec4(point, 1.0f));
     }
 
@@ -138,7 +143,7 @@ struct Plane {
      * @return true 
      * @return false 
      */
-    bool intersect(const Ray& ray, SurfaceInteraction& hit) {
+    bool ray_cast(const Ray& ray, SurfaceInteraction& hit) {
         using namespace glm;
         const float denom = dot(ray.direction, vec3(p));
         if (denom == 0.0) // parallel
@@ -196,7 +201,7 @@ public:
      * @return true got an intersection
      * @return false miss
      */
-    bool intersect(const Ray& r, float* hit_t0 = nullptr, float* hit_t1 = nullptr) const {
+    bool ray_cast(const Ray& r, float* hit_t0 = nullptr, float* hit_t1 = nullptr) const {
         float t0 = 0;
         float t1 = INFINITY;
         // for each axis, check axis aligned plane t = (v[i] - o[i]) / d[i]
@@ -354,7 +359,7 @@ inline Frustum extract_frustum(const glm::mat4& comp) noexcept {
 inline bool intersect(const Frustum& f, const Sphere& s) noexcept {
     float dist = 0;
     for (int i = 0; i < 6; i++) {
-        dist = f.planes[i].distanceFromPlane(s.center);
+        dist = f.planes[i].distance_from_plane(s.center);
         //test against each plane
         if (dist < 0 && std::abs(dist) > s.radius) {
             return false;
@@ -389,7 +394,7 @@ inline bool intersect(const Frustum& f, const AABB& b) noexcept {
         int out = 0;
         for (int j = 0; j < 8; ++j) {
             // planes are ordered inward, so if the distance is negative, the point is outside
-            if (f.planes[i].distanceFromPlane(points_to_test[j]) < 0) {
+            if (f.planes[i].distance_from_plane(points_to_test[j]) < 0) {
                 out++;
             }
         }

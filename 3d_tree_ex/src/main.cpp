@@ -343,6 +343,8 @@ public:
 //Callback for miniaudio.
 void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
+    (void)pInput; // Unused.
+
     ma_decoder* pDecoder = (ma_decoder*)pDevice->pUserData;
     if (pDecoder == NULL) {
         return;
@@ -350,8 +352,6 @@ void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uin
 
     /* Reading PCM frames will loop based on what we specified when called ma_data_source_set_looping(). */
     ma_data_source_read_pcm_frames(pDecoder, pOutput, frameCount, NULL);
-
-    (void)pInput;
 }
 
 int initAudio(fs::path asset_path) {
@@ -362,10 +362,6 @@ int initAudio(fs::path asset_path) {
     const char* filePath = "";
 
     filePath = (asset_path / "stickerbrush.mp3").generic_string().c_str();
-    if (filePath == "") {
-        printf("No input file.\n");
-        return -1;
-    }
     printf("%s\n", filePath);
     result = ma_decoder_init_file(filePath, NULL, &decoder);
     if (result != MA_SUCCESS) {
@@ -397,7 +393,6 @@ int initAudio(fs::path asset_path) {
 }
 
 int main(int argc, char *argv[]) {
-
 
     ev2::Args args{argc, argv};
 
