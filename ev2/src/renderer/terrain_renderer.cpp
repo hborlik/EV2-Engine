@@ -1160,7 +1160,7 @@ bool LoadMeshletBuffers()
 
     // compute index and vertex buffer
     for (int i = 0; i < triangleCount; ++i) {
-        cbt_Node node = {(uint64_t)(triangleCount + i), 2 * g_terrain.gpuSubd};
+        cbt_Node node = {(uint64_t)(triangleCount + i), (uint64_t)(2 * g_terrain.gpuSubd)};
         float attribArray[][3] = { {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f} };
 
         leb_DecodeNodeAttributeArray(node, 2, attribArray);

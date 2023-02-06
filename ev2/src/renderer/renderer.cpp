@@ -447,7 +447,7 @@ void Renderer::init() {
     // light geometry
     point_light_drawable = ResourceManager::get_singleton().get_model( std::filesystem::path("models") / "cube.obj", false);
     point_light_drawable->front_facing = gl::FrontFacing::CW; // render back facing only
-    glm::vec3 scaling = glm::vec3{2} / (point_light_drawable->bmax - point_light_drawable->bmin);
+    glm::vec3 scaling = glm::vec3{2} / (point_light_drawable->bounding_box.pMax - point_light_drawable->bounding_box.pMin);
     point_light_geom_base_scale = scaling.x;
 
     point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.getAttributeMap());
@@ -517,14 +517,14 @@ void Renderer::destroy_material(Material* material) {
 }
 
 LID Renderer::create_point_light() {
-    uint32_t nlid = next_light_id++;
+    int32_t nlid = next_light_id++;
     Light l{};
     point_lights.insert_or_assign(nlid, l);
     return {LID::Point, nlid};
 }
 
 LID Renderer::create_directional_light() {
-    uint32_t nlid = next_light_id++;
+    int32_t nlid = next_light_id++;
     if (shadow_directional_light_id < 0)
         shadow_directional_light_id = nlid;
     DirectionalLight l{};
@@ -592,6 +592,7 @@ void Renderer::set_light_ambient(LID lid, const glm::vec3& color) {
                 mi->second.ambient = color;
             }
         }
+        case LID::Point:
         break;
     };
 }
@@ -714,10 +715,14 @@ void Renderer::render(const Camera &camera) {
             update_material(i, material_data_buffer[i]);
     }
 
+    
+    const glm::mat4 P = camera.get_projection();
+    const glm::mat4 V = camera.get_view();
+    const glm::mat4 VP = P * V;
+    const Frustum frustum = extract_frustum(VP);
+
+
     // update globals buffer with frame info
-    glm::mat4 P = camera.get_projection();
-    glm::mat4 V = camera.get_view();
-    glm::mat4 VP = P * V;
     globals_desc.setShaderParameter("P", P, shader_globals);
     globals_desc.setShaderParameter("PInv", glm::inverse(P), shader_globals);
     globals_desc.setShaderParameter("View", V, shader_globals);
@@ -812,9 +817,25 @@ void Renderer::render(const Camera &camera) {
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
 
+    // int cull_count = 0;
     for (auto &mPair : model_instances) {
         auto& m = mPair.second;
         if (m.drawable) {
+            bool visible = true;
+            switch(m.drawable->frustum_cull) {
+                case FrustumCull::None:
+                    break;
+                case FrustumCull::Sphere:
+                    visible = intersect(frustum, m.transform * m.drawable->bounding_sphere);
+                    break;
+                case FrustumCull::AABB:
+                    visible = intersect(frustum, m.transform * m.drawable->bounding_box);
+                    break;
+            }
+            if (!visible) {
+                // cull_count++;
+                continue;
+            }
             const glm::mat3 G = glm::inverse(glm::transpose(glm::mat3(m.transform)));
 
             ev2::gl::glUniform(m.transform, gp_m_location);
@@ -827,6 +848,8 @@ void Renderer::render(const Camera &camera) {
         }
     }
     geometry_program.unbind();
+
+    // std::cout << "Culled " << cull_count << " models" << std::endl;
 
     // render instanced geometry
     geometry_program_instanced.use();

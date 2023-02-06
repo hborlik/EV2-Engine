@@ -113,7 +113,7 @@ public:
      * @param a 
      * @param b 
      */
-    virtual void edge(Node *a, Node *b, float v) = 0;
+    virtual void add_edge(Node *a, Node *b, float v) = 0;
 
     /**
      * @brief check if nodes are adjacent, returns 0.f if not
@@ -123,9 +123,17 @@ public:
      * @return float 
      */
     virtual float adjacent(Node *a, Node *b) = 0;
+
+    /**
+     * @brief get adjacent nodes
+     * 
+     * @param a 
+     * @return std::vector<Node*> 
+     */
+    virtual std::vector<Node*> adjacent_nodes(Node *a) = 0;
 };
 
-class UndirectedSparseGraph : public Graph
+class SparseGraph : public Graph
 {
 private:
 
@@ -143,11 +151,16 @@ private:
     };
 
     int next_mat_coord = 0;
+    bool is_directed = false;
     std::unordered_map<int, internal_node> node_map{};
     std::unordered_map<coord, weight> sparse_adjacency_map{};
 
 public:
-    void edge(Node *a, Node *b, float v) override
+
+    SparseGraph() = default;
+    SparseGraph(bool is_directed) : is_directed{is_directed} {}
+
+    void add_edge(Node *a, Node *b, float v) override
     {
         assert(a != nullptr && b != nullptr);
         assert(a != b);
@@ -155,16 +168,21 @@ public:
         internal_node *b_i = add_node(b);
 
         // enforce populating only the upper triangular matrix
-        if (a_i->mat_coord > b_i->mat_coord)
+        if (!is_directed && a_i->mat_coord > b_i->mat_coord)
             std::swap(a_i, b_i);
 
         // build adjacency information
         a_i->adjacent_nodes.push_back(b);
-        b_i->adjacent_nodes.push_back(a);
+        if (!is_directed)
+            b_i->adjacent_nodes.push_back(a);
 
         coord c{a_i->mat_coord, b_i->mat_coord};
 
-        assert(c.x != c.y); // sanity check, no diagonals
+        if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
+            return; // already added
+        
+        if (c.x == c.y)
+            return; // no self loops (diagonals)
 
         auto& sam = sparse_adjacency_map[c];
         sam.i_nodeA = a_i;
@@ -218,7 +236,7 @@ public:
      * @param b 
      * @param v 
      */
-    void edge(Node *a, Node *b, float v) override {
+    void add_edge(Node *a, Node *b, float v) override {
         assert(a != nullptr && b != nullptr);
         assert(a != b);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
@@ -273,10 +291,16 @@ public:
 class WFCSolver
 {
 public:
+    WFCSolver(Graph *graph, std::vector<Pattern> patterns) : graph{graph}, patterns{patterns} {
+        assert(graph != nullptr);
+    }
+
     void propogate(Node *node)
     {
         assert(node != nullptr);
-        
+        for (auto& n : graph->adjacent_nodes(node)) {
+            propagation_stack.push(n);
+        }
     }
 
     void observe(Node *node)
@@ -290,6 +314,8 @@ public:
     }
 
     std::queue<Node *> propagation_stack;
+    Graph *graph;
+    std::vector<Pattern> patterns;
 };
 
 } // namespace wfc

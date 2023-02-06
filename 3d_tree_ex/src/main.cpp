@@ -366,7 +366,7 @@ int initAudio(fs::path asset_path) {
         printf("No input file.\n");
         return -1;
     }
-    printf(filePath);
+    printf("%s\n", filePath);
     result = ma_decoder_init_file(filePath, NULL, &decoder);
     if (result != MA_SUCCESS) {
         return -2;

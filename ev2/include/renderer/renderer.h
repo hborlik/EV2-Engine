@@ -23,11 +23,19 @@
 #include <renderer/render_state.hpp>
 #include <renderer/terrain_renderer.h>
 
+#include <geometry.h>
+
 namespace ev2::renderer {
 
 constexpr uint16_t MAX_N_MATERIALS = 255;
 
 using mat_slot_t = uint8_t;
+
+enum class FrustumCull {
+    None,
+    Sphere,
+    AABB
+};
 
 /**
  * @brief light id
@@ -191,25 +199,28 @@ struct Drawable {
     Drawable(VertexBuffer &&vb,
              std::vector<Primitive> primitives,
              std::vector<Ref<Material>> materials,
-             glm::vec3 bmin,
-             glm::vec3 bmax,
+             AABB bounding_box,
+             Sphere bounding_sphere,
+             FrustumCull frustum_cull,
              gl::CullMode cull,
              gl::FrontFacing ff) : vertex_buffer{std::move(vb)},
                                    primitives{std::move(primitives)},
                                    materials{std::move(materials)},
-                                   bmin{bmin},
-                                   bmax{bmax},
+                                   bounding_box{bounding_box},
+                                   bounding_sphere{bounding_sphere},
+                                   frustum_cull{frustum_cull},
                                    cull_mode{cull},
                                    front_facing{ff}
     {
     }
 
-    VertexBuffer            vertex_buffer;
-    std::vector<Primitive>  primitives;
+    VertexBuffer                vertex_buffer;
+    std::vector<Primitive>      primitives;
     std::vector<Ref<Material>>  materials;
 
-    glm::vec3 bmin, bmax;
-
+    AABB            bounding_box{};
+    Sphere          bounding_sphere{};
+    FrustumCull     frustum_cull = FrustumCull::None;
     gl::CullMode    cull_mode = gl::CullMode::BACK;
     gl::FrontFacing front_facing = gl::FrontFacing::CCW;
 
@@ -241,26 +252,33 @@ private:
 };
 
 struct InstancedDrawable {
-    glm::mat4               instance_world_transform = glm::identity<glm::mat4>();
-    std::unique_ptr<Buffer> instance_transform_buffer{};
-    uint32_t                n_instances;
-
-    void set_drawable(std::shared_ptr<Drawable> drawable);
 
     InstancedDrawable() = default;
-    InstancedDrawable(InstancedDrawable &&o) : instance_world_transform{std::move(o.instance_world_transform)},
-                                               instance_transform_buffer{std::move(o.instance_transform_buffer)}
-    {
+    InstancedDrawable(InstancedDrawable &&o) noexcept {
+        *this = std::move(o);
+    }
+
+    InstancedDrawable& operator=(InstancedDrawable &&o) noexcept {
+        instance_world_transform = std::move(o.instance_world_transform);
+        instance_transform_buffer = std::move(o.instance_transform_buffer);
         std::swap(n_instances, o.n_instances);
         std::swap(id, o.id);
         std::swap(drawable, o.drawable);
         std::swap(gl_vao, o.gl_vao);
+        return *this;
     }
 
     ~InstancedDrawable() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
     }
+
+    void set_drawable(std::shared_ptr<Drawable> drawable);
+
+public:
+    glm::mat4               instance_world_transform = glm::identity<glm::mat4>();
+    std::unique_ptr<Buffer> instance_transform_buffer{};
+    uint32_t                n_instances;
 
 private:
     friend class Renderer;
@@ -393,7 +411,7 @@ private:
     std::unordered_map<uint32_t, Light> point_lights;
     std::unique_ptr<Buffer> point_light_data_buffer;
     std::unordered_map<uint32_t, DirectionalLight> directional_lights;
-    uint32_t next_light_id = 1000;
+    int32_t next_light_id = 1000;
     int32_t shadow_directional_light_id = -1;
 
     Program geometry_program;

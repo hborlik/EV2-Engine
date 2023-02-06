@@ -48,3 +48,15 @@ set_target_properties(wfc_test PROPERTIES
     CXX_EXTENSIONS NO
 )
 target_link_libraries(wfc_test PRIVATE ev2)
+
+
+add_executable(geometry_test "src/geometry_tests.cpp" ${include})
+target_include_directories(geometry_test PRIVATE
+    "include"
+)
+set_target_properties(geometry_test PROPERTIES 
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+target_link_libraries(geometry_test PRIVATE ev2)

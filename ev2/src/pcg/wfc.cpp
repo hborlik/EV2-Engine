@@ -2,7 +2,7 @@
 
 namespace wfc {
 
-UndirectedSparseGraph::internal_node* UndirectedSparseGraph::add_node(Node *node)
+SparseGraph::internal_node* SparseGraph::add_node(Node *node)
 {
     internal_node *i_node = nullptr;
     if (node) {
@@ -10,6 +10,7 @@ UndirectedSparseGraph::internal_node* UndirectedSparseGraph::add_node(Node *node
         // node does not exist
         if (itr == node_map.end()) {
             auto p = node_map.emplace(node->node_id, internal_node{get_next_mat_coord(), node, {}});
+
             // if false, failed to create, we probably already have the same id
             if (p.second)
                 i_node = &p.first->second;
@@ -19,7 +20,7 @@ UndirectedSparseGraph::internal_node* UndirectedSparseGraph::add_node(Node *node
     return i_node;
 }
 
-UndirectedSparseGraph::internal_node* UndirectedSparseGraph::get_node(Node *node)
+SparseGraph::internal_node* SparseGraph::get_node(Node *node)
 {
     internal_node *i_node = nullptr;
     if (node) {

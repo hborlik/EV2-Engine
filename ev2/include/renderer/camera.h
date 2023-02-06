@@ -24,28 +24,6 @@ enum class CameraProjection {
     FISHEYE       // conformal (stereographic projection)
 };
 
-/**
- * @brief Extract projection frustum planes
- * 
- * @param comp 
- * @return Frustum 
- */
-inline Frustum extract_frustum(const glm::mat4& comp) noexcept {
-    using namespace glm;
-    Frustum f{};
-
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 2; j++) {
-            f.planes[i * 2 + j].p.x = comp[0][3] + (j == 0 ? comp[0][j] : -comp[0][j]);
-            f.planes[i * 2 + j].p.y = comp[1][3] + (j == 0 ? comp[1][j] : -comp[1][j]);
-            f.planes[i * 2 + j].p.z = comp[2][3] + (j == 0 ? comp[2][j] : -comp[2][j]);
-            f.planes[i * 2 + j].p.w = comp[3][3] + (j == 0 ? comp[3][j] : -comp[3][j]);
-            f.planes[i * 2 + j].normalize();
-        }
-
-    return f;
-}
-
 class Camera {
 public:
     /**

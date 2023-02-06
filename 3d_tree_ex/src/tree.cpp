@@ -218,8 +218,9 @@ void TreeNode::on_init() {
         ev2::renderer::VertexBuffer::vbInitArrayVertexSpecIndexed({}, {}, buffer_layout),
         std::vector<ev2::renderer::Primitive>{},
         std::vector<ev2::Ref<ev2::renderer::Material>>{},
-        glm::vec3{}, // TODO
-        glm::vec3{}, // TODO
+        AABB{},
+        Sphere{glm::vec3{0.f}, 1.f}, // TODO: make sphere correct
+        renderer::FrustumCull::Sphere,
         ev2::gl::CullMode::BACK,
         ev2::gl::FrontFacing::CCW
     );
@@ -395,8 +396,9 @@ void Fruit::on_init() {
         ev2::renderer::VertexBuffer::vbInitSphereArrayVertexData(supershape.getInterleavedVerticesv(), indices),
         std::move(ev_meshs),
         std::vector<Ref<ev2::renderer::Material>>{},
-        glm::vec3{}, // TODO
-        glm::vec3{}, // TODO
+        AABB{},
+        Sphere{glm::vec3{0.f}, 0.05f},
+        renderer::FrustumCull::Sphere,
         ev2::gl::CullMode::BACK,
         ev2::gl::FrontFacing::CCW);
 }

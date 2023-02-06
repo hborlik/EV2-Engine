@@ -63,8 +63,9 @@ void InstancedGeometry::on_init() {
             quad_layout),
         std::vector<renderer::Primitive>{renderer::Primitive{0, 12, -1}},
         std::vector<Ref<renderer::Material>>{},
-        glm::vec3{},
-        glm::vec3{},
+        AABB{},
+        Sphere{glm::vec3{0.f}, 0.05f},
+        renderer::FrustumCull::Sphere,
         gl::CullMode::BACK,
         gl::FrontFacing::CCW
     );

@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <limits>
+#include <cmath>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -53,9 +54,10 @@ struct Ray {
 };
 
 struct Sphere {
-    glm::vec3   center;
-    float       radius;
+    glm::vec3   center{0.f};
+    float       radius = 0.f;
 
+    Sphere() = default;
     Sphere(const glm::vec3& center, float radius) noexcept : center{center}, radius{radius} {}
 
     bool intersect(const Ray& ray, SurfaceInteraction& hit) {
@@ -85,12 +87,31 @@ struct Sphere {
         hit = h;
         return true;
     }
+
+private:
+
+    friend Sphere operator*(const glm::mat4& tr, const Sphere& s) {
+        return {tr * glm::vec4{s.center, 1.0f}, s.radius};
+    }    
 };
 
 struct Plane {
     glm::vec4 p = {0, 1, 0, 0};
 
-    Plane() {p = p;};
+    Plane() {};
+
+    Plane(glm::vec3 normal, float d) noexcept : p{normal.x, normal.y, normal.z, d} {
+        normalize();
+    }
+
+    Plane(glm::vec3 normal, glm::vec3 point) noexcept : p{normal.x, normal.y, normal.z, -glm::dot(normal, point)} {
+        normalize();
+    }
+
+    Plane(glm::vec3 a, glm::vec3 b, glm::vec3 c) noexcept : p{glm::cross(b - a, c - a), -glm::dot(a, glm::cross(b - a, c - a))} {
+        normalize();
+    }
+
     Plane(const glm::vec4& p) noexcept : p{p} {
         normalize();
     }
@@ -137,53 +158,17 @@ struct Plane {
     }
 };
 
-struct PlaneShape {
-    Plane plane{};
-
-    PlaneShape() {};
-    PlaneShape(const glm::vec4& p) noexcept : plane{p} {
-    }
-
-    inline void normalize() noexcept {
-        plane.normalize();
-    }
-
-    /**
-     * @brief Normalized plane required
-     * 
-     * @param point 
-     * @return float 
-     */
-    inline float distanceFromPlane(glm::vec3 point) const noexcept {
-        return plane.distanceFromPlane(point);
-    }
-
-    /**
-     * @brief intersect ray and plane, ray direction and plane should be normalized
-     * 
-     * @param ray 
-     * @param hit 
-     * @return true 
-     * @return false 
-     */
-    bool intersect(const Ray& ray, SurfaceInteraction& hit) {
-        using namespace glm;
-        return plane.intersect(ray, hit);
-    }
-};
-
 /**
- * @brief axis aligned box
+ * @brief axis aligned box. 
  * 
- * @tparam T 
  */
-class Bounds3 {
+class AABB {
 public:
     const glm::vec3 pMin;
     const glm::vec3 pMax;
 
-    Bounds3() : pMin{(float)-INFINITY}, pMax{(float)INFINITY} {}
-    Bounds3(glm::vec3 pMin, glm::vec3 pMax) : pMin{pMin}, pMax{pMax} {}
+    AABB() : pMin{(float)-INFINITY}, pMax{(float)INFINITY} {}
+    AABB(glm::vec3 pMin, glm::vec3 pMax) : pMin{pMin}, pMax{pMax} {}
 
     glm::vec3 diagonal() const noexcept {return pMax - pMin;}
 
@@ -192,12 +177,13 @@ public:
         return d.x * d.y * d.z;
     }
 
-
-    template<typename... P>
-    static Bounds3 FromPoints(P&&... args) {
-        glm::vec3 minp{util::vmin(args.x...), util::vmin(args.y...), util::vmin(args.z...)};
-        glm::vec3 maxp{util::vmax(args.x...), util::vmax(args.y...), util::vmax(args.z...)};
-
+    static AABB from_points(const glm::vec3 points[8]) noexcept {
+        glm::vec3 minp{INFINITY};
+        glm::vec3 maxp{-INFINITY};
+        for (int i = 0; i < 8; ++i) {
+            minp = glm::min(minp, points[i]);
+            maxp = glm::max(maxp, points[i]);
+        }
         return {minp, maxp};
     }
 
@@ -233,14 +219,79 @@ public:
             *hit_t1 = t1;
         return true;
     }
+
+private:
+
+    friend AABB operator*(const glm::mat4& tr, const AABB& aabb) noexcept {
+        using namespace glm;
+        // 8 corners of the box
+        vec3 corners[8] = {
+            vec3(aabb.pMin.x, aabb.pMin.y, aabb.pMin.z),
+            vec3(aabb.pMax.x, aabb.pMin.y, aabb.pMin.z),
+            vec3(aabb.pMax.x, aabb.pMax.y, aabb.pMin.z),
+            vec3(aabb.pMin.x, aabb.pMax.y, aabb.pMin.z),
+            vec3(aabb.pMin.x, aabb.pMin.y, aabb.pMax.z),
+            vec3(aabb.pMax.x, aabb.pMin.y, aabb.pMax.z),
+            vec3(aabb.pMax.x, aabb.pMax.y, aabb.pMax.z),
+            vec3(aabb.pMin.x, aabb.pMax.y, aabb.pMax.z),
+        };
+
+        // transform with tr
+        vec3 world_corners[8];
+        for (int i = 0; i < 8; ++i) {
+            world_corners[i] = vec3(tr * vec4(corners[i], 1.0f));
+        }
+
+        // find min and max
+        return from_points(world_corners);
+    }
 };
 
 struct Box {
     glm::mat4   transform;
-    Bounds3     local_bounds;
+    AABB     local_bounds;
 };
 
 struct Frustum {
+
+    Frustum() = default;
+    explicit Frustum(const glm::mat4& view_projection) {
+        using namespace glm;
+        // 4 corners of the view frustum in clip space
+        vec4 clip_corners[8] = {
+            vec4(-1, -1, -1, 1),
+            vec4( 1, -1, -1, 1),
+            vec4( 1,  1, -1, 1),
+            vec4(-1,  1, -1, 1),
+            vec4(-1, -1,  1, 1),
+            vec4( 1, -1,  1, 1),
+            vec4( 1,  1,  1, 1),
+            vec4(-1,  1,  1, 1),
+        };
+
+        // transform to world space
+        mat4 inv_view_projection = inverse(view_projection);
+        vec4 world_corners[8];
+        for (int i = 0; i < 8; ++i) {
+            world_corners[i] = inv_view_projection * clip_corners[i];
+            world_corners[i] /= world_corners[i].w;
+        }
+
+        // 6 planes
+        // left
+        planes[0] = Plane(world_corners[0], world_corners[1], world_corners[2]);
+        // right
+        planes[1] = Plane(world_corners[4], world_corners[5], world_corners[6]);
+        // top
+        planes[2] = Plane(world_corners[2], world_corners[3], world_corners[6]);
+        // bottom
+        planes[3] = Plane(world_corners[0], world_corners[1], world_corners[4]);
+        // near
+        planes[4] = Plane(world_corners[0], world_corners[3], world_corners[4]);
+        // far
+        planes[5] = Plane(world_corners[1], world_corners[2], world_corners[5]);
+    }
+
     // 6 inward pointing planes
     Plane planes[6];
 
@@ -272,7 +323,29 @@ struct Frustum {
 };
 
 /**
- * @brief check if a sphere intersects a frustum
+ * @brief Extract projection frustum planes
+ * 
+ * @param comp 
+ * @return Frustum 
+ */
+inline Frustum extract_frustum(const glm::mat4& comp) noexcept {
+    using namespace glm;
+    Frustum f{};
+
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 2; j++) {
+            f.planes[i * 2 + j].p.x = comp[0][3] + (j == 0 ? comp[0][j] : -comp[0][j]);
+            f.planes[i * 2 + j].p.y = comp[1][3] + (j == 0 ? comp[1][j] : -comp[1][j]);
+            f.planes[i * 2 + j].p.z = comp[2][3] + (j == 0 ? comp[2][j] : -comp[2][j]);
+            f.planes[i * 2 + j].p.w = comp[3][3] + (j == 0 ? comp[3][j] : -comp[3][j]);
+            f.planes[i * 2 + j].normalize();
+        }
+
+    return f;
+}
+
+/**
+ * @brief check if a sphere is touching or inside a frustum
  * 
  * @param f 
  * @param s 
@@ -283,13 +356,52 @@ inline bool intersect(const Frustum& f, const Sphere& s) noexcept {
     for (int i = 0; i < 6; i++) {
         dist = f.planes[i].distanceFromPlane(s.center);
         //test against each plane
-        if (dist < 0 && abs(dist) > s.radius) {
-            return true;
+        if (dist < 0 && std::abs(dist) > s.radius) {
+            return false;
         }
     }
-    return false;
+    return true;
 };
 
+/**
+ * @brief check if an axis aligned lies completely inside a frustum
+ * 
+ * @param f 
+ * @param b 
+ * @return true 
+ * @return false 
+ */
+inline bool intersect(const Frustum& f, const AABB& b) noexcept {
+    // code partly created by Copilot https://copilot.github.com/
+    glm::vec3 points_to_test[8] = {
+        b.pMin,
+        b.pMax,
+        {b.pMin.x, b.pMin.y, b.pMax.z},
+        {b.pMin.x, b.pMax.y, b.pMin.z},
+        {b.pMin.x, b.pMax.y, b.pMax.z},
+        {b.pMax.x, b.pMin.y, b.pMin.z},
+        {b.pMax.x, b.pMin.y, b.pMax.z},
+        {b.pMax.x, b.pMax.y, b.pMin.z},
+    };
+
+    // for each plane, check if all points are outside
+    for (int i = 0; i < 6; ++i) {
+        int out = 0;
+        for (int j = 0; j < 8; ++j) {
+            // planes are ordered inward, so if the distance is negative, the point is outside
+            if (f.planes[i].distanceFromPlane(points_to_test[j]) < 0) {
+                out++;
+            }
+        }
+        // all points are outside of the frustum plane
+        if (out == 8) {
+            return false;
+        }
+    }
+    return true;
 }
+
+
+} // namespace ev2
 
 #endif // EV2_GEOMETRY_H

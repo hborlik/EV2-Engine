@@ -701,8 +701,9 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesy
             renderer::VertexBuffer::vbInitArrayVertexData(loaded_model->buffer),
             std::move(ev_prim),
             std::move(ev_mat),
-            loaded_model->bmin,
-            loaded_model->bmax,
+            AABB{loaded_model->bmin, loaded_model->bmax},
+            Sphere{},
+            renderer::FrustumCull::AABB,
             gl::CullMode::BACK,
             gl::FrontFacing::CCW
         );
