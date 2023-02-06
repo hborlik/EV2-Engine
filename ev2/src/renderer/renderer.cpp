@@ -392,9 +392,7 @@ void Renderer::init() {
     lighting_materials.allocate(lighting_materials_desc.block_size);
 
     // extract all offsets for material buffer
-    for (const auto& layout_p : lighting_materials_desc.layouts) {
-        const auto& layout = layout_p.second;
-        std::string name = layout_p.first;
+    for (const auto& [name, layout] : lighting_materials_desc.layouts) {
         std::size_t b_begin = name.find('[');
         std::size_t b_end = name.find(']');
         if (b_begin != std::string::npos) {
@@ -608,10 +606,10 @@ ModelInstance* Renderer::create_model_instance() {
     int32_t id = next_model_instance_id++;
     ModelInstance model{};
     model.id = id;
-    auto mi = model_instances.emplace(id, std::move(model));
+    auto [mi, inserted] = model_instances.emplace(id, std::move(model));
     ModelInstance* new_model = nullptr;
-    if (mi.second)
-        new_model = &((mi.first)->second);
+    if (inserted)
+        new_model = &(mi->second);
 
     return new_model;
 }
@@ -625,10 +623,10 @@ InstancedDrawable* Renderer::create_instanced_drawable() {
     int32_t id = next_instanced_drawable_id++;
     InstancedDrawable model{};
     model.id = id;
-    auto mi = instanced_drawables.emplace(id, std::move(model));
+    auto [mi, inserted] = instanced_drawables.emplace(id, std::move(model));
     InstancedDrawable* new_instanced = nullptr;
-    if (mi.second) {
-        new_instanced = &((mi.first)->second);
+    if (inserted) {
+        new_instanced = &(mi->second);
         new_instanced->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
     }
 

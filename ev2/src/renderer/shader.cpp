@@ -28,18 +28,18 @@ std::ostream& operator<<(std::ostream& os, const Program& input) {
     //     os << v.second->shaderPath() << std::endl;
     // }
     os << "Program inputs: (name, location)" << std::endl;
-    for(auto& v : input.inputs) {
-        os << "    - " << v.first << ", " << v.second.Location << std::endl;
+    for(const auto& [name, desc] : input.inputs) {
+        os << "    - " << name << ", " << desc.Location << std::endl;
     }
     os << "Program uniforms: (name, location)" << std::endl;
-    for(auto& v : input.uniforms) {
-        os << "    - " << v.first << ", " << v.second.Location << std::endl;
+    for(const auto& [name, desc] : input.uniforms) {
+        os << "    - " << name << ", " << desc.Location << std::endl;
     }
     os << "Program uniform blocks:" << std::endl;
-    for(auto& v : input.uniformBlocks) {
-        os << "    UB: " << v.first << " at " << v.second.location_index << " size: " << v.second.block_size << " bytes" << std::endl;
-        for(auto& l : v.second.layouts) {
-            os << "       U: " << l.first << " offset " << l.second.Offset << " len " <<l.second.ArraySize << " stride " << l.second.ArrayStride << std::endl;
+    for(const auto& [name, desc] : input.uniformBlocks) {
+        os << "    UB: " << name << " at " << desc.location_index << " size: " << desc.block_size << " bytes" << std::endl;
+        for(const auto& [l_name, l_desc] : desc.layouts) {
+            os << "       U: " << l_name << " offset " << l_desc.Offset << " len " << l_desc.ArraySize << " stride " << l_desc.ArrayStride << std::endl;
         }
     }
     os << "    shader " << (input.isLinked() ? "linked" : "not linked") << std::endl;

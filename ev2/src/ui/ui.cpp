@@ -8,24 +8,24 @@ namespace ev2 {
 
 void show_material_editor_window(bool* p_open) {
     ImGui::Begin("Material Editor", p_open);
-    for (auto& mas : ev2::ResourceManager::get_singleton().get_materials()) {
-        if (ImGui::CollapsingHeader(("Material " + mas.second->name + " " + mas.first).c_str())) {
+    for (const auto& [name, mat] : ev2::ResourceManager::get_singleton().get_materials()) {
+        if (ImGui::CollapsingHeader(("Material " + mat->name + " " + name).c_str())) {
             
             if (ImGui::TreeNode("Color")) {
-                ImGui::ColorPicker3("diffuse", glm::value_ptr(mas.second->diffuse), ImGuiColorEditFlags_InputRGB);
-                ImGui::ColorPicker3("emissive", glm::value_ptr(mas.second->emissive), ImGuiColorEditFlags_InputRGB);
+                ImGui::ColorPicker3("diffuse", glm::value_ptr(mat->diffuse), ImGuiColorEditFlags_InputRGB);
+                ImGui::ColorPicker3("emissive", glm::value_ptr(mat->emissive), ImGuiColorEditFlags_InputRGB);
                 ImGui::TreePop();
             }
-            ImGui::DragFloat("metallic",    &mas.second->metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("subsurface",  &mas.second->subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specular",    &mas.second->specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("roughness",   &mas.second->roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specularTint",&mas.second->specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoat",   &mas.second->clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoatGloss", &mas.second->clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("anisotropic", &mas.second->anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheen",       &mas.second->sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheenTint",   &mas.second->sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("metallic",    &mat->metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("subsurface",  &mat->subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("specular",    &mat->specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("roughness",   &mat->roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("specularTint",&mat->specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("clearcoat",   &mat->clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("clearcoatGloss", &mat->clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("anisotropic", &mat->anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("sheen",       &mat->sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            ImGui::DragFloat("sheenTint",   &mat->sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
         }
     }
     ImGui::End();

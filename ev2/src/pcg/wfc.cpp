@@ -9,11 +9,11 @@ SparseGraph::internal_node* SparseGraph::add_node(Node *node)
         auto itr = node_map.find(node->node_id);
         // node does not exist
         if (itr == node_map.end()) {
-            auto p = node_map.emplace(node->node_id, internal_node{get_next_mat_coord(), node, {}});
+            auto [p, inserted] = node_map.emplace(node->node_id, internal_node{get_next_mat_coord(), node, {}});
 
             // if false, failed to create, we probably already have the same id
-            if (p.second)
-                i_node = &p.first->second;
+            if (inserted)
+                i_node = &p->second;
         } else
             i_node = &itr->second;
     }

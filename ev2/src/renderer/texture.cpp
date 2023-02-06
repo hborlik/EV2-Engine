@@ -116,14 +116,13 @@ void Texture::set_params() {
 // FBO
 
 bool FBO::resize_all(GLsizei width, GLsizei height) {
-    for (auto& tex_at : attachments) {
-        auto &tex = tex_at.second.texture;
+    for (const auto& [tex_at, bind] : attachments) {
+        auto &tex = bind.texture;
         tex->recreate_storage2D(1, tex->get_internal_format(), width, height);
-        attach_texture(tex.get(), tex_at.first);
+        attach_texture(tex.get(), tex_at);
     }
-    for (auto& rb_at : rb_attachments) {
-        auto &rb = rb_at.second;
-        rb.set_data(rb.get_format(), width, height);
+    for (auto& [_, rb_at] : rb_attachments) {
+        rb_at.set_data(rb_at.get_format(), width, height);
     }
     this->width = width;
     this->height = height;
@@ -140,9 +139,9 @@ bool FBO::check() {
     }
     std::vector<GLenum> dbtgt(max_binding + 1);
     int i = 0;
-    for (auto &a : attachments) {
-        if (a.second.location >= 0) 
-        dbtgt[a.second.location] = (GLenum)a.first;
+    for (const auto & [at, binding] : attachments) {
+        if (binding.location >= 0) 
+            dbtgt[binding.location] = (GLenum)at;
     }
 
     GL_CHECKED_CALL(glDrawBuffers(dbtgt.size(), dbtgt.data()));
@@ -181,11 +180,11 @@ bool FBO::attach(std::shared_ptr<Texture> texture, gl::FBOAttachment attachment_
 
 bool FBO::attach_renderbuffer(gl::RenderBufferInternalFormat format, uint32_t width, uint32_t height, gl::FBOAttachment attachment_point) {
     // create new renderbuffer
-    auto ip = rb_attachments.emplace(std::pair{attachment_point, RenderBuffer{}});
-    if (!ip.second)
+    auto [ip, inserted] = rb_attachments.emplace(std::pair{attachment_point, RenderBuffer{}});
+    if (!inserted)
         return false;
 
-    RenderBuffer &r_buffer = ip.first->second;
+    RenderBuffer &r_buffer = ip->second;
     r_buffer.set_data(format, width, height);
 
     // attempt to attach the renderbuffer

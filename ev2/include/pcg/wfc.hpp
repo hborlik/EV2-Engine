@@ -8,6 +8,7 @@
 #define WFC_H
 
 #include <vector>
+#include <random>
 #include <list>
 #include <queue>
 #include <string>
@@ -98,9 +99,10 @@ public:
         return sum;
     }
 
-    const int node_id;
-    std::string identifier = "";
-    std::list<Pattern> domain{};      // list of valid patterns for this node
+    const int               node_id = -1;
+    Value                   value{};
+    std::string             identifier = "";
+    std::vector<Pattern>    domain{};      // valid patterns for this node
 };
 
 class Graph {
@@ -295,21 +297,65 @@ public:
         assert(graph != nullptr);
     }
 
+    /**
+     * @brief Propogate the wave function collapse algorithm
+     * 
+     * @param node 
+     */
     void propogate(Node *node)
     {
         assert(node != nullptr);
-        for (auto& n : graph->adjacent_nodes(node)) {
-            propagation_stack.push(n);
+        propagation_stack.push(node);
+        while (!propagation_stack.empty())
+        {
+            Node *n = propagation_stack.front();
+            propagation_stack.pop();
+            observe(n);
+            for (auto &neighbor : graph->adjacent_nodes(n))
+            {
+                if (neighbor->domain.size() == 1)
+                    propagation_stack.push(neighbor);
+            }
         }
     }
 
+    /**
+     * @brief Observe the node and update its domain
+     * 
+     * @param node 
+     */
     void observe(Node *node)
     {
         assert(node != nullptr);
-        float w = (float)rand() / RAND_MAX;
-        for (auto &p : node->domain)
-        {
-            // if (w < p->)
+        std::vector<Pattern> new_domain{};
+        for (auto &p : node->domain) {
+            if(p.valid(graph->adjacent_nodes(node)))
+                new_domain.push_back(p);
+        }
+        node->domain = new_domain;
+    }
+
+    /**
+     * @brief Collapse the node to a single value. Performing a weighted random selection if multiple values are available.
+     * 
+     * @param node 
+     */
+    void collapse(Node *node) {
+        assert(node != nullptr);
+        assert(node->domain.size() >= 1);
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        if (node->domain.size() == 1) {
+            node->value = node->domain[0].cell_value;
+            return;
+        } else {
+            // weighted random selection of available domain values
+            std::vector<float> weights{};
+            for (auto &p : node->domain) {
+                weights.push_back(p.cell_value.weight);
+            }
+            std::discrete_distribution<int> dist(weights.begin(), weights.end());
+            node->value = node->domain[dist(gen)].cell_value;
         }
     }
 
