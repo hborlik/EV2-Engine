@@ -78,7 +78,6 @@ public:
     Value() = default;
     explicit Value(int cell_id) : cell_id{cell_id} {}
 
-    float weight = 0.f;
     int cell_id = 0; // cell tile identifier
 };
 
@@ -87,22 +86,16 @@ class Pattern;
 class Node
 {
 public:
-    Node(const std::string &identifier, int node_id) : node_id{node_id}, identifier{identifier} {}
-
-    float entropy() const
-    {
-        float sum = 0;
-        for (auto &p : domain)
-        {
-            // TODO
-        }
-        return sum;
+    Node(const std::string &identifier, int node_id) : node_id{node_id}, identifier{identifier} {
+        assert(node_id > 0);
     }
+
+    float entropy() const;
 
     const int               node_id = -1;
     Value                   value{};
     std::string             identifier = "";
-    std::vector<Pattern>    domain{};      // valid patterns for this node
+    std::vector<Pattern*>   domain{};      // valid patterns for this node
 };
 
 class Graph {
@@ -124,7 +117,7 @@ public:
      * @param b 
      * @return float 
      */
-    virtual float adjacent(Node *a, Node *b) = 0;
+    virtual float adjacent(Node *a, Node *b) const = 0;
 
     /**
      * @brief get adjacent nodes
@@ -132,9 +125,18 @@ public:
      * @param a 
      * @return std::vector<Node*> 
      */
-    virtual std::vector<Node*> adjacent_nodes(Node *a) = 0;
+    virtual std::vector<Node*> adjacent_nodes(Node *a) const = 0;
 
     virtual bool is_directed() const noexcept = 0;
+
+    virtual int get_n_nodes() const noexcept = 0;
+
+    /**
+     * @brief make an unordered map of node ids to boolean flags
+     * 
+     * @return std::unordered_map<int, bool> 
+     */
+    virtual std::unordered_map<int, bool> make_visited_map() const = 0;
 };
 
 class SparseGraph : public Graph
@@ -156,7 +158,7 @@ private:
 
     int next_mat_coord = 0;
     bool m_is_directed = false;
-    std::unordered_map<int, internal_node> node_map{};
+    std::unordered_map<int, internal_node> node_map{}; // node id to internal adjacency
     std::unordered_map<coord, weight> sparse_adjacency_map{};
 
 public:
@@ -193,7 +195,7 @@ public:
         sam.w = v;
     }
 
-    float adjacent(Node *a, Node *b) override {
+    float adjacent(Node *a, Node *b) const override {
         assert(a != nullptr && b != nullptr);
         internal_node *a_i = get_node(a);
         internal_node *b_i = get_node(b);
@@ -215,7 +217,7 @@ public:
         return 0.f;
     }
 
-    std::vector<Node*> adjacent_nodes(Node *a) override {
+    std::vector<Node*> adjacent_nodes(Node *a) const override {
         assert(a != nullptr);
         std::vector<Node*> output{};
         internal_node *a_i = get_node(a);
@@ -228,10 +230,19 @@ public:
 
     bool is_directed() const noexcept override {return m_is_directed;}
 
+    int get_n_nodes() const noexcept override {return node_map.size();}
+
+    std::unordered_map<int, bool> make_visited_map() const override {
+        std::unordered_map<int, bool> out(get_n_nodes());
+        for (const auto& [k, _] : node_map)
+            out.insert({k, false});
+        return out;
+    }
+
 private:
     internal_node* add_node(Node *node);
 
-    internal_node* get_node(Node* node);
+    internal_node* get_node(Node* node) const;
 
     int get_next_mat_coord() noexcept {return next_mat_coord++;}
 
@@ -259,13 +270,15 @@ public:
         if (!m_is_directed && a->node_id < b->node_id)
             std::swap(a, b);
 
-        coord c{a->node_id, b->node_id};
+        int ind_a = check_node_index(a);
+        int ind_b = check_node_index(b);
 
-        if (!m_is_directed && c.x == c.y)
+        int index = ind(ind_a, ind_b);
+
+        if (index < 0)
             return; // no self loops (diagonals)
 
-        int ind = c.to_index(m_n_nodes);
-        m_adjacency_matrix[ind] = v;
+        m_adjacency_matrix[index] = v;
     }
 
     /**
@@ -275,17 +288,17 @@ public:
      * @param b 
      * @return float 
      */
-    float adjacent(Node *a, Node *b) override {
+    float adjacent(Node *a, Node *b) const override {
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
-        if (!m_is_directed && a->node_id < b->node_id)
-            std::swap(a, b);
+        int ind_a = check_node_index(a);
+        int ind_b = check_node_index(b);
 
-        coord c{a->node_id, b->node_id};
+        if (ind_a < 0 || ind_b < 0)
+            return 0.0f; // 
 
-        int ind = c.to_index(m_n_nodes);
-        return m_adjacency_matrix[ind];
+        return m_adjacency_matrix[ind(ind_a, ind_b)];
     }
 
     /**
@@ -294,47 +307,100 @@ public:
      * @param a 
      * @return std::vector<Node*> 
      */
-    std::vector<Node*> adjacent_nodes(Node *a) override {
+    std::vector<Node*> adjacent_nodes(Node *a) const override {
         assert(a != nullptr);
         assert(a->node_id < m_n_nodes);
 
         std::vector<Node*> nodes{};
+        
+        int ind_a = check_node_index(a);
+        if (ind_a < 0)
+            return nodes; // node not in graph
+
         for (int i = 0; i < m_n_nodes; ++i) {
-            if (i == a->node_id)
+            if (i == ind_a)
                 continue;
-            coord c{a->node_id, i};
+            coord c{ind_a, i};
             int ind = c.to_index(m_n_nodes);
             if (m_adjacency_matrix[ind] > 0.f)
-                nodes.push_back(m_nodes[i]);
+                nodes.push_back(m_nodes[i]); // m_nodes indexing follows adjacency matrix
         }
         return nodes;
     }
 
     bool is_directed() const noexcept override {return m_is_directed;}
 
+    int get_n_nodes() const noexcept override {return m_nodes.size();}
+
+    int get_max_node_id() const noexcept {return m_n_nodes;}
+
+    std::unordered_map<int, bool> make_visited_map() const override {
+        std::unordered_map<int, bool> out(get_n_nodes());
+        for (const auto& [k, _] : m_nodeid_to_nodeind)
+            out.insert({k, false});
+        return out;
+    }
+
+    bool bfs(Node *a, Node *b, std::vector<Node*> path) const;
+
 private:
+    int check_node_index(Node* node) {
+        auto itr = m_nodeid_to_nodeind.find(node->node_id);
+        if (itr == m_nodeid_to_nodeind.end()) { // not found, add node and allocate it a row in matrix
+            int ind = m_nodes.size();
+            m_nodes.push_back(node);
+            m_nodeid_to_nodeind.insert({node->node_id, ind});
+            return ind;
+        }
+        return itr->second;
+    }
+
+    int check_node_index(Node* node) const {
+        auto itr = m_nodeid_to_nodeind.find(node->node_id);
+        if (itr == m_nodeid_to_nodeind.end()) { // not found, none
+            return -1;
+        }
+        return itr->second;
+    }
+
+    /**
+     * @brief adjacency matrix indices to array index, returns -1 when self loop in non-directed mode
+     * 
+     * @param ind_a 
+     * @param ind_b 
+     * @return int 
+     */
+    int ind(int ind_a, int ind_b) const noexcept {
+        if (!m_is_directed && ind_a < ind_b)
+            std::swap(ind_a, ind_b);
+
+        coord c{ind_a, ind_b};
+
+        if (!m_is_directed && c.x == c.y)
+            return -1; // no self loops (diagonals)
+
+        return c.to_index(m_n_nodes);
+    }
+
     const int m_n_nodes = 0;
     const bool m_is_directed = false;
     std::vector<float> m_adjacency_matrix{};
-    std::vector<Node*> m_nodes{};
+    std::vector<Node*> m_nodes{}; // m_nodes indexing follows adjacency matrix, m_nodes at i corresponds to row and column i
+    std::unordered_map<int, int> m_nodeid_to_nodeind{};
 };
 
 /**
- * @brief Pattern is a valid configuration of nodes and maintains adjacency
+ * @brief Pattern is a valid configuration of cell values in the generated output
  *
  */
 class Pattern
 {
 public:
-    bool valid(std::vector<Node *> neighborhood) {
-        // TODO matching problem (edges are between required values and neighbors with that value in domain)
-        // map required values one-to-one (perfect matching) with available neighbors
-        // if all satisfied, return true
-        return false;
-    }
+    bool valid(std::vector<Node *> neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};
+    float weight = 0.f; // relative probabilistic weight on this pattern
 };
 
 class WFCSolver
@@ -374,9 +440,9 @@ public:
     void observe(Node *node)
     {
         assert(node != nullptr);
-        std::vector<Pattern> new_domain{};
+        decltype(node->domain) new_domain{};
         for (auto &p : node->domain) {
-            if(p.valid(graph->adjacent_nodes(node)))
+            if(p->valid(graph->adjacent_nodes(node)))
                 new_domain.push_back(p);
         }
         node->domain = new_domain;
@@ -389,20 +455,20 @@ public:
      */
     void collapse(Node *node) {
         assert(node != nullptr);
-        assert(node->domain.size() >= 1);
+        assert(node->domain.size() >= 1); // TODO need to backtrack here, and not crash the program
         static std::random_device rd;
         static std::mt19937 gen(rd());
         if (node->domain.size() == 1) {
-            node->value = node->domain[0].cell_value;
+            node->value = node->domain[0]->cell_value;
             return;
         } else {
             // weighted random selection of available domain values
             std::vector<float> weights{};
             for (auto &p : node->domain) {
-                weights.push_back(p.cell_value.weight);
+                weights.push_back(p->weight);
             }
             std::discrete_distribution<int> dist(weights.begin(), weights.end());
-            node->value = node->domain[dist(gen)].cell_value;
+            node->value = node->domain[dist(gen)]->cell_value;
         }
     }
 
