@@ -133,6 +133,8 @@ public:
      * @return std::vector<Node*> 
      */
     virtual std::vector<Node*> adjacent_nodes(Node *a) = 0;
+
+    virtual bool is_directed() const noexcept = 0;
 };
 
 class SparseGraph : public Graph
@@ -153,29 +155,28 @@ private:
     };
 
     int next_mat_coord = 0;
-    bool is_directed = false;
+    bool m_is_directed = false;
     std::unordered_map<int, internal_node> node_map{};
     std::unordered_map<coord, weight> sparse_adjacency_map{};
 
 public:
 
     SparseGraph() = default;
-    SparseGraph(bool is_directed) : is_directed{is_directed} {}
+    SparseGraph(bool is_directed) : m_is_directed{is_directed} {}
 
     void add_edge(Node *a, Node *b, float v) override
     {
         assert(a != nullptr && b != nullptr);
-        assert(a != b);
         internal_node *a_i = add_node(a);
         internal_node *b_i = add_node(b);
 
         // enforce populating only the upper triangular matrix
-        if (!is_directed && a_i->mat_coord > b_i->mat_coord)
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
             std::swap(a_i, b_i);
 
         // build adjacency information
         a_i->adjacent_nodes.push_back(b);
-        if (!is_directed)
+        if (!m_is_directed)
             b_i->adjacent_nodes.push_back(a);
 
         coord c{a_i->mat_coord, b_i->mat_coord};
@@ -183,7 +184,7 @@ public:
         if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
             return; // already added
         
-        if (c.x == c.y)
+        if (!m_is_directed && c.x == c.y)
             return; // no self loops (diagonals)
 
         auto& sam = sparse_adjacency_map[c];
@@ -194,25 +195,38 @@ public:
 
     float adjacent(Node *a, Node *b) override {
         assert(a != nullptr && b != nullptr);
-        assert(a != b);
         internal_node *a_i = get_node(a);
         internal_node *b_i = get_node(b);
 
         if (a_i == nullptr || b_i == nullptr)
             return 0.f;
 
-        if (a_i->mat_coord > b_i->mat_coord)
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
             std::swap(a_i, b_i);
 
         coord c{a_i->mat_coord, b_i->mat_coord};
 
-        assert(c.x != c.y); // sanity check, no diagonals
+        if (!m_is_directed && c.x == c.y)
+            return 0.f; // no self loops (diagonals)
 
         auto itr = sparse_adjacency_map.find(c);
         if (itr != sparse_adjacency_map.end())
             return itr->second.w;
         return 0.f;
     }
+
+    std::vector<Node*> adjacent_nodes(Node *a) override {
+        assert(a != nullptr);
+        std::vector<Node*> output{};
+        internal_node *a_i = get_node(a);
+
+        if (a_i == nullptr)
+            return output;
+
+        return a_i->adjacent_nodes;
+    }
+
+    bool is_directed() const noexcept override {return m_is_directed;}
 
 private:
     internal_node* add_node(Node *node);
@@ -227,9 +241,9 @@ private:
  * @brief Dense Graph
  * 
  */
-class DirectedDenseGraph : public Graph {
+class DenseGraph : public Graph {
 public:
-    DirectedDenseGraph(int n_nodes) : m_n_nodes{n_nodes}, m_adjacency_matrix(n_nodes*n_nodes) {}
+    DenseGraph(int n_nodes, bool directed = false) : m_is_directed{directed}, m_n_nodes{n_nodes}, m_adjacency_matrix(n_nodes*n_nodes) {}
 
     /**
      * @brief A to B
@@ -240,10 +254,15 @@ public:
      */
     void add_edge(Node *a, Node *b, float v) override {
         assert(a != nullptr && b != nullptr);
-        assert(a != b);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
+        if (!m_is_directed && a->node_id < b->node_id)
+            std::swap(a, b);
+
         coord c{a->node_id, b->node_id};
+
+        if (!m_is_directed && c.x == c.y)
+            return; // no self loops (diagonals)
 
         int ind = c.to_index(m_n_nodes);
         m_adjacency_matrix[ind] = v;
@@ -258,8 +277,10 @@ public:
      */
     float adjacent(Node *a, Node *b) override {
         assert(a != nullptr && b != nullptr);
-        assert(a != b);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
+
+        if (!m_is_directed && a->node_id < b->node_id)
+            std::swap(a, b);
 
         coord c{a->node_id, b->node_id};
 
@@ -267,9 +288,35 @@ public:
         return m_adjacency_matrix[ind];
     }
 
+    /**
+     * @brief get adjacent nodes
+     * 
+     * @param a 
+     * @return std::vector<Node*> 
+     */
+    std::vector<Node*> adjacent_nodes(Node *a) override {
+        assert(a != nullptr);
+        assert(a->node_id < m_n_nodes);
+
+        std::vector<Node*> nodes{};
+        for (int i = 0; i < m_n_nodes; ++i) {
+            if (i == a->node_id)
+                continue;
+            coord c{a->node_id, i};
+            int ind = c.to_index(m_n_nodes);
+            if (m_adjacency_matrix[ind] > 0.f)
+                nodes.push_back(m_nodes[i]);
+        }
+        return nodes;
+    }
+
+    bool is_directed() const noexcept override {return m_is_directed;}
+
 private:
     const int m_n_nodes = 0;
+    const bool m_is_directed = false;
     std::vector<float> m_adjacency_matrix{};
+    std::vector<Node*> m_nodes{};
 };
 
 /**
