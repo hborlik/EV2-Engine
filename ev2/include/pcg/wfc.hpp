@@ -197,8 +197,8 @@ public:
 
     float adjacent(Node *a, Node *b) const override {
         assert(a != nullptr && b != nullptr);
-        internal_node *a_i = get_node(a);
-        internal_node *b_i = get_node(b);
+        const internal_node *a_i = get_node(a);
+        const internal_node *b_i = get_node(b);
 
         if (a_i == nullptr || b_i == nullptr)
             return 0.f;
@@ -220,7 +220,7 @@ public:
     std::vector<Node*> adjacent_nodes(Node *a) const override {
         assert(a != nullptr);
         std::vector<Node*> output{};
-        internal_node *a_i = get_node(a);
+        const internal_node *a_i = get_node(a);
 
         if (a_i == nullptr)
             return output;
@@ -242,7 +242,7 @@ public:
 private:
     internal_node* add_node(Node *node);
 
-    internal_node* get_node(Node* node) const;
+    const internal_node* get_node(Node* node) const;
 
     int get_next_mat_coord() noexcept {return next_mat_coord++;}
 

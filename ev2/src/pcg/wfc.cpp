@@ -22,9 +22,9 @@ SparseGraph::internal_node* SparseGraph::add_node(Node *node)
     return i_node;
 }
 
-SparseGraph::internal_node* SparseGraph::get_node(Node *node) const 
+const SparseGraph::internal_node* SparseGraph::get_node(Node *node) const 
 {
-    internal_node *i_node = nullptr;
+    const internal_node *i_node = nullptr;
     if (node) {
         auto itr = node_map.find(node->node_id);
         if (itr != node_map.end())
@@ -82,10 +82,10 @@ bool Pattern::valid(std::vector<Node *> neighborhood) const {
     // matching problem (edges are between required values and neighbors with that value in domain)
     // map required values one-to-one (perfect matching) with available neighbors
     // if all requirements are satisfied, return true
-    DenseGraph d{neighborhood.size() + required_values.size() + 2};
+    DenseGraph d{(int)neighborhood.size() + (int)required_values.size() + 2};
 
-    auto source = std::make_unique<Node>();
-    auto sink = std::make_unique<Node>();
+    auto source = std::make_unique<Node>("source", 1000);
+    auto sink = std::make_unique<Node>("sink", 1001);
 
     // construct flow graph
 
