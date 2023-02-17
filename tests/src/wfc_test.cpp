@@ -8,6 +8,7 @@ using namespace std;
 using namespace wfc;
 
 void sparse_test_empty() {
+    std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
     SparseGraph s{};
 
@@ -19,6 +20,7 @@ void sparse_test_empty() {
 
 
 void dense_test_empty() {
+    std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
     DenseGraph s{100};
 
@@ -50,12 +52,14 @@ void adjacent_abc(Graph* s) {
 }
 
 void sparse_test_add() {
+    std::cout << __FUNCTION__ << std::endl;
     SparseGraph s{};
 
     adjacent_abc(&s);
 }
 
 void dense_test_add() {
+    std::cout << __FUNCTION__ << std::endl;
     DenseGraph s{4};
 
     adjacent_abc(&s);
@@ -89,15 +93,210 @@ void directed_adjacent_abc(Graph* s) {
 }
 
 void sparse_directed_add() {
+    std::cout << __FUNCTION__ << std::endl;
     SparseGraph s{true};
 
     directed_adjacent_abc(&s);
 }
 
 void dense_directed_add() {
+    std::cout << __FUNCTION__ << std::endl;
     DenseGraph d{4, true};
 
     directed_adjacent_abc(&d);
+}
+
+void dense_bfs_no_soln() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10};
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+
+    std::vector<Node *> path;
+    assert(g.bfs(a, b, path) == false);
+}
+
+void dense_bfs_no_soln_directional() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, true};
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+
+    g.add_edge(b, a, 1.f);
+    g.add_edge(a, c, 1.f);
+    g.add_edge(b, c, 1.f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(a, b, path) == false);
+}
+
+void dense_bfs_soln_directional0() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, true};
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+
+    g.add_edge(a, b, 1.f);
+    g.add_edge(b, c, 1.f);
+    g.add_edge(c, a, 1.f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(a, c, path) == true);
+    assert(path.size() == 3);
+
+    std::vector<Node *> path_correct {
+        a, b, c
+    };
+    assert(path_correct == path);
+}
+
+void dense_bfs_soln_directional1() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, true};
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<Node> n_d = make_unique<Node>("D", 4);
+    unique_ptr<Node> n_e = make_unique<Node>("E", 5);
+    unique_ptr<Node> n_f = make_unique<Node>("F", 6);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+    Node *d = n_d.get();
+    Node *e = n_e.get();
+    Node *f = n_f.get();
+
+    g.add_edge(a, b, 1.f);
+    g.add_edge(b, c, 1.f);
+    g.add_edge(c, a, 1.f);
+
+    g.add_edge(a, d, 1.f);
+    g.add_edge(d, e, 1.f);
+    g.add_edge(e, f, 1.f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(a, c, path) == true);
+    assert(path.size() == 3);
+
+    std::vector<Node *> path_correct {
+        a, b, c
+    };
+    assert(path_correct == path);
+}
+
+void dense_bfs_soln_0() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, false};
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+
+    g.add_edge(a, b, 1.f);
+    g.add_edge(b, c, 1.f);
+    g.add_edge(c, a, 1.f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(a, c, path) == true);
+    assert(path.size() == 2);
+
+    std::vector<Node *> path_correct {
+        a, c
+    };
+    assert(path_correct == path);
+}
+
+void dense_flow_soln_directional0() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, true};
+
+    unique_ptr<Node> n_s = make_unique<Node>("source", 1);
+    unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
+    unique_ptr<Node> n_a = make_unique<Node>("A", 3);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 4);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 5);
+    unique_ptr<Node> n_d = make_unique<Node>("D", 6);
+
+    Node *s = n_s.get();
+    Node *t = n_t.get();
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+    Node *d = n_d.get();
+
+    g.add_edge(s, a, 1.f);
+    g.add_edge(a, b, 1.f);
+    g.add_edge(b, c, 0.9f);
+    g.add_edge(c, d, 1.f);
+    g.add_edge(d, t, 1.f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(s, t, path) == true);
+
+    float max_flow = ford_fulkerson(g, s, t, &g);
+    assert(max_flow == 0.9f);
+}
+
+void dense_flow_soln_directional1() {
+    std::cout << __FUNCTION__ << std::endl;
+    DenseGraph g{10, true};
+    DenseGraph r{10, true};
+
+    unique_ptr<Node> n_s = make_unique<Node>("source", 1);
+    unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
+    unique_ptr<Node> n_a = make_unique<Node>("A", 3);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 4);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 5);
+    unique_ptr<Node> n_d = make_unique<Node>("D", 6);
+
+    Node *s = n_s.get();
+    Node *t = n_t.get();
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+    Node *d = n_d.get();
+
+    g.add_edge(s, a, 1.f);
+    g.add_edge(s, b, 1.f);
+    g.add_edge(s, c, 1.f);
+    g.add_edge(s, d, 1.f);
+
+    g.add_edge(a, t, 1.1f);
+    g.add_edge(b, t, 1.1f);
+    g.add_edge(c, t, 1.1f);
+    g.add_edge(d, t, 1.1f);
+
+    std::vector<Node *> path;
+    assert(g.bfs(s, t, path) == true);
+
+    float max_flow = ford_fulkerson(g, s, t, &r);
+    assert(max_flow == 4.f);
+
+    std::cout << r << std::endl;
 }
 
 int main() {
@@ -108,6 +307,17 @@ int main() {
     dense_test_empty();
     dense_test_add();
     dense_directed_add();
+
+    // bfs tests
+    dense_bfs_no_soln();
+    dense_bfs_no_soln_directional();
+    dense_bfs_soln_directional0();
+    dense_bfs_soln_directional1();
+    dense_bfs_soln_0();
+
+    // ford_fulkerson algo tests
+    dense_flow_soln_directional0();
+    dense_flow_soln_directional1();
 
     cout << "Done" << endl;
 

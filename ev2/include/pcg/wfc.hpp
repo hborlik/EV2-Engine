@@ -47,12 +47,29 @@ struct coord {
     }
 };
 
-}
+class Value
+{
+public:
+    Value() = default;
+    explicit Value(int cell_id) : cell_id{cell_id} {}
+
+    int cell_id = 0; // cell tile identifier
+
+private:
+
+    friend bool operator==(const Value& a, const Value& b) noexcept {
+        return a.cell_id == b.cell_id;
+    }
+};
+
+} // namespace wfc
+
+namespace std {
 
 template<>
-struct std::hash<wfc::coord>
+struct hash<wfc::coord>
 {
-    std::size_t operator()(const wfc::coord& k) const
+    size_t operator()(const wfc::coord& k) const
     {
         // from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
         using std::size_t;
@@ -69,17 +86,21 @@ struct std::hash<wfc::coord>
     }
 };
 
+template<>
+struct hash<wfc::Value>
+{
+    size_t operator()(const wfc::Value& k) const
+    {
+        using std::hash;
+
+        return hash<int>()(k.cell_id);
+    }
+};
+
+} // namespace std
+
 namespace wfc
 {
-
-class Value
-{
-public:
-    Value() = default;
-    explicit Value(int cell_id) : cell_id{cell_id} {}
-
-    int cell_id = 0; // cell tile identifier
-};
 
 class Pattern;
 
@@ -254,7 +275,13 @@ private:
  */
 class DenseGraph : public Graph {
 public:
-    DenseGraph(int n_nodes, bool directed = false) : m_is_directed{directed}, m_n_nodes{n_nodes}, m_adjacency_matrix(n_nodes*n_nodes) {}
+    explicit DenseGraph(int n_nodes, bool directed = false) : m_is_directed{directed}, m_n_nodes{n_nodes}, m_adjacency_matrix(n_nodes*n_nodes) {}
+
+    DenseGraph(const DenseGraph&) = default;
+    DenseGraph(DenseGraph&&) = default;
+
+    DenseGraph& operator=(const DenseGraph&) = default;
+    DenseGraph& operator=(DenseGraph&&) = default;
 
     /**
      * @brief A to B
@@ -292,13 +319,27 @@ public:
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
-        int ind_a = check_node_index(a);
-        int ind_b = check_node_index(b);
+        int ind_a = get_node_index(a);
+        int ind_b = get_node_index(b);
 
         if (ind_a < 0 || ind_b < 0)
             return 0.0f; // 
 
         return m_adjacency_matrix[ind(ind_a, ind_b)];
+    }
+
+    float adjacent(int a_ind, int b_ind) const {
+        assert(a_ind >= 0 && b_ind >= 0);
+        assert(a_ind < m_n_nodes && b_ind < m_n_nodes);
+
+        return m_adjacency_matrix[ind(a_ind, b_ind)];
+    }
+
+    float& adjacent(int a_ind, int b_ind) {
+        assert(a_ind >= 0 && b_ind >= 0);
+        assert(a_ind < m_nodes.size() && b_ind < m_nodes.size()); // node should already be in graph
+
+        return m_adjacency_matrix[ind(a_ind, b_ind)];
     }
 
     /**
@@ -313,7 +354,7 @@ public:
 
         std::vector<Node*> nodes{};
         
-        int ind_a = check_node_index(a);
+        int ind_a = get_node_index(a);
         if (ind_a < 0)
             return nodes; // node not in graph
 
@@ -332,7 +373,23 @@ public:
 
     int get_n_nodes() const noexcept override {return m_nodes.size();}
 
+    const auto& get_nodes() const noexcept {return m_nodes;}
+
     int get_max_node_id() const noexcept {return m_n_nodes;}
+
+    /**
+     * @brief Get the internal index for a node in the adjacency matrix
+     * 
+     * @param node 
+     * @return int 
+     */
+    int get_node_index(const Node* node) const {
+        auto itr = m_nodeid_to_nodeind.find(node->node_id);
+        if (itr == m_nodeid_to_nodeind.end()) { // not found, none
+            return -1;
+        }
+        return itr->second;
+    }
 
     std::unordered_map<int, bool> make_visited_map() const override {
         std::unordered_map<int, bool> out(get_n_nodes());
@@ -341,7 +398,27 @@ public:
         return out;
     }
 
-    bool bfs(Node *a, Node *b, std::vector<Node*> path) const;
+    /**
+     * @brief Attempt to find b starting from a through a BFS
+     * 
+     * @param a 
+     * @param b 
+     * @param path Path array of nodes from a to b if found
+     * @return true path found
+     * @return false 
+     */
+    bool bfs(const Node *a, const Node *b, std::vector<Node*>& path) const;
+
+    /**
+     * @brief 
+     * 
+     * @param a 
+     * @param b 
+     * @param parent parent index of all visited nodes in the graph
+     * @return true path found
+     * @return false 
+     */
+    bool bfs(int a_ind, int b_ind, std::vector<int>& parent) const;
 
 private:
     int check_node_index(Node* node) {
@@ -351,14 +428,6 @@ private:
             m_nodes.push_back(node);
             m_nodeid_to_nodeind.insert({node->node_id, ind});
             return ind;
-        }
-        return itr->second;
-    }
-
-    int check_node_index(Node* node) const {
-        auto itr = m_nodeid_to_nodeind.find(node->node_id);
-        if (itr == m_nodeid_to_nodeind.end()) { // not found, none
-            return -1;
         }
         return itr->second;
     }
@@ -382,12 +451,25 @@ private:
         return c.to_index(m_n_nodes);
     }
 
-    const int m_n_nodes = 0;
-    const bool m_is_directed = false;
+    friend std::ostream& operator<< (std::ostream &out, const DenseGraph &graph);
+
+    int m_n_nodes = 0;
+    bool m_is_directed = false;
     std::vector<float> m_adjacency_matrix{};
     std::vector<Node*> m_nodes{}; // m_nodes indexing follows adjacency matrix, m_nodes at i corresponds to row and column i
     std::unordered_map<int, int> m_nodeid_to_nodeind{};
 };
+
+/**
+ * @brief return maximum flow through graph from source to sink
+ * 
+ * @param dg dense graph of flow capacities
+ * @param source source node
+ * @param sink sink node
+ * @param residual_graph optional flow output
+ * @return int max flow
+ */
+float ford_fulkerson(const DenseGraph& dg, const Node *source, const Node *sink, DenseGraph* residual_graph);
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output
@@ -396,7 +478,7 @@ private:
 class Pattern
 {
 public:
-    bool valid(std::vector<Node *> neighborhood) const;
+    bool valid(const std::vector<Node *>& neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};
