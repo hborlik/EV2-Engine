@@ -672,7 +672,7 @@ MSIID Renderer::create_mesh_instance() {
 void Renderer::set_mesh_instance_mesh(MSIID msiid, RenderObj* render_object) {
     if (!(msiid.is_valid() || render_object))
         return;
-    auto msi = render_object;
+
     auto mesh_instance = mesh_instances.find(msiid.v);
     if (mesh_instance != mesh_instances.end())
         mesh_instance->second.mesh = render_object;

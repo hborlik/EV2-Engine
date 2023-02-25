@@ -71,9 +71,10 @@ public:
           std::vector<float> vb) : name{name},
                                    draw_objects{std::move(draw_objects)},
                                    materials{std::move(materials)},
+                                   buffer{std::move(vb)},
                                    bmin{bmin},
-                                   bmax{bmax},
-                                   buffer{std::move(vb)} {}
+                                   bmax{bmax}
+                                   {}
 
     std::string             name;
     std::vector<DrawObject> draw_objects;

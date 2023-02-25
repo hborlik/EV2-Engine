@@ -299,6 +299,36 @@ void dense_flow_soln_directional1() {
     std::cout << r << std::endl;
 }
 
+void test_pattern_validity0() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    // values
+    Value v0{3};
+    Value v1{30};
+    Value v2{6};
+    Value v3{60};
+    Value v4{7};
+    Value v5{70};
+
+    Pattern p{};
+    p.required_values.push_back(v0);
+    p.required_values.push_back(v1);
+
+    unique_ptr<Node> n_a = make_unique<Node>("A", 10);
+    unique_ptr<Node> n_b = make_unique<Node>("B", 20);
+    unique_ptr<Node> n_c = make_unique<Node>("C", 30);
+    unique_ptr<Node> n_d = make_unique<Node>("D", 40);
+
+    Node *a = n_a.get();
+    Node *b = n_b.get();
+    Node *c = n_c.get();
+    Node *d = n_d.get();
+
+    a->domain.push_back(); // TODO
+
+    std::vector<Node*> neighborhood{a, b, c, d};
+}
+
 int main() {
     sparse_test_empty();
     sparse_test_add();

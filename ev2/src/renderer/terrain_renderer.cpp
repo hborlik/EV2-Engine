@@ -462,7 +462,7 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
     ConfigureTerrainProgram(state, djp->getHandle(), uniformOffset, matid);
 
     assert(glGetError() == GL_NO_ERROR);
-    return std::move(djp); 
+    return djp;
 }
 
 bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre, GLuint matid)
@@ -1332,7 +1332,6 @@ float TerrainRenderer::height_query(float x, float y) const {
 
     int width = m_heightmap->width();
     int height = m_heightmap->height();
-    int bytes_per_pixel = m_heightmap->bytes_per_pixel();
 
     float fx = terrain_pos.x * width - 0.5f;
     float fy = terrain_pos.y * height - 0.5f;

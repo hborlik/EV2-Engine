@@ -158,7 +158,7 @@ struct MeshPrimitive {
 
 private:
     friend class Renderer;
-    friend class RenderObj;
+    friend struct RenderObj;
     GLuint gl_vao = 0;
 };
 

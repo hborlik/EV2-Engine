@@ -131,7 +131,7 @@ void SceneEditor::show_node_editor_widget(Node* node) {
     if (!node)
         return;
     std::string uuid_text = "UUID: " + node->uuid;
-    ImGui::Text(uuid_text.c_str());
+    ImGui::Text("%s", uuid_text.c_str());
     ImGui::Separator();
     ImGui::Text("Transform");
     show_transform_editor(&node->transform);
@@ -166,7 +166,7 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     if (test_drag_and_drop && ImGui::BeginDragDropSource())
     {
         ImGui::SetDragDropPayload("SCENE_TREENODE", &node, sizeof(node));
-        ImGui::Text(node_name.c_str());
+        ImGui::Text("%s", node_name.c_str());
         ImGui::EndDragDropSource();
     }
     

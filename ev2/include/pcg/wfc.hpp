@@ -14,6 +14,7 @@
 #include <string>
 #include <algorithm>
 #include <unordered_map>
+#include <set>
 
 #include <assert.h>
 
@@ -26,19 +27,19 @@ struct coord {
 
     /**
      * @brief enable use in maps
-     * 
-     * @param other 
-     * @return true 
-     * @return false 
+     *
+     * @param other
+     * @return true
+     * @return false
      */
-    bool operator<(const coord &other) const {
+    bool operator<(const coord& other) const {
         if (x < other.x) return true;
         if (x > other.x) return false;
         if (y < other.y) return true;
         return y > other.y;
     }
 
-    bool operator==(const coord &other) const noexcept {
+    bool operator==(const coord& other) const noexcept {
         return x == other.x && y == other.y;
     }
 
@@ -51,7 +52,7 @@ class Value
 {
 public:
     Value() = default;
-    explicit Value(int cell_id) : cell_id{cell_id} {}
+    explicit Value(int cell_id): cell_id{ cell_id } {}
 
     int cell_id = 0; // cell tile identifier
 
@@ -69,8 +70,7 @@ namespace std {
 template<>
 struct hash<wfc::coord>
 {
-    size_t operator()(const wfc::coord& k) const
-    {
+    size_t operator()(const wfc::coord& k) const {
         // from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
         using std::size_t;
         using std::hash;
@@ -81,16 +81,15 @@ struct hash<wfc::coord>
         // and bit shifting:
 
         return ((hash<int>()(k.x)
-                ^ (hash<int>()(k.y) << 1)) >> 1);
-                // ^ (hash<int>()(k.third) << 1);
+            ^ (hash<int>()(k.y) << 1)) >> 1);
+        // ^ (hash<int>()(k.third) << 1);
     }
 };
 
 template<>
 struct hash<wfc::Value>
 {
-    size_t operator()(const wfc::Value& k) const
-    {
+    size_t operator()(const wfc::Value& k) const {
         using std::hash;
 
         return hash<int>()(k.cell_id);
@@ -99,23 +98,33 @@ struct hash<wfc::Value>
 
 } // namespace std
 
-namespace wfc
-{
+namespace wfc {
 
 class Pattern;
 
-class Node
-{
+class Node {
 public:
-    Node(const std::string &identifier, int node_id) : node_id{node_id}, identifier{identifier} {
+    Node(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
         assert(node_id > 0);
     }
 
-    float entropy() const;
+    virtual ~Node() = default;
 
     const int               node_id = -1;
     Value                   value{};
     std::string             identifier = "";
+};
+
+/**
+ * @brief Domain Node used in WFC for tracking valid domain on a cell
+ * 
+ */
+class DNode : public Node {
+public:
+    DNode(const std::string& identifier, int node_id) : Node{identifier, node_id} {}
+
+    float entropy() const;
+    
     std::vector<Pattern*>   domain{};      // valid patterns for this node
 };
 
@@ -125,28 +134,28 @@ public:
 
     /**
      * @brief add edge
-     * 
-     * @param a 
-     * @param b 
+     *
+     * @param a
+     * @param b
      */
-    virtual void add_edge(Node *a, Node *b, float v) = 0;
+    virtual void add_edge(Node* a, Node* b, float v) = 0;
 
     /**
      * @brief check if nodes are adjacent, returns 0.f if not
-     * 
-     * @param a 
-     * @param b 
-     * @return float 
+     *
+     * @param a
+     * @param b
+     * @return float
      */
-    virtual float adjacent(Node *a, Node *b) const = 0;
+    virtual float adjacent(Node* a, Node* b) const = 0;
 
     /**
      * @brief get adjacent nodes
-     * 
-     * @param a 
-     * @return std::vector<Node*> 
+     *
+     * @param a
+     * @return std::vector<Node*>
      */
-    virtual std::vector<Node*> adjacent_nodes(Node *a) const = 0;
+    virtual std::vector<Node*> adjacent_nodes(Node* a) const = 0;
 
     virtual bool is_directed() const noexcept = 0;
 
@@ -154,13 +163,13 @@ public:
 
     /**
      * @brief make an unordered map of node ids to boolean flags
-     * 
-     * @return std::unordered_map<int, bool> 
+     *
+     * @return std::unordered_map<int, bool>
      */
     virtual std::unordered_map<int, bool> make_visited_map() const = 0;
 };
 
-class SparseGraph : public Graph
+class SparseGraph: public Graph
 {
 private:
 
@@ -185,13 +194,12 @@ private:
 public:
 
     SparseGraph() = default;
-    SparseGraph(bool is_directed) : m_is_directed{is_directed} {}
+    SparseGraph(bool is_directed): m_is_directed{ is_directed } {}
 
-    void add_edge(Node *a, Node *b, float v) override
-    {
+    void add_edge(Node* a, Node* b, float v) override {
         assert(a != nullptr && b != nullptr);
-        internal_node *a_i = add_node(a);
-        internal_node *b_i = add_node(b);
+        internal_node* a_i = add_node(a);
+        internal_node* b_i = add_node(b);
 
         // enforce populating only the upper triangular matrix
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
@@ -202,11 +210,11 @@ public:
         if (!m_is_directed)
             b_i->adjacent_nodes.push_back(a);
 
-        coord c{a_i->mat_coord, b_i->mat_coord};
+        coord c{ a_i->mat_coord, b_i->mat_coord };
 
         if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
             return; // already added
-        
+
         if (!m_is_directed && c.x == c.y)
             return; // no self loops (diagonals)
 
@@ -216,10 +224,10 @@ public:
         sam.w = v;
     }
 
-    float adjacent(Node *a, Node *b) const override {
+    float adjacent(Node* a, Node* b) const override {
         assert(a != nullptr && b != nullptr);
-        const internal_node *a_i = get_node(a);
-        const internal_node *b_i = get_node(b);
+        const internal_node* a_i = get_node(a);
+        const internal_node* b_i = get_node(b);
 
         if (a_i == nullptr || b_i == nullptr)
             return 0.f;
@@ -227,7 +235,7 @@ public:
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
             std::swap(a_i, b_i);
 
-        coord c{a_i->mat_coord, b_i->mat_coord};
+        coord c{ a_i->mat_coord, b_i->mat_coord };
 
         if (!m_is_directed && c.x == c.y)
             return 0.f; // no self loops (diagonals)
@@ -238,10 +246,10 @@ public:
         return 0.f;
     }
 
-    std::vector<Node*> adjacent_nodes(Node *a) const override {
+    std::vector<Node*> adjacent_nodes(Node* a) const override {
         assert(a != nullptr);
         std::vector<Node*> output{};
-        const internal_node *a_i = get_node(a);
+        const internal_node* a_i = get_node(a);
 
         if (a_i == nullptr)
             return output;
@@ -249,33 +257,33 @@ public:
         return a_i->adjacent_nodes;
     }
 
-    bool is_directed() const noexcept override {return m_is_directed;}
+    bool is_directed() const noexcept override { return m_is_directed; }
 
-    int get_n_nodes() const noexcept override {return node_map.size();}
+    int get_n_nodes() const noexcept override { return node_map.size(); }
 
     std::unordered_map<int, bool> make_visited_map() const override {
         std::unordered_map<int, bool> out(get_n_nodes());
         for (const auto& [k, _] : node_map)
-            out.insert({k, false});
+            out.insert({ k, false });
         return out;
     }
 
 private:
-    internal_node* add_node(Node *node);
+    internal_node* add_node(Node* node);
 
     const internal_node* get_node(Node* node) const;
 
-    int get_next_mat_coord() noexcept {return next_mat_coord++;}
+    int get_next_mat_coord() noexcept { return next_mat_coord++; }
 
 };
 
 /**
  * @brief Dense Graph
- * 
+ *
  */
-class DenseGraph : public Graph {
+class DenseGraph: public Graph {
 public:
-    explicit DenseGraph(int n_nodes, bool directed = false) : m_is_directed{directed}, m_n_nodes{n_nodes}, m_adjacency_matrix(n_nodes*n_nodes) {}
+    explicit DenseGraph(int n_nodes, bool directed = false): m_n_nodes{ n_nodes }, m_is_directed{ directed }, m_adjacency_matrix(n_nodes* n_nodes) {}
 
     DenseGraph(const DenseGraph&) = default;
     DenseGraph(DenseGraph&&) = default;
@@ -285,12 +293,12 @@ public:
 
     /**
      * @brief A to B
-     * 
-     * @param a 
-     * @param b 
-     * @param v 
+     *
+     * @param a
+     * @param b
+     * @param v
      */
-    void add_edge(Node *a, Node *b, float v) override {
+    void add_edge(Node* a, Node* b, float v) override {
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
@@ -310,12 +318,12 @@ public:
 
     /**
      * @brief A to B
-     * 
-     * @param a 
-     * @param b 
-     * @return float 
+     *
+     * @param a
+     * @param b
+     * @return float
      */
-    float adjacent(Node *a, Node *b) const override {
+    float adjacent(Node* a, Node* b) const override {
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
@@ -344,16 +352,16 @@ public:
 
     /**
      * @brief get adjacent nodes
-     * 
-     * @param a 
-     * @return std::vector<Node*> 
+     *
+     * @param a
+     * @return std::vector<Node*>
      */
-    std::vector<Node*> adjacent_nodes(Node *a) const override {
+    std::vector<Node*> adjacent_nodes(Node* a) const override {
         assert(a != nullptr);
         assert(a->node_id < m_n_nodes);
 
         std::vector<Node*> nodes{};
-        
+
         int ind_a = get_node_index(a);
         if (ind_a < 0)
             return nodes; // node not in graph
@@ -361,7 +369,7 @@ public:
         for (int i = 0; i < m_n_nodes; ++i) {
             if (i == ind_a)
                 continue;
-            coord c{ind_a, i};
+            coord c{ ind_a, i };
             int ind = c.to_index(m_n_nodes);
             if (m_adjacency_matrix[ind] > 0.f)
                 nodes.push_back(m_nodes[i]); // m_nodes indexing follows adjacency matrix
@@ -369,19 +377,19 @@ public:
         return nodes;
     }
 
-    bool is_directed() const noexcept override {return m_is_directed;}
+    bool is_directed() const noexcept override { return m_is_directed; }
 
-    int get_n_nodes() const noexcept override {return m_nodes.size();}
+    int get_n_nodes() const noexcept override { return m_nodes.size(); }
 
-    const auto& get_nodes() const noexcept {return m_nodes;}
+    const auto& get_nodes() const noexcept { return m_nodes; }
 
-    int get_max_node_id() const noexcept {return m_n_nodes;}
+    int get_max_node_id() const noexcept { return m_n_nodes; }
 
     /**
      * @brief Get the internal index for a node in the adjacency matrix
-     * 
-     * @param node 
-     * @return int 
+     *
+     * @param node
+     * @return int
      */
     int get_node_index(const Node* node) const {
         auto itr = m_nodeid_to_nodeind.find(node->node_id);
@@ -394,29 +402,29 @@ public:
     std::unordered_map<int, bool> make_visited_map() const override {
         std::unordered_map<int, bool> out(get_n_nodes());
         for (const auto& [k, _] : m_nodeid_to_nodeind)
-            out.insert({k, false});
+            out.insert({ k, false });
         return out;
     }
 
     /**
      * @brief Attempt to find b starting from a through a BFS
-     * 
-     * @param a 
-     * @param b 
+     *
+     * @param a
+     * @param b
      * @param path Path array of nodes from a to b if found
      * @return true path found
-     * @return false 
+     * @return false
      */
-    bool bfs(const Node *a, const Node *b, std::vector<Node*>& path) const;
+    bool bfs(const Node* a, const Node* b, std::vector<Node*>& path) const;
 
     /**
-     * @brief 
-     * 
-     * @param a 
-     * @param b 
+     * @brief
+     *
+     * @param a
+     * @param b
      * @param parent parent index of all visited nodes in the graph
      * @return true path found
-     * @return false 
+     * @return false
      */
     bool bfs(int a_ind, int b_ind, std::vector<int>& parent) const;
 
@@ -426,7 +434,7 @@ private:
         if (itr == m_nodeid_to_nodeind.end()) { // not found, add node and allocate it a row in matrix
             int ind = m_nodes.size();
             m_nodes.push_back(node);
-            m_nodeid_to_nodeind.insert({node->node_id, ind});
+            m_nodeid_to_nodeind.insert({ node->node_id, ind });
             return ind;
         }
         return itr->second;
@@ -434,16 +442,16 @@ private:
 
     /**
      * @brief adjacency matrix indices to array index, returns -1 when self loop in non-directed mode
-     * 
-     * @param ind_a 
-     * @param ind_b 
-     * @return int 
+     *
+     * @param ind_a
+     * @param ind_b
+     * @return int
      */
     int ind(int ind_a, int ind_b) const noexcept {
         if (!m_is_directed && ind_a < ind_b)
             std::swap(ind_a, ind_b);
 
-        coord c{ind_a, ind_b};
+        coord c{ ind_a, ind_b };
 
         if (!m_is_directed && c.x == c.y)
             return -1; // no self loops (diagonals)
@@ -451,7 +459,7 @@ private:
         return c.to_index(m_n_nodes);
     }
 
-    friend std::ostream& operator<< (std::ostream &out, const DenseGraph &graph);
+    friend std::ostream& operator<< (std::ostream& out, const DenseGraph& graph);
 
     int m_n_nodes = 0;
     bool m_is_directed = false;
@@ -462,14 +470,14 @@ private:
 
 /**
  * @brief return maximum flow through graph from source to sink
- * 
- * @param dg dense graph of flow capacities
- * @param source source node
- * @param sink sink node
- * @param residual_graph optional flow output
+ *
+ * @param dg            dense graph of flow capacities
+ * @param source        source node
+ * @param sink          sink node
+ * @param residual_graph optional flow output, can be the same as dg
  * @return int max flow
  */
-float ford_fulkerson(const DenseGraph& dg, const Node *source, const Node *sink, DenseGraph* residual_graph);
+float ford_fulkerson(const DenseGraph& dg, const Node* source, const Node* sink, DenseGraph* residual_graph);
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output
@@ -478,7 +486,7 @@ float ford_fulkerson(const DenseGraph& dg, const Node *source, const Node *sink,
 class Pattern
 {
 public:
-    bool valid(const std::vector<Node *>& neighborhood) const;
+    bool valid(const std::vector<DNode*>& neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};
@@ -488,26 +496,24 @@ public:
 class WFCSolver
 {
 public:
-    WFCSolver(Graph *graph, std::vector<Pattern> patterns) : graph{graph}, patterns{patterns} {
+    WFCSolver(Graph* graph, std::vector<Pattern> patterns): graph{ graph }, patterns{ patterns } {
         assert(graph != nullptr);
     }
 
     /**
-     * @brief Propogate the wave function collapse algorithm
-     * 
-     * @param node 
+     * @brief Propagate the wave function collapse algorithm
+     *
+     * @param node
      */
-    void propogate(Node *node)
-    {
+    void propagate(DNode* node) {
         assert(node != nullptr);
         propagation_stack.push(node);
-        while (!propagation_stack.empty())
-        {
-            Node *n = propagation_stack.front();
+        while (!propagation_stack.empty()) {
+            DNode* n = propagation_stack.front();
             propagation_stack.pop();
             observe(n);
-            for (auto &neighbor : graph->adjacent_nodes(n))
-            {
+            for (auto& neighbor_n : graph->adjacent_nodes(n)) {
+                DNode* neighbor = static_cast<DNode*>(neighbor_n);
                 if (neighbor->domain.size() == 1)
                     propagation_stack.push(neighbor);
             }
@@ -516,15 +522,14 @@ public:
 
     /**
      * @brief Observe the node and update its domain
-     * 
-     * @param node 
+     *
+     * @param node
      */
-    void observe(Node *node)
-    {
+    void observe(DNode* node) {
         assert(node != nullptr);
         decltype(node->domain) new_domain{};
-        for (auto &p : node->domain) {
-            if(p->valid(graph->adjacent_nodes(node)))
+        for (auto& p : node->domain) {
+            if (p->valid(graph->adjacent_nodes(node)))
                 new_domain.push_back(p);
         }
         node->domain = new_domain;
@@ -532,10 +537,10 @@ public:
 
     /**
      * @brief Collapse the node to a single value. Performing a weighted random selection if multiple values are available.
-     * 
-     * @param node 
+     *
+     * @param node
      */
-    void collapse(Node *node) {
+    void collapse(DNode* node) {
         assert(node != nullptr);
         assert(node->domain.size() >= 1); // TODO need to backtrack here, and not crash the program
         static std::random_device rd;
@@ -546,7 +551,7 @@ public:
         } else {
             // weighted random selection of available domain values
             std::vector<float> weights{};
-            for (auto &p : node->domain) {
+            for (auto& p : node->domain) {
                 weights.push_back(p->weight);
             }
             std::discrete_distribution<int> dist(weights.begin(), weights.end());
@@ -554,8 +559,8 @@ public:
         }
     }
 
-    std::queue<Node *> propagation_stack;
-    Graph *graph;
+    std::queue<DNode*> propagation_stack;
+    Graph* graph;
     std::vector<Pattern> patterns;
 };
 

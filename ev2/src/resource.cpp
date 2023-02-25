@@ -682,7 +682,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesy
             int mat_id = dObj.material_id;
             if (mat_id == -1)
                 mat_id = 0;
-            auto& m = loaded_model->materials[mat_id];
+            // auto& m = loaded_model->materials[mat_id];
 
             ev_prim[i++] = renderer::Primitive {
                 dObj.start * 3,
@@ -871,7 +871,6 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
             } else if(nrChannels == 4) { // rgba
                 out->set_image2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image);
             } else {
-                error = true;
                 std::cerr << "unable to load unsupported texture format. " + file + " Channels:" + std::to_string(nrChannels) << std::endl;
             }
             stbi_image_free(image);
@@ -879,10 +878,8 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
             out->generate_mips();
         } else {
             std::cerr << "Unable to load texture: " + file << std::endl;
-            error = true;
         }
-    } else
-        error = true;
+    }
     
     return out;
 }
