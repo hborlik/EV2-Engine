@@ -14,6 +14,7 @@
 #include <string>
 #include <algorithm>
 #include <unordered_map>
+#include <iomanip>
 #include <set>
 
 #include <assert.h>
@@ -125,9 +126,11 @@ public:
 
     float entropy() const;
     
-    std::vector<Pattern*>   domain{};      // valid patterns for this node
+    std::vector<const Pattern*> domain{};      // valid patterns for this node
 };
 
+template<typename T,
+    typename = std::enable_if_t<std::is_base_of_v<Node, T>>>
 class Graph {
 public:
     virtual ~Graph() {}
@@ -138,7 +141,7 @@ public:
      * @param a
      * @param b
      */
-    virtual void add_edge(Node* a, Node* b, float v) = 0;
+    virtual void add_edge(T* a, T* b, float v) = 0;
 
     /**
      * @brief check if nodes are adjacent, returns 0.f if not
@@ -147,7 +150,7 @@ public:
      * @param b
      * @return float
      */
-    virtual float adjacent(Node* a, Node* b) const = 0;
+    virtual float adjacent(T* a, T* b) const = 0;
 
     /**
      * @brief get adjacent nodes
@@ -155,7 +158,7 @@ public:
      * @param a
      * @return std::vector<Node*>
      */
-    virtual std::vector<Node*> adjacent_nodes(Node* a) const = 0;
+    virtual std::vector<T*> adjacent_nodes(T* a) const = 0;
 
     virtual bool is_directed() const noexcept = 0;
 
@@ -169,14 +172,15 @@ public:
     virtual std::unordered_map<int, bool> make_visited_map() const = 0;
 };
 
-class SparseGraph: public Graph
+template<typename T>
+class SparseGraph: public Graph<T>
 {
 private:
 
     struct internal_node {
         int mat_coord = -1;
-        Node* node = nullptr;
-        std::vector<Node*> adjacent_nodes{};
+        T* node = nullptr;
+        std::vector<T*> adjacent_nodes{};
     };
 
     struct weight {
@@ -196,7 +200,7 @@ public:
     SparseGraph() = default;
     SparseGraph(bool is_directed): m_is_directed{ is_directed } {}
 
-    void add_edge(Node* a, Node* b, float v) override {
+    void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
         internal_node* a_i = add_node(a);
         internal_node* b_i = add_node(b);
@@ -224,7 +228,7 @@ public:
         sam.w = v;
     }
 
-    float adjacent(Node* a, Node* b) const override {
+    float adjacent(T* a, T* b) const override {
         assert(a != nullptr && b != nullptr);
         const internal_node* a_i = get_node(a);
         const internal_node* b_i = get_node(b);
@@ -246,9 +250,9 @@ public:
         return 0.f;
     }
 
-    std::vector<Node*> adjacent_nodes(Node* a) const override {
+    std::vector<T*> adjacent_nodes(T* a) const override {
         assert(a != nullptr);
-        std::vector<Node*> output{};
+        std::vector<T*> output{};
         const internal_node* a_i = get_node(a);
 
         if (a_i == nullptr)
@@ -269,9 +273,32 @@ public:
     }
 
 private:
-    internal_node* add_node(Node* node);
+    internal_node* add_node(T* node) {
+        internal_node* i_node = nullptr;
+        if (node) {
+            auto itr = node_map.find(node->node_id);
+            // node does not exist
+            if (itr == node_map.end()) {
+                auto [p, inserted] = node_map.emplace(node->node_id, internal_node{ get_next_mat_coord(), node, {} });
 
-    const internal_node* get_node(Node* node) const;
+                // if false, failed to create, we probably already have the same id
+                if (inserted)
+                    i_node = &p->second;
+            } else
+                i_node = &itr->second;
+        }
+        return i_node;
+    }
+
+    const internal_node* get_node(T* node) const {
+        const internal_node* i_node = nullptr;
+        if (node) {
+            auto itr = node_map.find(node->node_id);
+            if (itr != node_map.end())
+                i_node = &itr->second;
+        }
+        return i_node;
+    }
 
     int get_next_mat_coord() noexcept { return next_mat_coord++; }
 
@@ -281,7 +308,8 @@ private:
  * @brief Dense Graph
  *
  */
-class DenseGraph: public Graph {
+template<typename T>
+class DenseGraph: public Graph<T> {
 public:
     explicit DenseGraph(int n_nodes, bool directed = false): m_n_nodes{ n_nodes }, m_is_directed{ directed }, m_adjacency_matrix(n_nodes* n_nodes) {}
 
@@ -298,7 +326,7 @@ public:
      * @param b
      * @param v
      */
-    void add_edge(Node* a, Node* b, float v) override {
+    void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
@@ -323,7 +351,7 @@ public:
      * @param b
      * @return float
      */
-    float adjacent(Node* a, Node* b) const override {
+    float adjacent(T* a, T* b) const override {
         assert(a != nullptr && b != nullptr);
         assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
@@ -356,11 +384,11 @@ public:
      * @param a
      * @return std::vector<Node*>
      */
-    std::vector<Node*> adjacent_nodes(Node* a) const override {
+    std::vector<T*> adjacent_nodes(T* a) const override {
         assert(a != nullptr);
         assert(a->node_id < m_n_nodes);
 
-        std::vector<Node*> nodes{};
+        std::vector<T*> nodes{};
 
         int ind_a = get_node_index(a);
         if (ind_a < 0)
@@ -391,7 +419,7 @@ public:
      * @param node
      * @return int
      */
-    int get_node_index(const Node* node) const {
+    int get_node_index(const T* node) const {
         auto itr = m_nodeid_to_nodeind.find(node->node_id);
         if (itr == m_nodeid_to_nodeind.end()) { // not found, none
             return -1;
@@ -415,7 +443,30 @@ public:
      * @return true path found
      * @return false
      */
-    bool bfs(const Node* a, const Node* b, std::vector<Node*>& path) const;
+    bool bfs(const T* a, const T* b, std::vector<T*>& path) const {
+        assert(a && b);
+        path.clear();
+
+        if (m_nodeid_to_nodeind.find(a->node_id) == m_nodeid_to_nodeind.end() ||
+            m_nodeid_to_nodeind.find(b->node_id) == m_nodeid_to_nodeind.end())
+            return false;
+
+        auto parent = std::vector<int>{};
+
+        int a_ind = m_nodeid_to_nodeind.at(a->node_id);
+        int b_ind = m_nodeid_to_nodeind.at(b->node_id);
+
+        if (bfs(a_ind, b_ind, parent)) {
+            int next = b_ind;
+            while (next != -1) {
+                path.push_back(m_nodes[next]);
+                next = parent[next];
+            }
+            std::reverse(path.begin(), path.end());
+            return true;
+        }
+        return false;
+    }
 
     /**
      * @brief
@@ -426,10 +477,41 @@ public:
      * @return true path found
      * @return false
      */
-    bool bfs(int a_ind, int b_ind, std::vector<int>& parent) const;
+    bool bfs(int a_ind, int b_ind, std::vector<int>& parent) const {
+        assert(a_ind >= 0 && b_ind >= 0);
+        parent.clear();
+        parent = std::vector<int>(m_nodes.size(), -1);
+
+        auto visited = std::vector<bool>(m_nodes.size(), false);
+
+        std::queue<int> q{};
+
+        q.push(a_ind);
+        visited[a_ind] = true;
+
+        while (!q.empty()) {
+            int u_ind = q.front();
+            q.pop();
+            // visit n, find index in adjacency matrix
+            for (int v_ind = 0; v_ind < m_nodes.size(); ++v_ind) {
+                // if this node has not been visited and adjacent (from u to v)
+                if (!visited[v_ind] && m_adjacency_matrix[ind(u_ind, v_ind)] > 0.f) {
+                    q.push(v_ind);
+                    visited[v_ind] = true;
+                    parent[v_ind] = u_ind; // v was reached from u
+
+                    if (v_ind == b_ind) {
+                        // found target, starting from target, record all parents into path
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
 private:
-    int check_node_index(Node* node) {
+    int check_node_index(T* node) {
         auto itr = m_nodeid_to_nodeind.find(node->node_id);
         if (itr == m_nodeid_to_nodeind.end()) { // not found, add node and allocate it a row in matrix
             int ind = m_nodes.size();
@@ -459,12 +541,21 @@ private:
         return c.to_index(m_n_nodes);
     }
 
-    friend std::ostream& operator<< (std::ostream& out, const DenseGraph& graph);
+    friend std::ostream& operator<< (std::ostream& out, const DenseGraph<T>& graph) {
+        out << std::setprecision(5);
+        for (int i = 0; i < graph.get_n_nodes(); ++i) {
+            for (int j = 0; j < graph.get_n_nodes(); ++j)
+                out << graph.m_adjacency_matrix[graph.ind(i, j)] << " ";
+        out << "\n";
+    }
+
+    return out;
+}
 
     int m_n_nodes = 0;
     bool m_is_directed = false;
     std::vector<float> m_adjacency_matrix{};
-    std::vector<Node*> m_nodes{}; // m_nodes indexing follows adjacency matrix, m_nodes at i corresponds to row and column i
+    std::vector<T*> m_nodes{}; // m_nodes indexing follows adjacency matrix, m_nodes at i corresponds to row and column i
     std::unordered_map<int, int> m_nodeid_to_nodeind{};
 };
 
@@ -477,7 +568,7 @@ private:
  * @param residual_graph optional flow output, can be the same as dg
  * @return int max flow
  */
-float ford_fulkerson(const DenseGraph& dg, const Node* source, const Node* sink, DenseGraph* residual_graph);
+float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node* sink, DenseGraph<Node>* residual_graph);
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output
@@ -486,6 +577,10 @@ float ford_fulkerson(const DenseGraph& dg, const Node* source, const Node* sink,
 class Pattern
 {
 public:
+    explicit Pattern(const Value& v) noexcept: cell_value{ v } {}
+
+    Pattern(const Value& v, std::initializer_list<Value> l) noexcept: required_values{ l }, cell_value{ v } {}
+
     bool valid(const std::vector<DNode*>& neighborhood) const;
 
     std::vector<Value> required_values{};
@@ -496,7 +591,7 @@ public:
 class WFCSolver
 {
 public:
-    WFCSolver(Graph* graph, std::vector<Pattern> patterns): graph{ graph }, patterns{ patterns } {
+    WFCSolver(Graph<DNode>* graph, std::vector<Pattern> patterns): graph{ graph }, patterns{ patterns } {
         assert(graph != nullptr);
     }
 
@@ -560,7 +655,7 @@ public:
     }
 
     std::queue<DNode*> propagation_stack;
-    Graph* graph;
+    Graph<DNode>* graph;
     std::vector<Pattern> patterns;
 };
 

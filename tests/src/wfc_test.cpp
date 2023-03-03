@@ -10,7 +10,7 @@ using namespace wfc;
 void sparse_test_empty() {
     std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
-    SparseGraph s{};
+    SparseGraph<Node> s{};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -22,7 +22,7 @@ void sparse_test_empty() {
 void dense_test_empty() {
     std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
-    DenseGraph s{100};
+    DenseGraph<Node> s{100};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -30,7 +30,7 @@ void dense_test_empty() {
     assert(s.adjacent(n_a.get(), n_b.get()) == 0.f);
 }
 
-void adjacent_abc(Graph* s) {
+void adjacent_abc(Graph<Node>* s) {
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -53,19 +53,19 @@ void adjacent_abc(Graph* s) {
 
 void sparse_test_add() {
     std::cout << __FUNCTION__ << std::endl;
-    SparseGraph s{};
+    SparseGraph<Node> s{};
 
     adjacent_abc(&s);
 }
 
 void dense_test_add() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph s{4};
+    DenseGraph<Node> s{4};
 
     adjacent_abc(&s);
 }
 
-void directed_adjacent_abc(Graph* s) {
+void directed_adjacent_abc(Graph<Node>* s) {
     assert(s->is_directed());
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
@@ -94,21 +94,21 @@ void directed_adjacent_abc(Graph* s) {
 
 void sparse_directed_add() {
     std::cout << __FUNCTION__ << std::endl;
-    SparseGraph s{true};
+    SparseGraph<Node> s{true};
 
     directed_adjacent_abc(&s);
 }
 
 void dense_directed_add() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph d{4, true};
+    DenseGraph<Node> d{4, true};
 
     directed_adjacent_abc(&d);
 }
 
 void dense_bfs_no_soln() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10};
+    DenseGraph<Node> g{10};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -124,7 +124,7 @@ void dense_bfs_no_soln() {
 
 void dense_bfs_no_soln_directional() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, true};
+    DenseGraph<Node> g{10, true};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -144,7 +144,7 @@ void dense_bfs_no_soln_directional() {
 
 void dense_bfs_soln_directional0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, true};
+    DenseGraph<Node> g{10, true};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -170,7 +170,7 @@ void dense_bfs_soln_directional0() {
 
 void dense_bfs_soln_directional1() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, true};
+    DenseGraph<Node> g{10, true};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -206,7 +206,7 @@ void dense_bfs_soln_directional1() {
 
 void dense_bfs_soln_0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, false};
+    DenseGraph<Node> g{10, false};
 
     unique_ptr<Node> n_a = make_unique<Node>("A", 1);
     unique_ptr<Node> n_b = make_unique<Node>("B", 2);
@@ -232,7 +232,7 @@ void dense_bfs_soln_0() {
 
 void dense_flow_soln_directional0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, true};
+    DenseGraph<Node> g{10, true};
 
     unique_ptr<Node> n_s = make_unique<Node>("source", 1);
     unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
@@ -263,8 +263,8 @@ void dense_flow_soln_directional0() {
 
 void dense_flow_soln_directional1() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph g{10, true};
-    DenseGraph r{10, true};
+    DenseGraph<Node> g{10, true};
+    DenseGraph<Node> r{10, true};
 
     unique_ptr<Node> n_s = make_unique<Node>("source", 1);
     unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
@@ -308,25 +308,39 @@ void test_pattern_validity0() {
     Value v2{6};
     Value v3{60};
     Value v4{7};
-    Value v5{70};
 
-    Pattern p{};
-    p.required_values.push_back(v0);
-    p.required_values.push_back(v1);
+    Pattern p_center{v0, {v0, v1, v2, v3}};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 10);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 20);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 30);
-    unique_ptr<Node> n_d = make_unique<Node>("D", 40);
+    // neighbor patterns
+    Pattern p1{v1, {}};
+    Pattern p2{v2, {}};
+    Pattern p3{v3, {}};
+    Pattern p4{v4, {}};
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
-    Node *d = n_d.get();
+    unique_ptr<DNode> n_a = make_unique<DNode>("A", 10);
+    unique_ptr<DNode> n_b = make_unique<DNode>("B", 20);
+    unique_ptr<DNode> n_c = make_unique<DNode>("C", 30);
+    unique_ptr<DNode> n_d = make_unique<DNode>("D", 40);
 
-    a->domain.push_back(); // TODO
+    DNode *a = n_a.get();
+    a->domain.push_back(&p1);
+    a->domain.push_back(&p2);
 
-    std::vector<Node*> neighborhood{a, b, c, d};
+    DNode *b = n_b.get();
+    b->domain.push_back(&p1);
+    b->domain.push_back(&p2);
+
+    DNode *c = n_c.get();
+    c->domain.push_back(&p3);
+    c->domain.push_back(&p2);
+
+    DNode *d = n_d.get();
+    d->domain.push_back(&p4);
+    d->domain.push_back(&p2);
+
+    std::vector<DNode*> neighborhood{a, b, c, d};
+
+    assert(p_center.valid(neighborhood));
 }
 
 int main() {
@@ -348,6 +362,9 @@ int main() {
     // ford_fulkerson algo tests
     dense_flow_soln_directional0();
     dense_flow_soln_directional1();
+
+    // patterns
+    test_pattern_validity0();
 
     cout << "Done" << endl;
 
