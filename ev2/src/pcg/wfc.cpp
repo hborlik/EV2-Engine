@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <unordered_set>
+#include <iostream>
 
 namespace wfc {
 
@@ -80,7 +81,7 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
     for (auto& rv : required_values) {
-        auto req_node = std::make_unique<Node>("req_value:" + std::to_string(rv.cell_id), ++id);
+        auto req_node = std::make_unique<Node>("req:" + std::to_string(rv.cell_id), ++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
             .v = rv,
@@ -107,7 +108,8 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
     }
 
     auto sort_vn = [](const ValueAndNode& a, const ValueAndNode& b) {
-        return a.v.cell_id > b.v.cell_id;
+        // sorted high to low cell values
+        return a.v.cell_id < b.v.cell_id;
     };
 
     // sort by the cell values
@@ -117,28 +119,28 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
     // find the nodes associated with each required value by stepping through the sorted lists
     auto vn_pos = neigh_values.begin();
     for (const auto& req : required) {
+        bool has_single_neighbor = false;
         while(vn_pos != neigh_values.end()) {
             if (vn_pos->v == req.v) {
                 // connect required value node with neighbor node that
                 // has required value in its domain
                 dg.add_edge(req.p, vn_pos->p, 1.f);
-            } else {
+                // there is at least one node satisfying the requirement
+                has_single_neighbor = true;
+            } else if (vn_pos->v.cell_id > req.v.cell_id) {
+                if (has_single_neighbor == false)
+                    return false;
                 break; // did not match value
             }
-
             ++vn_pos;
         }
     }
 
-    ford_fulkerson(dg, source.get(), sink.get(), &dg);
+    float flow = ford_fulkerson(dg, source.get(), sink.get(), &dg);
 
     // check that all requirements are met
-    for (const auto& n : req_nodes) {
-        float f = dg.adjacent(source.get(), n.get());
-        if (f < 1.f) {
-            return false;
-        }
-    }
+    if (flow != required_values.size())
+        return false;
 
     return true;
 }

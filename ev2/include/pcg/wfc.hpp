@@ -328,13 +328,14 @@ public:
      */
     void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
-        assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
         if (!m_is_directed && a->node_id < b->node_id)
             std::swap(a, b);
 
         int ind_a = check_node_index(a);
         int ind_b = check_node_index(b);
+        
+        assert(!(ind_a < 0 || ind_b < 0));
 
         int index = ind(ind_a, ind_b);
 
@@ -515,8 +516,11 @@ private:
         auto itr = m_nodeid_to_nodeind.find(node->node_id);
         if (itr == m_nodeid_to_nodeind.end()) { // not found, add node and allocate it a row in matrix
             int ind = m_nodes.size();
-            m_nodes.push_back(node);
-            m_nodeid_to_nodeind.insert({ node->node_id, ind });
+            if (ind < m_n_nodes) {
+                m_nodes.push_back(node);
+                m_nodeid_to_nodeind.insert({ node->node_id, ind });
+            } else
+                ind = -1;
             return ind;
         }
         return itr->second;
@@ -542,10 +546,18 @@ private:
     }
 
     friend std::ostream& operator<< (std::ostream& out, const DenseGraph<T>& graph) {
-        out << std::setprecision(5);
+        out << "Dense Graph. Directed (" << std::to_string(graph.is_directed()) << ")\n";
+        if (graph.is_directed())
+            out << "_From column_ \n";
+        out << std::setw(10) << "_";
+        for (int j = 0; j < graph.get_n_nodes(); ++j) {
+            out << std::setw(10) << graph.m_nodes[j]->identifier;
+        }
+        out << "\n" << std::setprecision(5);
         for (int i = 0; i < graph.get_n_nodes(); ++i) {
+            out << std::setw(10) << graph.m_nodes[i]->identifier;
             for (int j = 0; j < graph.get_n_nodes(); ++j)
-                out << graph.m_adjacency_matrix[graph.ind(i, j)] << " ";
+                out << std::setw(10) << graph.m_adjacency_matrix[graph.ind(i, j)];
         out << "\n";
     }
 
@@ -565,7 +577,7 @@ private:
  * @param dg            dense graph of flow capacities
  * @param source        source node
  * @param sink          sink node
- * @param residual_graph optional flow output, can be the same as dg
+ * @param residual_graph optional residual graph output
  * @return int max flow
  */
 float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node* sink, DenseGraph<Node>* residual_graph);
