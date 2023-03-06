@@ -15,14 +15,14 @@ Notes about good papers:
 2-3 pages on results, Introduction clearly states contributions and motivations. 
 
 ## Abstract
-This thesis presents a tool that interactively generates procedural outdoor 3D scenes. This goal of this tool is to allow for iterative modifications to a partially complete scene. PCG is incorporated to the artistic process by allowing the existing structure of the scene to be extended. This thesis use a modified Wave Function Collapse (WFC), which allows it to a operate in an unstructured 3D environment. WFC solves problems known as Constraint Satisfaction Problems (CSP), that is, it finds solutions (valid placements of tiles) to problems where there is set of valid configurations for neighboring tiles. The main aim of this research is to take advantage of the properties of WFC in order to generate game content procedurally. In this case, the content is the environment of a 3D game.
+This thesis presents a tool that interactively generates procedural outdoor 3D scenes. This goal of this tool is to allow for iterative modifications to a partially complete scene. PCG is incorporated to the artistic process by allowing the existing structure of the scene to be extended. This thesis uses a modified Wave Function Collapse (WFC) algorithm, which allows it to a operate in an unstructured 3D environment. WFC solves problems known as Constraint Satisfaction Problems (CSP), that is, it finds solutions (valid placements of tiles) to problems where there is set of valid configurations for neighboring tiles. The main aim of this research is to take advantage of the properties of WFC in order to generate game content procedurally in an unstructured 3D environment.
 
 ## Introduction
-Wave Function Collapse (WFC) is a probabilistic algorithm that takes patterns from a given input, and uses it to model outputs with similar local properties. It has been used in the creation of images, 2D textures, and more recently, 3D objects[cite]. In constraint satisfaction problems, local consistency is a property that describes the requirements of constraints and subsets of variables. WFC is a specific approach to solving the arc consistency problem. Two variables are arc consistent if its value is consistent with some allowed value of a second variable [cite]. 
+Wave Function Collapse (WFC) [cite orig WFC] is a probabilistic algorithm that takes patterns from a given input, and uses it to model outputs with similar local properties. It has been used in the creation of images, 2D textures, and more recently, 3D objects[cite]. In constraint satisfaction problems, local consistency is a property that describes the requirements of constraints and subsets of variables. WFC is a specific approach to solving the arc consistency problem. Two variables are arc consistent if its value is consistent with some allowed value of a second variable [cite]. 
 
-CSPs are a type of problem that can be expressed in terms of variables, domains, and constraints. A CSP involves finding a solution to a set of constraints which must be satisfied in order to find a valid solution. The variables represent the objects that are being solved for, the domains represent the range of possible values for each variable, and the constraints are restrictions on the values the variables can take. A CSP is a mathematical problem and can be solved using various approaches, such as backtracking or branch and bound.
+The Constraint Satisfaction Problem (CSP) is a type of problem that can be expressed in terms of variables, domains, and constraints. A CSP involves finding a solution to a set of constraints which must be satisfied in order to find a valid solution. The variables represent the objects that are being solved for, the domains represent the range of possible values for each variable, and the constraints are restrictions on the values the variables can take. A CSP is a mathematical problem and can be solved using various approaches. Some alternative methods are backtracking, and branch-and-bound [cite].
 
-The goals of this project are to implement a flexible WFC graph algorithm in C++, and then use it to generate procedural placements for 3D objects. In addition, this project attempts to explore the possibilities of using WFC in a 3D environment by experimenting with different parameters and configurations. Experiments are performed in a custom rendering engine, created with the intent of supplying an environment for exploring procedural generation of 3D scenes.
+The goals of this project are to implement a flexible WFC graph algorithm in C++, and then use it to generate procedural placements for 3D objects. In addition, this project attempts to explore the possibilities of using WFC in a 3D environment by experimenting with different parameters and configurations. Experiments are performed in a custom rendering engine, created with the intent of supplying an environment for exploring procedural generation of 3D scenes. 
 
 The implementation is tested on different types of 3D objects, and the results are evaluated to determine the effectiveness of the algorithm in this context. 
 
@@ -43,7 +43,7 @@ The project includes the following components:
 
 1. Is it possible to extend WFC to an unstructured 3d environment?
 2. Does WFC generate plausible results when extended to this environment?
-3. What are the implications for game development?
+3. What are the implications for scene authoring?
 4. How does WFC compare to other methods of 3d procedural generation?
 5. What other applications could WFC be used for in a 3d unstructured environment?
 
@@ -51,7 +51,7 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
     Write an abstract! (three week deadline) Feb 10
     Graph queries needed for neighbors.
     OpenMesh??
-    Asset Library for buildings
+    Asset Library for buildings?
 
 ### Reading
 2.  Jan 20 : 

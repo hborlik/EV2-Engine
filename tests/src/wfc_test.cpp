@@ -3,9 +3,10 @@
 #include <set>
 
 #include <pcg/wfc.hpp>
+#include <pcg/grid.hpp>
 
 using namespace std;
-using namespace wfc;
+using namespace pcg;
 
 void sparse_test_empty() {
     std::cout << __FUNCTION__ << std::endl;

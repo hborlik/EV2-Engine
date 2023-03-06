@@ -19,7 +19,7 @@
 
 #include <assert.h>
 
-namespace wfc {
+namespace pcg {
 
 struct coord {
     int x = 0, y = 0;
@@ -64,14 +64,14 @@ private:
     }
 };
 
-} // namespace wfc
+} // namespace pcg
 
 namespace std {
 
 template<>
-struct hash<wfc::coord>
+struct hash<pcg::coord>
 {
-    size_t operator()(const wfc::coord& k) const {
+    size_t operator()(const pcg::coord& k) const {
         // from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
         using std::size_t;
         using std::hash;
@@ -88,9 +88,9 @@ struct hash<wfc::coord>
 };
 
 template<>
-struct hash<wfc::Value>
+struct hash<pcg::Value>
 {
-    size_t operator()(const wfc::Value& k) const {
+    size_t operator()(const pcg::Value& k) const {
         using std::hash;
 
         return hash<int>()(k.cell_id);
@@ -99,7 +99,7 @@ struct hash<wfc::Value>
 
 } // namespace std
 
-namespace wfc {
+namespace pcg {
 
 class Pattern;
 
@@ -671,6 +671,6 @@ public:
     std::vector<Pattern> patterns;
 };
 
-} // namespace wfc
+} // namespace pcg
 
 #endif // WFC_H

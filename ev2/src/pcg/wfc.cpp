@@ -4,7 +4,7 @@
 #include <unordered_set>
 #include <iostream>
 
-namespace wfc {
+namespace pcg {
 
 float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node* sink, DenseGraph<Node>* residual_graph) {
     // based on https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
