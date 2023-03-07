@@ -7,7 +7,7 @@
 #ifndef EV2_VISUAL_INSTANCE_H
 #define EV2_VISUAL_INSTANCE_H
 
-#include <node.h>
+#include <scene/node.h>
 #include <renderer/mesh.h>
 #include <renderer/buffer.h>
 #include <renderer/renderer.h>

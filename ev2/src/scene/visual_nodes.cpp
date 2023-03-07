@@ -1,6 +1,6 @@
-#include <visual_nodes.h>
+#include <scene/visual_nodes.h>
 
-#include <scene.h>
+#include <scene/scene.h>
 #include <renderer/shader.h>
 
 namespace ev2 {

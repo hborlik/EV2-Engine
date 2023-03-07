@@ -1,5 +1,5 @@
 
-#include <scene.h>
+#include <scene/scene.h>
 
 #include <algorithm>
 

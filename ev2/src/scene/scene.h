@@ -17,8 +17,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <reference_counted.h>
-#include <node.h>
-#include <visual_nodes.h>
+#include <scene/node.h>
+#include <scene/visual_nodes.h>
 
 namespace ev2 {
 

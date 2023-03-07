@@ -11,7 +11,7 @@
 #include <physics.h>
 #include <renderer/renderer.h>
 #include <input.h>
-#include <visual_nodes.h>
+#include <scene/visual_nodes.h>
 
 class GameState;
 

@@ -7,7 +7,7 @@
 #ifndef PLANT_GAME_H
 #define PLANT_GAME_H
 
-#include <scene.h>
+#include <scene/scene.h>
 #include <resource.h>
 #include <physics.h>
 #include <player.h>

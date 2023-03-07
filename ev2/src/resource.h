@@ -16,7 +16,7 @@
 #include <renderer/texture.h>
 #include <renderer/material.h>
 #include <image.hpp>
-#include <scene.h>
+#include <scene/scene.h>
 #include <gltf.h>
 
 namespace ev2 {

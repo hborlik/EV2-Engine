@@ -7,7 +7,7 @@
 #ifndef EV2_UI_H
 #define EV2_UI_H
 
-#include <scene.h>
+#include <scene/scene.h>
 
 namespace ev2 {
 

@@ -25,9 +25,9 @@
 #include <Sphere.h>
 #include <physics.h>
 #include <renderer/renderer.h>
-#include <scene.h>
+#include <scene/scene.h>
 #include <physics.h>
-#include <visual_nodes.h>
+#include <scene/visual_nodes.h>
 #include <debug.h>
 #include <game.h>
 

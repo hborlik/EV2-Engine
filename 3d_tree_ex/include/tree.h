@@ -7,7 +7,7 @@
 #ifndef PLANT_GAME_TREE_H
 #define PLANT_GAME_TREE_H
 
-#include <visual_nodes.h>
+#include <scene/visual_nodes.h>
 #include <renderer/mesh.h>
 
 #include <Sphere.h>

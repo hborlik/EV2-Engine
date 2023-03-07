@@ -13,7 +13,7 @@
 #include <ev.h>
 #include <singleton.h>
 #include <geometry.h>
-#include <node.h>
+#include <scene/node.h>
 
 #include <reactphysics3d/reactphysics3d.h>
 
