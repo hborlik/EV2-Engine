@@ -12,8 +12,8 @@
 #include <memory>
 #include <cstdint>
 
-#include <renderer/texture.h>
-#include <ev.h>
+#include <renderer/texture.hpp>
+#include <ev.hpp>
 
 namespace ev2::renderer {
 

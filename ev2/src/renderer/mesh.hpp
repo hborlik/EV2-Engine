@@ -9,10 +9,10 @@
 
 #include <memory>
 
-#include <renderer/buffer.h>
-#include <renderer/shader.h>
-#include <renderer/texture.h>
-#include <transform.h>
+#include <renderer/buffer.hpp>
+#include <renderer/shader.hpp>
+#include <renderer/texture.hpp>
+#include <transform.hpp>
 
 namespace ev2::renderer {
 

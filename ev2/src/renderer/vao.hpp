@@ -10,8 +10,8 @@
 
 #include <map>
 
-#include <renderer/ev_gl.h>
-#include <renderer/mesh.h>
+#include <renderer/ev_gl.hpp>
+#include <renderer/mesh.hpp>
 
 namespace ev2::renderer {
 

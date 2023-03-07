@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include <tree.h>
-#include <physics.h>
+#include <physics.hpp>
 #include <Sphere.h>
 
 namespace fs = std::filesystem;

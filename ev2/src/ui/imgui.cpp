@@ -812,13 +812,13 @@ CODE
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <ui/imgui.h>
+#include <ui/imgui.hpp>
 #ifndef IMGUI_DISABLE
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
-#include <ui/imgui_internal.h>
+#include <ui/imgui_internal.hpp>
 
 // System includes
 #include <ctype.h>      // toupper
@@ -848,7 +848,7 @@ CODE
 #ifndef __MINGW32__
 #include <Windows.h>        // _wfopen, OpenClipboard
 #else
-#include <windows.h>
+#include <windows.hpp>
 #endif
 #if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP) // UWP doesn't have all Win32 functions
 #define IMGUI_DISABLE_WIN32_DEFAULT_CLIPBOARD_FUNCTIONS
@@ -858,7 +858,7 @@ CODE
 
 // [Apple] OS specific includes
 #if defined(__APPLE__)
-#include <TargetConditionals.h>
+#include <TargetConditionals.hpp>
 #endif
 
 // Visual Studio warnings
@@ -12025,7 +12025,7 @@ static void SetClipboardTextFn_DefaultImpl(void*, const char* text)
 // Win32 API IME support (for Asian languages, etc.)
 #if defined(_WIN32) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS) && !defined(IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS)
 
-#include <imm.h>
+#include <imm.hpp>
 #ifdef _MSC_VER
 #pragma comment(lib, "imm32")
 #endif

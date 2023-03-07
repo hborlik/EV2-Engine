@@ -1,9 +1,9 @@
 #include <debug.h>
-#include <renderer/renderer.h>
-#include <resource.h>
-#include <physics.h>
+#include <renderer/renderer.hpp>
+#include <resource.hpp>
+#include <physics.hpp>
 
-#include <ui/imgui.h>
+#include <ui/imgui.hpp>
 #include <ui/ui.hpp>
 
 void show_settings_editor_window(GameState* game) {

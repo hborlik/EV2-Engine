@@ -4,30 +4,30 @@
 
 #include <tests.h>
 #include <tree.h>
-#include <ui/imgui.h>
-#include <ui/imgui_impl_glfw.h>
-#include <ui/imgui_impl_opengl3.h>
+#include <ui/imgui.hpp>
+#include <ui/imgui_impl_glfw.hpp>
+#include <ui/imgui_impl_opengl3.hpp>
 //#define DR_MP3_IMPLEMENTATION
 //#include "../extras/dr_mp3.h"   /* Enables MP3 decoding. */
 
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h> 
 
-#include <ev.h>
-#include <renderer/ev_gl.h>
-#include <window.h>
-#include <renderer/shader.h>
-#include <application.h>
-#include <renderer/camera.h>
-#include <window.h>
-#include <renderer/mesh.h>
-#include <resource.h>
+#include <ev.hpp>
+#include <renderer/ev_gl.hpp>
+#include <window.hpp>
+#include <renderer/shader.hpp>
+#include <application.hpp>
+#include <renderer/camera.hpp>
+#include <window.hpp>
+#include <renderer/mesh.hpp>
+#include <resource.hpp>
 #include <Sphere.h>
-#include <physics.h>
-#include <renderer/renderer.h>
-#include <scene/scene.h>
-#include <physics.h>
-#include <scene/visual_nodes.h>
+#include <physics.hpp>
+#include <renderer/renderer.hpp>
+#include <scene/scene.hpp>
+#include <physics.hpp>
+#include <scene/visual_nodes.hpp>
 #include <debug.h>
 #include <game.h>
 

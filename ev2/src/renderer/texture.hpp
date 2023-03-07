@@ -11,7 +11,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include <renderer/ev_gl.h>
+#include <renderer/ev_gl.hpp>
 
 namespace ev2::renderer {
 

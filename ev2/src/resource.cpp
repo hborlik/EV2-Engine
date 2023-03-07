@@ -1,4 +1,4 @@
-#include <resource.h>
+#include <resource.hpp>
 
 #include <map>
 #include <unordered_map>
@@ -10,8 +10,8 @@
 #include <tiny_obj_loader.h>
 #include <stb_image.h>
 
-#include <renderer/buffer.h>
-#include <renderer/renderer.h>
+#include <renderer/buffer.hpp>
+#include <renderer/renderer.hpp>
 
 namespace {
 

@@ -16,9 +16,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <reference_counted.h>
-#include <scene/node.h>
-#include <scene/visual_nodes.h>
+#include <reference_counted.hpp>
+#include <scene/node.hpp>
+#include <scene/visual_nodes.hpp>
 
 namespace ev2 {
 

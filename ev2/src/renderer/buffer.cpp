@@ -8,7 +8,7 @@
  * 
  */
 
-#include <renderer/buffer.h>
+#include <renderer/buffer.hpp>
 
 namespace ev2::renderer {
 

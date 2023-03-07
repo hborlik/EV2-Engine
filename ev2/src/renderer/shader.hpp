@@ -15,9 +15,9 @@
 #include <unordered_map>
 #include <filesystem>
 
-#include <ev.h>
-#include <renderer/ev_gl.h>
-#include <renderer/buffer.h>
+#include <ev.hpp>
+#include <renderer/ev_gl.hpp>
+#include <renderer/buffer.hpp>
 
 namespace ev2::renderer
 {

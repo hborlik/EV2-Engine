@@ -16,8 +16,8 @@
 #include <map>
 #include <fstream>
 
-#include <reference_counted.h>
-#include <util.h>
+#include <reference_counted.hpp>
+#include <util.hpp>
 
 #define EV2_CHECK_THROW(expr, message) if(!(expr)) throw ev2::engine_exception{"[" + std::string{__FILE__} + ":" + std::to_string(__LINE__) + "]:" + message}
 

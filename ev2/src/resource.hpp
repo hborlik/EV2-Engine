@@ -11,13 +11,13 @@
 
 #include <glm/glm.hpp>
 
-#include <renderer/mesh.h>
-#include <renderer/renderer.h>
-#include <renderer/texture.h>
-#include <renderer/material.h>
+#include <renderer/mesh.hpp>
+#include <renderer/renderer.hpp>
+#include <renderer/texture.hpp>
+#include <renderer/material.hpp>
 #include <image.hpp>
-#include <scene/scene.h>
-#include <gltf.h>
+#include <scene/scene.hpp>
+#include <gltf.hpp>
 
 namespace ev2 {
 

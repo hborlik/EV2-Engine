@@ -67,7 +67,7 @@ typedef signed   long  int     khronos_ssize_t;
 typedef signed   __int64       khronos_int64_t;
 typedef unsigned __int64       khronos_uint64_t;
 #elif (defined(__clang__) || defined(__GNUC__)) && (__cplusplus < 201100)
-#include <stdint.h>
+#include <stdint.hpp>
 typedef          int64_t       khronos_int64_t;
 typedef          uint64_t      khronos_uint64_t;
 #else

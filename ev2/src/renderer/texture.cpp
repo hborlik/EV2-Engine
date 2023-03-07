@@ -1,4 +1,4 @@
-#include <renderer/texture.h>
+#include <renderer/texture.hpp>
 
 #include <vector>
 

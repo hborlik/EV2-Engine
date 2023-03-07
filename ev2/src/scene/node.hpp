@@ -12,9 +12,9 @@
 #include <list>
 #include <memory>
 
-#include <transform.h>
-#include <ev.h>
-#include <reference_counted.h>
+#include <transform.hpp>
+#include <ev.hpp>
+#include <reference_counted.hpp>
 
 namespace ev2 {
 

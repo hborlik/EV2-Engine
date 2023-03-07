@@ -14,11 +14,11 @@
 #include <string>
 #include <cstdint>
 
-#include <ev.h>
-#include <renderer/ev_gl.h>
-#include <delegate.h>
-#include <singleton.h>
-#include <application.h>
+#include <ev.hpp>
+#include <renderer/ev_gl.hpp>
+#include <delegate.hpp>
+#include <singleton.hpp>
+#include <application.hpp>
 
 namespace ev2::window {
 

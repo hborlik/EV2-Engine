@@ -1,11 +1,11 @@
-#include <renderer/renderer.h>
+#include <renderer/renderer.hpp>
 
 #include <random>
 #include <cmath>
 #include <chrono>
 
-#include <renderer/ev_gl.h>
-#include <resource.h>
+#include <renderer/ev_gl.hpp>
+#include <resource.hpp>
 
 namespace ev2::renderer {
 

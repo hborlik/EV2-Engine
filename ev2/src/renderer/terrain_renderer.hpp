@@ -10,8 +10,8 @@
 #include <memory>
 
 #include <renderer/render_state.hpp>
-#include <renderer/shader.h>
-#include <renderer/material.h>
+#include <renderer/shader.hpp>
+#include <renderer/material.hpp>
 #include <image.hpp>
 
 namespace ev2::renderer {

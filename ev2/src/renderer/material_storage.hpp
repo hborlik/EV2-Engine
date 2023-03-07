@@ -14,7 +14,7 @@
 #include <queue>
 #include <cstdint>
 
-#include <renderer/shader.h>
+#include <renderer/shader.hpp>
 
 namespace ev2::renderer {
 

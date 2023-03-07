@@ -9,17 +9,17 @@
  * 
  */
 
-#include <ev.h>
+#include <ev.hpp>
 
 #include <iostream>
 #include <string>
 #include <ctime>
 #include <sstream>
 
-#include <window.h>
-#include <renderer/renderer.h>
-#include <resource.h>
-#include <physics.h>
+#include <window.hpp>
+#include <renderer/renderer.hpp>
+#include <resource.hpp>
+#include <physics.hpp>
 
 static ev2::Engine engine;
 

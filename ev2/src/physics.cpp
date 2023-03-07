@@ -1,4 +1,4 @@
-#include <physics.h>
+#include <physics.hpp>
 
 using namespace reactphysics3d;
 

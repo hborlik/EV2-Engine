@@ -208,7 +208,7 @@ struct stbrp_context
 
 #ifdef STB_RECT_PACK_IMPLEMENTATION
 #ifndef STBRP_SORT
-#include <stdlib.h>
+#include <stdlib.hpp>
 #define STBRP_SORT qsort
 #endif
 

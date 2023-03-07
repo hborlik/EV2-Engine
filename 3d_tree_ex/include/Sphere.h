@@ -7,7 +7,7 @@
 #define GEOMETRY_SPHERE_H
 
 #include <vector>
-#include <resource.h>
+#include <resource.hpp>
 
 struct SuperShapeParams {
     float n1 = .2f;

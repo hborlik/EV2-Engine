@@ -8,10 +8,10 @@
 #ifndef GAME_PLAYER_H
 #define GAME_PLAYER_H
 
-#include <physics.h>
-#include <renderer/renderer.h>
-#include <input.h>
-#include <scene/visual_nodes.h>
+#include <physics.hpp>
+#include <renderer/renderer.hpp>
+#include <input.hpp>
+#include <scene/visual_nodes.hpp>
 
 class GameState;
 

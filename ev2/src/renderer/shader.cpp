@@ -15,7 +15,7 @@
 #include <sstream>
 #include <algorithm>
 
-#include <renderer/shader.h>
+#include <renderer/shader.hpp>
 
 using namespace ev2;
 

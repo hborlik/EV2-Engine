@@ -2,22 +2,12 @@
 * SuperSphere Class template from http://www.songho.ca/opengl/gl_sphere.html
 * Modified by Jack Ortega to render a super shape instead, and to support animation.
 */
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
-#ifdef __APPLE__
-#include <OpenGL/gl.h>
-#else
-//#include <GL/gl.h>
-#endif
-
-#include <tiny_obj_loader.h>
 #include <iostream>
 #include <iomanip>
 #include <Sphere.h>
 #include <cmath>
-#include <resource.h>
+#include <resource.hpp>
 
 const int MIN_SECTOR_COUNT = 3;
 const int MIN_STACK_COUNT = 2;

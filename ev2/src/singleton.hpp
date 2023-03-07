@@ -11,8 +11,8 @@
 #define EV2_SINGLETON_H
 
 #include <memory>
-#include <ev.h>
-#include <util.h>
+#include <ev.hpp>
+#include <util.hpp>
 
 namespace ev2 {
 

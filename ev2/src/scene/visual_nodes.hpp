@@ -7,10 +7,10 @@
 #ifndef EV2_VISUAL_INSTANCE_H
 #define EV2_VISUAL_INSTANCE_H
 
-#include <scene/node.h>
-#include <renderer/mesh.h>
-#include <renderer/buffer.h>
-#include <renderer/renderer.h>
+#include <scene/node.hpp>
+#include <renderer/mesh.hpp>
+#include <renderer/buffer.hpp>
+#include <renderer/renderer.hpp>
 
 namespace ev2 {
 

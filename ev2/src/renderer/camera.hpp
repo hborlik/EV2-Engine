@@ -13,7 +13,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <geometry.h>
+#include <geometry.hpp>
 
 
 namespace ev2 {

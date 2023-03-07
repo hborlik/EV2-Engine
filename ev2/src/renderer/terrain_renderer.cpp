@@ -1,15 +1,15 @@
-#include <renderer/terrain_renderer.h>
+#include <renderer/terrain_renderer.hpp>
 
 #include <stdio.h>
 #include <map>
 #include <vector>
 
-#include <renderer/ev_gl.h>
-#include <renderer/buffer.h>
-#include <renderer/camera.h>
-#include <renderer/shader.h>
+#include <renderer/ev_gl.hpp>
+#include <renderer/buffer.hpp>
+#include <renderer/camera.hpp>
+#include <renderer/shader.hpp>
 #include <image.hpp>
-#include <resource.h>
+#include <resource.hpp>
 
 #define CBT_IMPLEMENTATION
 #include <cbt.h>

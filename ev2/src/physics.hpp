@@ -10,10 +10,10 @@
 #include <unordered_map>
 #include <optional>
 
-#include <ev.h>
-#include <singleton.h>
-#include <geometry.h>
-#include <scene/node.h>
+#include <ev.hpp>
+#include <singleton.hpp>
+#include <geometry.hpp>
+#include <scene/node.hpp>
 
 #include <reactphysics3d/reactphysics3d.h>
 

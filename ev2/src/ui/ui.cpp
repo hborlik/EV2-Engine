@@ -1,8 +1,8 @@
 #include <ui/ui.hpp>
-#include <ui/imgui.h>
+#include <ui/imgui.hpp>
 
-#include <physics.h>
-#include <resource.h>
+#include <physics.hpp>
+#include <resource.hpp>
 
 namespace ev2 {
 

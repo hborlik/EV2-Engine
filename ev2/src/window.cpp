@@ -5,15 +5,15 @@
  * 
  * 
  */
-#include <window.h>
+#include <window.hpp>
 
 #include <iostream>
 #include <iomanip>
 #include <array>
 
-#include <ev.h>
-#include <input.h>
-#include <application.h>
+#include <ev.hpp>
+#include <input.hpp>
+#include <application.hpp>
 
 using namespace ev2;
 

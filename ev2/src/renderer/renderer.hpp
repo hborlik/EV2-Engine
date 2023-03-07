@@ -13,17 +13,17 @@
 #include <array>
 #include <queue>
 
-#include <singleton.h>
-#include <renderer/mesh.h>
-#include <renderer/shader.h>
-#include <renderer/texture.h>
-#include <renderer/camera.h>
-#include <renderer/material.h>
-#include <renderer/debug_renderer.h>
+#include <singleton.hpp>
+#include <renderer/mesh.hpp>
+#include <renderer/shader.hpp>
+#include <renderer/texture.hpp>
+#include <renderer/camera.hpp>
+#include <renderer/material.hpp>
+#include <renderer/debug_renderer.hpp>
 #include <renderer/render_state.hpp>
-#include <renderer/terrain_renderer.h>
+#include <renderer/terrain_renderer.hpp>
 
-#include <geometry.h>
+#include <geometry.hpp>
 
 namespace ev2::renderer {
 

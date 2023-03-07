@@ -1,7 +1,7 @@
-#include <scene/visual_nodes.h>
+#include <scene/visual_nodes.hpp>
 
-#include <scene/scene.h>
-#include <renderer/shader.h>
+#include <scene/scene.hpp>
+#include <renderer/shader.hpp>
 
 namespace ev2 {
 

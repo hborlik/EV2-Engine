@@ -46,7 +46,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 
 #ifndef IMGUI_VERSION
-#include <ui/imgui.h>
+#include <ui/imgui.hpp>
 #endif
 
 #include <stdio.h>      // FILE*, sscanf
@@ -1403,7 +1403,7 @@ struct ImGuiOldColumns
 //-----------------------------------------------------------------------------
 
 #ifdef IMGUI_HAS_MULTI_SELECT
-// <this is filled in 'range_select' branch>
+// <this is filled in 'range_select' bran.hpp>
 #endif // #ifdef IMGUI_HAS_MULTI_SELECT
 
 //-----------------------------------------------------------------------------
@@ -1411,7 +1411,7 @@ struct ImGuiOldColumns
 //-----------------------------------------------------------------------------
 
 #ifdef IMGUI_HAS_DOCK
-// <this is filled in 'docking' branch>
+// <this is filled in 'docking' bran.hpp>
 #endif // #ifdef IMGUI_HAS_DOCK
 
 //-----------------------------------------------------------------------------

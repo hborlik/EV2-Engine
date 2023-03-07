@@ -9,8 +9,8 @@
 #ifndef EV2_RENDERER_STATE_H
 #define EV2_RENDERER_STATE_H
 
-#include <renderer/texture.h>
-#include <renderer/camera.h>
+#include <renderer/texture.hpp>
+#include <renderer/camera.hpp>
 
 namespace ev2::renderer {
 

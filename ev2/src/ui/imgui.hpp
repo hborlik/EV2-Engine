@@ -47,7 +47,7 @@ Index of this file:
 #include IMGUI_USER_CONFIG
 #endif
 #if !defined(IMGUI_DISABLE_INCLUDE_IMCONFIG_H) || defined(IMGUI_INCLUDE_IMCONFIG_H)
-#include <ui/imconfig.h>
+#include <ui/imconfig.hpp>
 #endif
 
 #ifndef IMGUI_DISABLE
