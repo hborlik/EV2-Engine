@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(ev2 VERSION 0.0.1 LANGUAGES CXX)
 
 file(GLOB_RECURSE sources src/*.cpp src/*.h)
-file(GLOB_RECURSE headers include/*.h include/*.hpp)
+file(GLOB_RECURSE headers src/*.h src/*.hpp)
 
 add_library(ev2 STATIC ${sources} ${headers})
 
@@ -15,11 +15,10 @@ set_target_properties(ev2 PROPERTIES
 
 target_include_directories(ev2
 PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    # $<INSTALL_INTERFACE:include>
 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 target_link_libraries(ev2 PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d)
