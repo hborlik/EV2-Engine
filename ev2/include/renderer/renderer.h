@@ -347,21 +347,6 @@ public:
     void set_ssao_bias(float bias) {ssao_bias = bias; uniforms_dirty = true;}
     void set_ssao_kernel_samples(int samples) {ssao_kernel_samples = abs(samples); uniforms_dirty = true;}
 
-    float exposure      = .8f;
-    float gamma         = 2.2f;
-    float bloom_falloff = 0.9f;
-
-    float sky_brightness = .22f;
-    float sun_position  = .0f;
-    float cloud_speed   = .1f;
-
-    const uint32_t ShadowMapWidth = 4096;
-    const uint32_t ShadowMapHeight = 4096;
-    float shadow_bias_world = 0.17f;
-
-    int32_t bloom_iterations = 2;
-    float bloom_threshold = 2.17f;
-
 private:
     friend Material;
 
@@ -379,6 +364,24 @@ private:
      * @param material 
      */
     void destroy_material(Material* material);
+
+public:
+    float exposure      = .8f;
+    float gamma         = 2.2f;
+    float bloom_falloff = 0.9f;
+
+    float sky_brightness = .22f;
+    float sun_position  = .0f;
+    float cloud_speed   = .1f;
+
+    const uint32_t ShadowMapWidth = 4096;
+    const uint32_t ShadowMapHeight = 4096;
+    float shadow_bias_world = 0.17f;
+
+    int32_t bloom_iterations = 2;
+    float bloom_threshold = 2.17f;
+
+private:
 
     // uniform constants
     bool uniforms_dirty = true;

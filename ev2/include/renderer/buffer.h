@@ -42,6 +42,7 @@ public:
     }
 
     Buffer& operator=(Buffer&& o) {
+        std::swap(capacity, o.capacity);
         std::swap(gl_reference, o.gl_reference);
         std::swap(target, o.target);
         std::swap(usage, o.usage);
@@ -133,7 +134,6 @@ public:
     gl::Usage get_usage() const noexcept {return usage;}
 
 private:
-
     /**
      * @brief size in bytes of copied data 
      */

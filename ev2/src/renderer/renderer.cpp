@@ -434,7 +434,7 @@ void Renderer::init() {
 
     ssao_kernel_desc = ssao_program.getUniformBlockInfo("Samples");
     ssao_kernel_buffer.allocate(ssao_kernel_desc.block_size);
-    auto tgt_layout = ssao_kernel_desc.getLayout("samples[0]");
+    auto tgt_layout = ssao_kernel_desc.get_layout("samples[0]");
     ssao_kernel_buffer.sub_data(ssaoKernel, tgt_layout.Offset, tgt_layout.ArrayStride);
     
     int i = 0;
@@ -721,13 +721,13 @@ void Renderer::render(const Camera &camera) {
 
 
     // update globals buffer with frame info
-    globals_desc.setShaderParameter("P", P, shader_globals);
-    globals_desc.setShaderParameter("PInv", glm::inverse(P), shader_globals);
-    globals_desc.setShaderParameter("View", V, shader_globals);
-    globals_desc.setShaderParameter("VInv", glm::inverse(V), shader_globals);
-    globals_desc.setShaderParameter("VP", VP, shader_globals);
-    globals_desc.setShaderParameter("CameraPos", camera.get_position(), shader_globals);
-    globals_desc.setShaderParameter("CameraDir", camera.get_forward(), shader_globals);
+    globals_desc.set_parameter("P", P, shader_globals);
+    globals_desc.set_parameter("PInv", glm::inverse(P), shader_globals);
+    globals_desc.set_parameter("View", V, shader_globals);
+    globals_desc.set_parameter("VInv", glm::inverse(V), shader_globals);
+    globals_desc.set_parameter("VP", VP, shader_globals);
+    globals_desc.set_parameter("CameraPos", camera.get_position(), shader_globals);
+    globals_desc.set_parameter("CameraDir", camera.get_forward(), shader_globals);
 
     glm::mat4 light_vp;
 

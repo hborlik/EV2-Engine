@@ -215,7 +215,7 @@ std::vector<std::unique_ptr<Shader>> UbiquitousShader::get_shader_stages(int ver
     return output_shaders;
 }
 
-// ShaderProgram
+// Program
 
 Program::Program() {
 
@@ -294,19 +294,6 @@ void Program::use() const {
     // set program to active
     glUseProgram(gl_reference);
 }
-
-// void Program::applyMaterial(const Material& material) const {
-    // const auto& textureInputs = material->getTextureInputs();
-    // for(uint32_t i = 0; i < textureInputs.size(); i++) { 
-    //     if(textureInputs[i].texture) {
-    //         // set and activate texture unit for editing
-    //         glActiveTexture(gl::TextureUnit[i]);
-    //         textureInputs[i].texture->bind();
-    //         // update sampler uniform for texture
-    //         glUniform1i(textureInputs[i].location, i);
-    //     }
-    // }
-// }
 
 bool Program::isLinked() const {
     GLint status;

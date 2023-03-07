@@ -276,7 +276,7 @@ struct ProgramUniformBlockDescription
     };
     std::unordered_map<std::string, Layout> layouts;
 
-    Layout getLayout(const std::string &name)
+    Layout get_layout(const std::string &name)
     {
         auto itr = layouts.find(name);
         if (itr != layouts.end())
@@ -284,7 +284,7 @@ struct ProgramUniformBlockDescription
         return {-1, -1, -1};
     }
 
-    GLint getOffset(const std::string &name)
+    GLint get_offset(const std::string &name)
     {
         auto itr = layouts.find(name);
         if (itr != layouts.end())
@@ -292,7 +292,7 @@ struct ProgramUniformBlockDescription
         return -1;
     }
 
-    bool isValid() const noexcept {return location_index != -1;}
+    bool is_valid() const noexcept {return location_index != -1;}
 
     /**
      * @brief Set a Shader parameter in the target uniform block buffer.
@@ -305,11 +305,11 @@ struct ProgramUniformBlockDescription
      * @return false 
      */
     template <typename T>
-    bool setShaderParameter(const std::string &paramName, const T &data, Buffer &shaderBuffer)
+    bool set_parameter(const std::string &paramName, const T &data, Buffer &shaderBuffer)
     {
-        if (isValid())
+        if (is_valid())
         {
-            GLint uoff = getOffset(paramName);
+            GLint uoff = get_offset(paramName);
             if (uoff != -1)
             {
                 shaderBuffer.sub_data(data, (uint32_t)uoff);
@@ -331,11 +331,11 @@ struct ProgramUniformBlockDescription
      * @return false 
      */
     template <typename T>
-    bool setShaderParameter(const std::string &paramName, const std::vector<T> &data, Buffer &shaderBuffer)
+    bool set_parameter(const std::string &paramName, const std::vector<T> &data, Buffer &shaderBuffer)
     {
-        if (isValid())
+        if (is_valid())
         {
-            ProgramUniformBlockDescription::Layout layout = getLayout(paramName);
+            ProgramUniformBlockDescription::Layout layout = get_layout(paramName);
             GLint uoff = layout.Offset;
             GLint stride = layout.ArrayStride;
             if (uoff != -1 && layout.ArraySize >= data.size())
