@@ -49,6 +49,7 @@ struct MaterialData {
     float sheenTint;
 };
 
+// TODO change to SSBO
 layout (std140, binding = 1) uniform MaterialsInfo {
     MaterialData materials[255];
 };
