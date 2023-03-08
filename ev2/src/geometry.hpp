@@ -113,6 +113,13 @@ struct Plane {
         normalize();
     }
 
+    /**
+     * @brief Construct a new Plane object with normal cross(b - a, c - a)
+     * 
+     * @param a 
+     * @param b 
+     * @param c 
+     */
     Plane(glm::vec3 a, glm::vec3 b, glm::vec3 c) noexcept : p{glm::cross(b - a, c - a), -glm::dot(a, glm::cross(b - a, c - a))} {
         normalize();
     }
@@ -263,15 +270,16 @@ struct Frustum {
     explicit Frustum(const glm::mat4& view_projection) {
         using namespace glm;
         // 4 corners of the view frustum in clip space
+        // clip space looks along +Z
         vec4 clip_corners[8] = {
-            vec4(-1, -1, -1, 1),
-            vec4( 1, -1, -1, 1),
-            vec4( 1,  1, -1, 1),
-            vec4(-1,  1, -1, 1),
-            vec4(-1, -1,  1, 1),
-            vec4( 1, -1,  1, 1),
-            vec4( 1,  1,  1, 1),
-            vec4(-1,  1,  1, 1),
+            vec4(-1, -1, -1, 1), // 0 near lower left
+            vec4( 1, -1, -1, 1), // 1 near lower right
+            vec4( 1,  1, -1, 1), // 2 near upper right
+            vec4(-1,  1, -1, 1), // 3 near upper left
+            vec4(-1, -1,  1, 1), // 4 far lower left
+            vec4( 1, -1,  1, 1), // 5 far lower right
+            vec4( 1,  1,  1, 1), // 6 far upper right
+            vec4(-1,  1,  1, 1), // 7 far upper left
         };
 
         // transform to world space
@@ -282,19 +290,19 @@ struct Frustum {
             world_corners[i] /= world_corners[i].w;
         }
 
-        // 6 planes
+        // 6 planes (a, b, c) normal is cross(b - a, c - a)
         // left
-        planes[0] = Plane(world_corners[0], world_corners[1], world_corners[2]);
+        planes[0] = Plane(world_corners[0], world_corners[4], world_corners[3]);
         // right
-        planes[1] = Plane(world_corners[4], world_corners[5], world_corners[6]);
+        planes[1] = Plane(world_corners[1], world_corners[2], world_corners[5]);
         // top
         planes[2] = Plane(world_corners[2], world_corners[3], world_corners[6]);
         // bottom
-        planes[3] = Plane(world_corners[0], world_corners[1], world_corners[4]);
+        planes[3] = Plane(world_corners[1], world_corners[5], world_corners[0]);
         // near
-        planes[4] = Plane(world_corners[0], world_corners[3], world_corners[4]);
+        planes[4] = Plane(world_corners[1], world_corners[0], world_corners[2]);
         // far
-        planes[5] = Plane(world_corners[1], world_corners[2], world_corners[5]);
+        planes[5] = Plane(world_corners[5], world_corners[6], world_corners[4]);
     }
 
     // 6 inward pointing planes
@@ -337,6 +345,7 @@ inline Frustum extract_frustum(const glm::mat4& comp) noexcept {
     using namespace glm;
     Frustum f{};
 
+    // total of 6 planes
     for (int i = 0; i < 3; i++)
         for (int j = 0; j < 2; j++) {
             f.planes[i * 2 + j].p.x = comp[0][3] + (j == 0 ? comp[0][j] : -comp[0][j]);

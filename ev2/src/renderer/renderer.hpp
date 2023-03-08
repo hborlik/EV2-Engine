@@ -381,7 +381,12 @@ public:
     int32_t bloom_iterations = 2;
     float bloom_threshold = 2.17f;
 
+    bool pause_cull = false;
+    bool culling_enabled = true;
+
 private:
+
+    Frustum cull_frustum{};
 
     // uniform constants
     bool uniforms_dirty = true;

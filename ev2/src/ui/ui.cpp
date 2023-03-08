@@ -52,6 +52,8 @@ void show_settings_window(bool* p_open) {
         ImGui::DragFloat("Bloom Threshold", &(ev2::renderer::Renderer::get_singleton().bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
         ImGui::DragFloat("Bloom Falloff", &(ev2::renderer::Renderer::get_singleton().bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
         ImGui::DragFloat("Shadow Bias World", &(ev2::renderer::Renderer::get_singleton().shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
+        ImGui::Checkbox("Culling Enabled", &(ev2::renderer::Renderer::get_singleton().culling_enabled));
+        ImGui::Checkbox("Pause Culling", &(ev2::renderer::Renderer::get_singleton().pause_cull));
         ImGui::Separator();
         ImGui::Text("World");
 

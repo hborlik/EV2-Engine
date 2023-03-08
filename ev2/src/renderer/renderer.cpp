@@ -717,7 +717,9 @@ void Renderer::render(const Camera &camera) {
     const glm::mat4 P = camera.get_projection();
     const glm::mat4 V = camera.get_view();
     const glm::mat4 VP = P * V;
-    const Frustum frustum = extract_frustum(VP);
+    
+    if (!pause_cull) // update frustum
+        cull_frustum = Frustum{VP};
 
 
     // update globals buffer with frame info
@@ -815,7 +817,7 @@ void Renderer::render(const Camera &camera) {
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
 
-    // int cull_count = 0;
+    int cull_count = 0;
     for (auto &mPair : model_instances) {
         auto& m = mPair.second;
         if (m.drawable) {
@@ -824,14 +826,14 @@ void Renderer::render(const Camera &camera) {
                 case FrustumCull::None:
                     break;
                 case FrustumCull::Sphere:
-                    visible = intersect(frustum, m.transform * m.drawable->bounding_sphere);
+                    visible = intersect(cull_frustum, m.transform * m.drawable->bounding_sphere);
                     break;
                 case FrustumCull::AABB:
-                    visible = intersect(frustum, m.transform * m.drawable->bounding_box);
+                    visible = intersect(cull_frustum, m.transform * m.drawable->bounding_box);
                     break;
             }
-            if (!visible) {
-                // cull_count++;
+            if (!visible && culling_enabled) {
+                cull_count++;
                 continue;
             }
             const glm::mat3 G = glm::inverse(glm::transpose(glm::mat3(m.transform)));
