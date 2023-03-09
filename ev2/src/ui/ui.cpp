@@ -32,28 +32,30 @@ void show_material_editor_window(bool* p_open) {
 }
 
 void show_settings_window(bool* p_open) {
+    auto& renderer = ev2::renderer::Renderer::get_singleton();
     if (ImGui::Begin("Render Settings", p_open)) {
-        ImGui::Text("N Lights %i", ev2::renderer::Renderer::get_singleton().get_n_pointlights());
-        float ssao_radius = ev2::renderer::Renderer::get_singleton().get_ssao_radius();
+        ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Text("N Lights %i", renderer.get_n_pointlights());
+        float ssao_radius = renderer.get_ssao_radius();
         if (ImGui::DragFloat("SSAO radius", &(ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f)) {
-            ev2::renderer::Renderer::get_singleton().set_ssao_radius(ssao_radius);
+            renderer.set_ssao_radius(ssao_radius);
         }
-        int ssao_samples = ev2::renderer::Renderer::get_singleton().get_ssao_kernel_samples();
+        int ssao_samples = renderer.get_ssao_kernel_samples();
         if (ImGui::DragInt("SSAO samples", &ssao_samples, 1, 1, 64)) {
-            ev2::renderer::Renderer::get_singleton().set_ssao_kernel_samples(ssao_samples);
+            renderer.set_ssao_kernel_samples(ssao_samples);
         }
-        float ssao_bias = ev2::renderer::Renderer::get_singleton().get_ssao_bias();
+        float ssao_bias = renderer.get_ssao_bias();
         if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
-            ev2::renderer::Renderer::get_singleton().set_ssao_bias(ssao_bias);
+            renderer.set_ssao_bias(ssao_bias);
         }
-        ImGui::DragFloat("Exposure", &(ev2::renderer::Renderer::get_singleton().exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
-        ImGui::DragFloat("Gamma", &(ev2::renderer::Renderer::get_singleton().gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
-        ImGui::DragInt("Bloom Quality", &(ev2::renderer::Renderer::get_singleton().bloom_iterations), 1, 1, 6);
-        ImGui::DragFloat("Bloom Threshold", &(ev2::renderer::Renderer::get_singleton().bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
-        ImGui::DragFloat("Bloom Falloff", &(ev2::renderer::Renderer::get_singleton().bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
-        ImGui::DragFloat("Shadow Bias World", &(ev2::renderer::Renderer::get_singleton().shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
-        ImGui::Checkbox("Culling Enabled", &(ev2::renderer::Renderer::get_singleton().culling_enabled));
-        ImGui::Checkbox("Pause Culling", &(ev2::renderer::Renderer::get_singleton().pause_cull));
+        ImGui::DragFloat("Exposure", &(renderer.exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
+        ImGui::DragFloat("Gamma", &(renderer.gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
+        ImGui::DragInt("Bloom Quality", &(renderer.bloom_iterations), 1, 1, 6);
+        ImGui::DragFloat("Bloom Threshold", &(renderer.bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
+        ImGui::DragFloat("Bloom Falloff", &(renderer.bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
+        ImGui::DragFloat("Shadow Bias World", &(renderer.shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
+        ImGui::Checkbox("Culling Enabled", &(renderer.culling_enabled));
+        ImGui::Checkbox("Pause Culling", &(renderer.pause_cull));
         ImGui::Separator();
         ImGui::Text("World");
 
@@ -62,7 +64,7 @@ void show_settings_window(bool* p_open) {
             ev2::Physics::get_singleton().enable_simulation(enable_physics_timestep);
         }
         ImGui::Separator();
-        ImGui::DragFloat("Sky Brightness", &(ev2::renderer::Renderer::get_singleton().sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
+        ImGui::DragFloat("Sky Brightness", &(renderer.sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
     }
     ImGui::End();
 }
