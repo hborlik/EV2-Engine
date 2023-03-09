@@ -19,11 +19,7 @@
 
 #define GL_CHECKED_CALL(call) {isGLError(); (call); if(isGLError()) std::cerr << __FILE__ << ":" << __LINE__ << " GL_CHECKED_CALL error" << std::endl;}
 
-#ifndef NDEBUG
 #define GL_ERROR_CHECK(call, var) {clearGLErrors(); (call); var = getGLError();}
-#else
-#define GL_ERROR_CHECK(call, var) {(call);}
-#endif
 
 namespace ev2 {
     namespace {

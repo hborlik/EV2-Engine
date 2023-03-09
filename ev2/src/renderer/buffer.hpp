@@ -23,12 +23,12 @@ public:
 
     template<typename T>
     Buffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
-        glGenBuffers(1, &gl_reference);
+        glCreateBuffers(1, &gl_reference);
         copy_data(data);
     }
 
     Buffer(gl::BindingTarget target, gl::Usage usage, std::size_t size, const void* data) : target{target}, usage{usage} {
-        glGenBuffers(1, &gl_reference);
+        glCreateBuffers(1, &gl_reference);
         copy_data(size, data);
     }
 
@@ -155,10 +155,9 @@ private:
 template<typename T>
 void Buffer::copy_data(const std::vector<T>& source) {
     if(!source.empty()) {
-        glBindBuffer((GLenum)target, gl_reference);
-        glBufferData((GLenum)target, sizeof(T) * source.size(), source.data(), (GLenum)usage);
-        glBindBuffer((GLenum)target, 0);
-        capacity = sizeof(T) * source.size();
+        bool error = false;
+        GL_ERROR_CHECK(glNamedBufferData(gl_reference, sizeof(T) * source.size(), source.data(), (GLenum)usage), error);
+        if (!error) capacity = sizeof(T) * source.size();
     }
 }
 
@@ -171,9 +170,7 @@ void Buffer::copy_data(const std::vector<T>& source) {
  */
 template<typename T>//, typename>
 void Buffer::sub_data(const T& source, uint32_t offset) {
-    glBindBuffer((GLenum)target, gl_reference);
-    GL_CHECKED_CALL(glBufferSubData((GLenum)target, offset, sizeof(T), &source));
-    glBindBuffer((GLenum)target, 0);
+    GL_CHECKED_CALL(glNamedBufferSubData(gl_reference, offset, sizeof(T), &source));
 }
 
 /**
@@ -187,11 +184,9 @@ void Buffer::sub_data(const T& source, uint32_t offset) {
 template<typename T>
 void Buffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
     if(!source.empty()) {
-        glBindBuffer((GLenum)target, gl_reference);
         for(size_t i = 0; i < source.size(); i++) {
-            GL_CHECKED_CALL(glBufferSubData((GLenum)target, offset + i * stride, sizeof(T), &source[i]));
+            GL_CHECKED_CALL(glNamedBufferSubData(gl_reference, offset + i * stride, sizeof(T), &source[i]));
         }
-        glBindBuffer((GLenum)target, 0);
     }
 }
 
