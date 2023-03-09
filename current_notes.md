@@ -100,7 +100,7 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
 6.  Feb 17 : 
 7.  Feb 24 : 
 8.  Mar 03 : 
-9.  Mar 10 : 
+9.  Mar 10 : Graph implementations are working and mostly tested. Need to finish WFC
 10. Mar 17 : 
 
 ### current milestones
@@ -127,6 +127,7 @@ A framework for both plant and building placement. Procedural open world scene g
    - The normals for terrain are wrong! this is why only part of it shades (fixed)
 2. How are volumes going to be represented? sdf, voxels, AABB, something else?
 3. Fix shutdown order! Terrain Renderer needs to be destroyed before Renderer and should be moved out of the class
+4. remove binding target from Buffer class
 
 ### Terrain Generation
 Example based terrain generation has been explored and GAN based models offer a smooth
