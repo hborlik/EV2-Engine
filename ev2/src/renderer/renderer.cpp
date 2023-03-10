@@ -106,14 +106,14 @@ void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuin
         }
 
         if (indexed) {
-            Buffer* el_buf = dr->vertex_buffer.get_buffer(dr->vertex_buffer.get_indexed()).get();
-            el_buf->bind();
+            // Buffer* el_buf = dr->vertex_buffer.get_buffer(dr->vertex_buffer.get_indexed()).get();
+            // el_buf->bind();
             if (instance_buffer || n_instances > 0) {
                 glDrawElementsInstanced(GL_TRIANGLES, m.num_elements, GL_UNSIGNED_INT, (void*)0, n_instances);
             } else {
                 glDrawElements(GL_TRIANGLES, m.num_elements, GL_UNSIGNED_INT, (void*)0);
             }
-            el_buf->unbind();
+            // el_buf->unbind();
         } else {
             if (instance_buffer || n_instances > 0) {
                 glDrawArraysInstanced(GL_TRIANGLES, m.start_index, m.num_elements, n_instances);

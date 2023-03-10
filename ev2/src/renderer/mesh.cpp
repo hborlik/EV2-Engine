@@ -176,6 +176,10 @@ GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<VertexAttri
             std::cout << "could not find accessor for " << (int)accessor_id << std::endl;
     }
 
+    if (indexed != -1) {
+        buffers.at(indexed)->bind();
+    }
+
     if (instance_buffer != nullptr) {
         // bind instance buffer
         instance_buffer->bind();
