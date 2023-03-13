@@ -450,6 +450,9 @@ int main() {
     test_pattern_validity0();
     test_pattern_validity1();
 
+    NodeGrid ngrid{2, 2};
+    std::cout << ngrid.get_graph() << std::endl;
+
     //
 
     cout << "Done" << endl;
