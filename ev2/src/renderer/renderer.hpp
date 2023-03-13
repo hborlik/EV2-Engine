@@ -135,53 +135,6 @@ struct MaterialData {
     }
 };
 
-struct MSIID { // mesh instance id
-    int32_t v = -1;
-
-    bool is_valid() const noexcept {return v != -1;}
-};
-
-struct MeshPrimitive {
-    MeshPrimitive() noexcept = default;
-    MeshPrimitive(VertexBuffer* vb, int32_t material_id, int32_t indices = -1)
-        : vb{vb}, indices{indices}, material_id{material_id} {}
-    
-    ~MeshPrimitive() {
-        if (gl_vao != 0)
-            glDeleteVertexArrays(1, &gl_vao);
-    }
-
-    std::map<int, int>      attributes;         // map of attribute location (engine value like VERTEX_BINDING_LOCATION to a buffer in vb)
-    VertexBuffer*           vb{};
-    int32_t                 indices = -1;       // ind of index buffer in vb
-    int32_t                 material_id = 0;
-
-private:
-    friend class Renderer;
-    friend struct RenderObj;
-    GLuint gl_vao = 0;
-};
-
-struct RenderObj {
-    gl::CullMode    cull_mode = gl::CullMode::NONE;
-    gl::FrontFacing front_facing = gl::FrontFacing::CCW;
-
-    void set_mesh_primitives(const std::vector<MeshPrimitive>& primitives);
-
-    RenderObj() = default;
-
-private:
-    friend class Renderer;
-    int32_t id = -1;
-
-    std::vector<MeshPrimitive> primitives{};
-};
-
-struct MeshInstance {
-    glm::mat4               transform = glm::identity<glm::mat4>();
-    RenderObj*              mesh = nullptr;
-};
-
 // instance drawable primitive setup
 
 struct Primitive {
@@ -309,14 +262,6 @@ public:
 
     InstancedDrawable* create_instanced_drawable();
     void destroy_instanced_drawable(InstancedDrawable* drawable);
-
-    RenderObj* create_render_obj();
-    void destroy_render_obj(RenderObj* render_obj);
-
-    MSIID create_mesh_instance();
-    void set_mesh_instance_mesh(MSIID msiid, RenderObj* render_object);
-    void set_mesh_instance_transform(MSIID msiid, const glm::mat4& transform);
-    void destroy_mesh_instance(MSIID msiid);
     
 
     void render(const Camera &camera);
@@ -409,11 +354,11 @@ private:
     std::unordered_map<int32_t, InstancedDrawable> instanced_drawables;
     uint32_t next_instanced_drawable_id = 100;
 
-    std::unordered_map<int32_t, RenderObj> meshes;
-    uint32_t next_mesh_id = 1;
+    // std::unordered_map<int32_t, RenderObj> meshes;
+    // uint32_t next_mesh_id = 1;
 
-    std::unordered_map<int32_t, MeshInstance> mesh_instances;
-    uint32_t next_mesh_instance_id = 1;
+    // std::unordered_map<int32_t, MeshInstance> mesh_instances;
+    // uint32_t next_mesh_instance_id = 1;
 
     // lights
     std::unordered_map<uint32_t, Light> point_lights;

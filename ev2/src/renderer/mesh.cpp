@@ -186,22 +186,23 @@ GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<VertexAttri
 
         // mat4 instance info, note: max size for a vertex attribute is a vec4
         constexpr std::size_t vec4Size = sizeof(glm::vec4);
-        glEnableVertexAttribArray(mat_spec::INSTANCE_BINDING_LOCATION);
-        glVertexAttribPointer(mat_spec::INSTANCE_BINDING_LOCATION, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
+        const int binding = mat_spec::INSTANCE_BINDING_LOCATION;
+        glEnableVertexAttribArray(binding);
+        glVertexAttribPointer(binding, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
 
-        glEnableVertexAttribArray(mat_spec::INSTANCE_BINDING_LOCATION + 1);
-        glVertexAttribPointer(mat_spec::INSTANCE_BINDING_LOCATION + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
+        glEnableVertexAttribArray(binding + 1);
+        glVertexAttribPointer(binding + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
 
-        glEnableVertexAttribArray(mat_spec::INSTANCE_BINDING_LOCATION + 2);
-        glVertexAttribPointer(mat_spec::INSTANCE_BINDING_LOCATION + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 2));
+        glEnableVertexAttribArray(binding + 2);
+        glVertexAttribPointer(binding + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 2));
 
-        glEnableVertexAttribArray(mat_spec::INSTANCE_BINDING_LOCATION + 3);
-        glVertexAttribPointer(mat_spec::INSTANCE_BINDING_LOCATION + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 3));
+        glEnableVertexAttribArray(binding + 3);
+        glVertexAttribPointer(binding + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 3));
 
-        glVertexAttribDivisor(mat_spec::INSTANCE_BINDING_LOCATION,  1);
-        glVertexAttribDivisor(mat_spec::INSTANCE_BINDING_LOCATION+1, 1);
-        glVertexAttribDivisor(mat_spec::INSTANCE_BINDING_LOCATION+2, 1);
-        glVertexAttribDivisor(mat_spec::INSTANCE_BINDING_LOCATION+3, 1);
+        glVertexAttribDivisor(binding,  1);
+        glVertexAttribDivisor(binding+1, 1);
+        glVertexAttribDivisor(binding+2, 1);
+        glVertexAttribDivisor(binding+3, 1);
 
         instance_buffer->unbind();
     }

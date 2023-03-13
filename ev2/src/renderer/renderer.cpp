@@ -638,61 +638,6 @@ void Renderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
     instanced_drawables.erase(drawable->id);
 }
 
-RenderObj* Renderer::create_render_obj() {
-    int32_t id = next_mesh_id++;
-    auto ro = meshes.emplace(id, RenderObj{});
-    RenderObj* out = nullptr;
-    if (ro.second)
-        out = &(ro.first->second);
-    return out;
-}
-
-// void RenderObj::set_mesh_primitives(const std::vector<MeshPrimitive>& primitives) {
-//     this->primitives = primitives;
-
-//     // generate the VAOs for all primitives in mesh 
-//     for (auto& m_pri : this->primitives) {
-//         assert(m_pri.vb);
-//         m_pri.gl_vao = m_pri.vb->gen_vao_for_attributes(m_pri.attributes);
-//     }
-// }
-
-void Renderer::destroy_render_obj(RenderObj* render_object) {
-    if (render_object) {
-        meshes.erase(render_object->id);
-    }
-}
-
-MSIID Renderer::create_mesh_instance() {
-    int32_t id = next_mesh_instance_id++;
-    mesh_instances.emplace(id, MeshInstance{});
-    return {id};
-}
-
-void Renderer::set_mesh_instance_mesh(MSIID msiid, RenderObj* render_object) {
-    if (!(msiid.is_valid() || render_object))
-        return;
-
-    auto mesh_instance = mesh_instances.find(msiid.v);
-    if (mesh_instance != mesh_instances.end())
-        mesh_instance->second.mesh = render_object;
-}
-
-void Renderer::set_mesh_instance_transform(MSIID msiid, const glm::mat4& transform) {
-    if (!msiid.is_valid())
-        return;
-    
-    auto mi = mesh_instances.find(msiid.v);
-    if (mi != mesh_instances.end()) {
-        mi->second.transform = transform;
-    }
-}
-
-void Renderer::destroy_mesh_instance(MSIID msiid) {
-    if (msiid.is_valid())
-        mesh_instances.erase(msiid.v);
-}
-
 void Renderer::render(const Camera &camera) {
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
