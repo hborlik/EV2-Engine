@@ -161,7 +161,7 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     if (node->get_n_children() == 0)
         node_flags |= ImGuiTreeNodeFlags_Leaf;
 
-    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)id, node_flags, node_name.c_str());
+    bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)id, node_flags, "%s", node_name.c_str());
     
     int node_clicked = -1;
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
