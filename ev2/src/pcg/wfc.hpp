@@ -190,11 +190,6 @@ private:
         internal_node* i_nodeB = nullptr;
     };
 
-    int next_mat_coord = 0;
-    bool m_is_directed = false;
-    std::unordered_map<int, internal_node> node_map{}; // node id to internal adjacency
-    std::unordered_map<coord, weight> sparse_adjacency_map{};
-
 public:
 
     SparseGraph() = default;
@@ -302,6 +297,35 @@ private:
 
     int get_next_mat_coord() noexcept { return next_mat_coord++; }
 
+    friend std::ostream& operator<< (std::ostream& out, const SparseGraph<T>& graph) {
+        out << "Sparse Graph. " << (graph.is_directed() ? "Directed" : "Undirected") << "\n";
+        if (graph.is_directed())
+            out << "_From column_ \n";
+        out << std::setw(10) << "_";
+
+        std::vector<T*> node_order{};
+        for (auto& [i, i_node] : graph.node_map) {
+            out << std::setw(10) << i_node.node->identifier;
+            node_order.push_back(i_node.node);
+        }
+        out << "\n" << std::setprecision(5);
+        for (auto& [i, i_node] : graph.node_map) {
+            out << std::setw(10) << i_node.node->identifier;
+            
+            // print row of adjacencies for this node
+            for (auto j_node : node_order) {
+                out << std::setw(10) << graph.adjacent(i_node.node, j_node);
+            }
+            out << "\n";
+        }
+        return out;
+    }
+
+private:
+    int next_mat_coord = 0;
+    bool m_is_directed = false;
+    std::unordered_map<int, internal_node> node_map{}; // node id to internal adjacency
+    std::unordered_map<coord, weight> sparse_adjacency_map{};
 };
 
 /**
@@ -546,7 +570,7 @@ private:
     }
 
     friend std::ostream& operator<< (std::ostream& out, const DenseGraph<T>& graph) {
-        out << "Dense Graph. Directed (" << std::to_string(graph.is_directed()) << ")\n";
+        out << "Dense Graph. " << (graph.is_directed() ? "Directed" : "Undirected") << "\n";
         if (graph.is_directed())
             out << "_From column_ \n";
         out << std::setw(10) << "_";
@@ -557,12 +581,12 @@ private:
         for (int i = 0; i < graph.get_n_nodes(); ++i) {
             out << std::setw(10) << graph.m_nodes[i]->identifier;
             for (int j = 0; j < graph.get_n_nodes(); ++j)
-                out << std::setw(10) << graph.m_adjacency_matrix[graph.ind(i, j)];
-        out << "\n";
-    }
+                out << std::setw(10) << graph.adjacent(i, j);
+            out << "\n";
+        }
 
-    return out;
-}
+        return out;
+    }
 
     int m_n_nodes = 0;
     bool m_is_directed = false;
@@ -603,7 +627,7 @@ public:
 class WFCSolver
 {
 public:
-    WFCSolver(Graph<DNode>* graph, std::vector<Pattern> patterns): graph{ graph }, patterns{ patterns } {
+    WFCSolver(Graph<DNode>* graph): graph{ graph } {
         assert(graph != nullptr);
     }
 
@@ -668,7 +692,6 @@ public:
 
     std::queue<DNode*> propagation_stack;
     Graph<DNode>* graph;
-    std::vector<Pattern> patterns;
 };
 
 } // namespace pcg
