@@ -7,42 +7,19 @@
  * 
  * 
  */
-#ifndef EV2_ENGINE_H
-#define EV2_ENGINE_H
+#ifndef EV2_HPP
+#define EV2_HPP
 
 #include <string>
 #include <exception>
-#include <filesystem>
 #include <map>
-#include <fstream>
+#include <filesystem>
 
 #include <reference_counted.hpp>
-#include <util.hpp>
 
 #define EV2_CHECK_THROW(expr, message) if(!(expr)) throw ev2::engine_exception{"[" + std::string{__FILE__} + ":" + std::to_string(__LINE__) + "]:" + message}
 
 namespace ev2 {
-
-class Engine {
-public:
-    static const Engine& get();
-
-    template<typename T>
-    static void log_file(const std::string& message);
-
-    std::filesystem::path asset_path;
-    std::filesystem::path shader_path;
-
-    std::ofstream log_file_stream;
-private:
-    static Engine& get_internal();
-};
-
-template<typename T>
-void Engine::log_file(const std::string& message) {
-    std::string mstr = std::string("[") + util::type_name<T>() + "]:" + message + "\n";
-    get_internal().log_file_stream << mstr;
-}
 
 class Object : public ReferenceCounted<Object> {
 public:

@@ -8,6 +8,7 @@
 #include <renderer/buffer.hpp>
 #include <renderer/camera.hpp>
 #include <renderer/shader.hpp>
+#include <engine.hpp>
 #include <image.hpp>
 #include <resource.hpp>
 

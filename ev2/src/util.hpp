@@ -33,6 +33,13 @@ inline std::string type_name() noexcept {
  */
 std::string get_unique_id();
 
+/**
+ * @brief used for generating log file names and times
+ * 
+ * @return std::string 
+ */
+std::string formatted_current_time();
+
 // variadic min and max functions from https://stackoverflow.com/questions/23815138/implementing-variadic-min-max-functions
 
 template<typename T>

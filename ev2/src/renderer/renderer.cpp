@@ -718,16 +718,17 @@ void Renderer::render(const Camera &camera) {
         const float shadow_far = 2.f * dist_to_camera;
         const float shadow_bias = 2.f * shadow_bias_world / (shadow_far - shadow_near);
         const glm::mat4 LO = glm::ortho(minX, maxX, minY, maxY, shadow_near, shadow_far);
+        const glm::mat4 LOV = LO * LV;
         const glm::mat4 bias_mat = {
             glm::vec4{.5f, 0, 0, 0},
             glm::vec4{0, .5f, 0, 0},
             glm::vec4{0, 0, .5f, 0},
             glm::vec4{.5f, .5f, .5f - shadow_bias, 0}
         };
-        light_vp = bias_mat * LO * LV;
+        light_vp = bias_mat * LOV;
 
         //render scene
-        ev2::gl::glUniform(LO * LV, sdp_lpv_location);
+        ev2::gl::glUniform(LOV, sdp_lpv_location);
         for (auto &mPair : model_instances) {
             auto& m = mPair.second;
             if (m.drawable) {

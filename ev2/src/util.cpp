@@ -2,6 +2,9 @@
 
 #include <cxxabi.h>
 #include <random>
+#include <ctime>
+#include <sstream>
+#include <iomanip>
 
 namespace ev2::util {
 
@@ -32,6 +35,17 @@ std::string get_unique_id() {
         res += v[dist(rng)];
     }
     return res;
+}
+
+std::string formatted_current_time() {
+    // from https://stackoverflow.com/questions/16357999/current-date-and-time-as-string
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+    
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y_%H-%M-%S");
+    auto str = oss.str();
+    return str;
 }
 
 }

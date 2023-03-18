@@ -15,6 +15,7 @@
 #include <sstream>
 #include <algorithm>
 
+#include <engine.hpp>
 #include <renderer/shader.hpp>
 
 using namespace ev2;
