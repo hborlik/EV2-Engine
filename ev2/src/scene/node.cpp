@@ -1,5 +1,5 @@
 #include <scene/node.hpp>
-#include <scene/scene.hpp>
+#include <scene/scene_tree.hpp>
 
 #include <algorithm>
 
@@ -13,10 +13,9 @@ void Node::add_child(Ref<Node> node) {
     int ind = children.size();
     children.push_back(node);
     node->parent = this;
-    node->scene = scene;
 
-    if (scene)
-        scene->_notify_child_added(node);
+    if (scene_tree)
+        scene_tree->node_added(node.get());
 
     on_child_added(node, ind);
 }
@@ -30,8 +29,8 @@ void Node::remove_child(Ref<Node> node) {
         throw engine_exception{"Node: " + name + " does not have child " + node->name};
     }
 
-    if (scene)
-        scene->_notify_child_removed(node);
+    if (scene_tree)
+        scene_tree->node_removed(node.get());
 
     on_child_removed(node);
 }
@@ -42,11 +41,13 @@ void Node::destroy() {
         c->destroy();
     }
 
+    if (scene_tree)
+        scene_tree->node_removed(this);
+
     on_destroy();
 }
 
 void Node::_update(float dt) {
-    transform_cache_valid = false;
     on_process(dt);
 
     for (auto& c : children) {
@@ -55,6 +56,7 @@ void Node::_update(float dt) {
 }
 
 void Node::_ready() {
+    is_ready = true;
     on_ready();
 
     for (auto& c : children) {

@@ -210,6 +210,8 @@ void RigidBody::on_init() {
 
 void RigidBody::on_ready() {
     body->setTransform(get_physics_transform());
+    if (colliders.empty())
+        std::cout << __FILE__ << ":" << std::to_string(__LINE__) << " " << __FUNCTION__ << " no colliders for RigidBody" << std::endl;
 }
 
 void RigidBody::on_process(float delta) {

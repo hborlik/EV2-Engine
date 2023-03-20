@@ -7,7 +7,8 @@
 #ifndef PLANT_GAME_H
 #define PLANT_GAME_H
 
-#include <scene/scene.hpp>
+#include <scene/node.hpp>
+#include <scene/scene_tree.hpp>
 #include <resource.hpp>
 #include <physics.hpp>
 #include <player.h>
@@ -24,7 +25,8 @@ public:
     glm::vec3 sunset_color{253/255.0f, 94/255.0, 83/255.0};
     glm::vec3 night_ambient{0.13, 0.16, 0.21};
 
-    Ref<Scene> scene;
+    ev2::SceneTree scene_tree{};
+    ev2::Ref<Node> scene = nullptr;
     ev2::Ref<ev2::renderer::Material> tree_bark;
     ev2::Ref<ev2::renderer::Material> highlight_material;
 

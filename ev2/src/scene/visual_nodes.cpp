@@ -1,6 +1,5 @@
 #include <scene/visual_nodes.hpp>
 
-#include <scene/scene.hpp>
 #include <renderer/shader.hpp>
 
 namespace ev2 {

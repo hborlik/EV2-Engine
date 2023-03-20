@@ -4,9 +4,6 @@
 
 #include <tests.h>
 #include <tree.h>
-#include <ui/imgui.hpp>
-#include <ui/imgui_impl_glfw.hpp>
-#include <ui/imgui_impl_opengl3.hpp>
 //#define DR_MP3_IMPLEMENTATION
 //#include "../extras/dr_mp3.h"   /* Enables MP3 decoding. */
 
@@ -25,11 +22,14 @@
 #include <Sphere.h>
 #include <physics.hpp>
 #include <renderer/renderer.hpp>
-#include <scene/scene.hpp>
 #include <physics.hpp>
 #include <scene/visual_nodes.hpp>
 #include <debug.h>
 #include <game.h>
+
+#include <ui/imgui.hpp>
+#include <ui/imgui_impl_glfw.hpp>
+#include <ui/imgui_impl_opengl3.hpp>
 
 namespace fs = std::filesystem;
 ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -77,7 +77,8 @@ public:
         return cam_orbital;
     }
 
-    void imgui(GLFWwindow * window) {
+    void imgui() {
+        GLFWwindow * window = ev2::window::getContextWindow();
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -109,12 +110,12 @@ public:
     void initialize() {
         game = std::make_unique<GameState>();
 
-        cam_orbital      = game->scene->create_node<ev2::CameraNode>("Orbital");
-        cam_orbital_root = game->scene->create_node<ev2::Node>("cam_orbital_root");
+        cam_orbital      = game->scene->create_child_node<ev2::CameraNode>("Orbital");
+        cam_orbital_root = game->scene->create_child_node<ev2::Node>("cam_orbital_root");
 
         cam_orbital_root->add_child(cam_orbital);
 
-        cam_fly = game->scene->create_node<ev2::CameraNode>("FlyCam");
+        cam_fly = game->scene->create_child_node<ev2::CameraNode>("FlyCam");
 
         // ev2::ResourceManager::get_singleton().loadGLTF(fs::path("models") / "Box.gltf");
        
@@ -122,36 +123,7 @@ public:
 
 
     int run() {
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-        // GL ES 2.0 + GLSL 100
-        const char* glsl_version = "#version 100";
-#elif defined(__APPLE__)
-        // GL 3.2 + GLSL 150
-        const char* glsl_version = "#version 150";
-#else
-        // GL 3.0 + GLSL 130
-        const char* glsl_version = "#version 130";
-#endif
-
-        GLFWwindow* window = ev2::window::getContextWindow();
-        if (window == NULL)
-            return 1;
-        glfwMakeContextCurrent(window);
-
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO(); (void)io;
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-        // Setup Dear ImGui style
-        ImGui::StyleColorsDark();
-        //ImGui::StyleColorsClassic();
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
-        ImGui_ImplOpenGL3_Init(glsl_version);
-
-        game->scene->ready();
+        // game->scene_tree.change_scene(game->scene.get());
 
         float dt = 0.05f;
         while(ev2::window::frame()) {
@@ -159,7 +131,7 @@ public:
             game->update(dt); // scene graph update
             ev2::Physics::get_singleton().simulate(dt); // finally, physics update
 
-            game->scene->update_pre_render(); // compute all transforms in scene and pass to renderer
+            game->scene_tree.update_pre_render(); // compute all transforms in scene and pass to renderer
             ev2::ResourceManager::get_singleton().pre_render(); // does nothing
 
             auto camera_node = getCameraNode();
@@ -167,11 +139,11 @@ public:
                 camera_node = game->cam_first_person;
 
             ev2::renderer::Renderer::get_singleton().render(camera_node->get_camera()); // render scene
-            imgui(window);
+            imgui();
             dt = float(ev2::window::getFrameTime());
         }
 
-        game->scene->destroy();
+        // game->scene->destroy();
      
         return 0;
     }

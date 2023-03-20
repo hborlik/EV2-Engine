@@ -210,7 +210,7 @@ void TreeNode::on_init() {
             fruit_material->sheenTint = 0.5f;
         }
 
-        leafs = create_node<ev2::InstancedGeometry>("leafs");
+        leafs = create_child_node<ev2::InstancedGeometry>("leafs");
         leafs->set_material_override(leaf_material);
     }
 
@@ -315,7 +315,7 @@ void TreeNode::generate(int iterations) {
             fruit_params.k =   (int)randomFloatRange(1, 3.f);
             fruit_params.c =   randomFloatRange(.99f, 1.05f);
 
-            fruits = create_node<Fruit>("Fruit", fruit_params, 0.05f);
+            fruits = create_child_node<Fruit>("Fruit", fruit_params, 0.05f);
             fruits->set_material_override(fruit_material);
             fruits->generate(1.0f);
 
@@ -360,13 +360,13 @@ void TreeNode::spawn_fruit(const glm::vec3& position) {
 
     glm::vec3 wpos = get_transform() * glm::vec4{position, 1.0f};
 
-    ev2::Ref<ev2::RigidBody> fruit_hit_sphere = get_scene()->create_node<ev2::RigidBody>("fruit");
-    fruit_hit_sphere->add_shape(ev2::make_referenced<ev2::SphereShape>(.5f), glm::vec3{0, 0, 0});
-    // auto light = create_node<ev2::PointLightNode>("point_light");
+    // ev2::Ref<ev2::RigidBody> fruit_hit_sphere = get_scene()->create_node<ev2::RigidBody>("fruit");
+    // fruit_hit_sphere->add_shape(ev2::make_referenced<ev2::SphereShape>(.5f), glm::vec3{0, 0, 0});
+    // auto light = create_child_node<ev2::PointLightNode>("point_light");
     // light->set_color(fruit_material->get_material()->diffuse * 0.5f);
     // fruit_hit_sphere->add_child(light);
 
-    fruit_hit_sphere->transform.set_position(wpos);
+    // fruit_hit_sphere->transform.set_position(wpos);
     // fruit_hit_sphere->add_child(fruit);
 
     fruits->add_fruit(position);
@@ -443,7 +443,7 @@ FireFlies::FireFlies(GameState* game, const std::string& name, int32_t n_flies) 
 void FireFlies::on_init() {
     auto material = ResourceManager::get_singleton().get_material("flies_material");
     material->emissive = glm::vec3{10, 10, 5};
-    flies = create_node<ev2::InstancedGeometry>("flies");
+    flies = create_child_node<ev2::InstancedGeometry>("flies");
     flies->set_material_override(material);
 
     flies->instance_transforms.resize(NFlies, glm::identity<glm::mat4>());

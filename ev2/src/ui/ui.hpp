@@ -7,7 +7,8 @@
 #ifndef EV2_UI_H
 #define EV2_UI_H
 
-#include <scene/scene.hpp>
+#include <scene/scene_tree.hpp>
+#include <scene/node.hpp>
 
 namespace ev2 {
 
@@ -15,8 +16,8 @@ void show_settings_window(bool* p_open);
 
 class SceneEditor {
 public:
-    void editor(Scene* scene);
-    void show_scene_explorer(Scene* scene, bool* p_open);
+    void editor(Node* scene);
+    void show_scene_explorer(Node* scene, bool* p_open);
     void show_node_editor_widget(Node* node);
 private:
     void show_scene_tree_widget(int id, Node* node);

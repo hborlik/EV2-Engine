@@ -69,7 +69,7 @@ void show_settings_window(bool* p_open) {
     ImGui::End();
 }
 
-void SceneEditor::editor(Scene* scene) {
+void SceneEditor::editor(Node* scene) {
 
     if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open);
 
@@ -95,7 +95,7 @@ void SceneEditor::editor(Scene* scene) {
     }
 }
 
-void SceneEditor::show_scene_explorer(Scene* scene, bool* p_open) {
+void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
     ImGui::SetNextWindowSize(ImVec2(500, 450), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
     if (!ImGui::Begin("Scene Window", p_open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize)) {

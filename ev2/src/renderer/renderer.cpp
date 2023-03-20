@@ -49,8 +49,8 @@ void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
 }
 
 void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override, const Buffer* instance_buffer, int32_t n_instances) {
-    if (instance_buffer != nullptr) {
-        assert(n_instances > 0);
+    if (instance_buffer != nullptr && n_instances == 0) {
+        return; // nothing to do
     }
     
     if (dr->cull_mode == gl::CullMode::NONE) {

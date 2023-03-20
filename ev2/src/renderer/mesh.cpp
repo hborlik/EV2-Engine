@@ -172,8 +172,8 @@ GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<VertexAttri
             glEnableVertexAttribArray(binding);
             glVertexAttribPointer(binding, vba.count, (GLenum)vba.type, vba.normalized ? GL_TRUE : GL_FALSE, vba.stride, (void*)vba.byte_offset);
             buffer_itr->second->unbind();
-        } else 
-            std::cout << "could not find accessor for " << (int)accessor_id << std::endl;
+        }
+            // std::cout << "could not find accessor for " << (int)accessor_id << std::endl;
     }
 
     if (indexed != -1) {

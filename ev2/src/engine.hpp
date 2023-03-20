@@ -28,14 +28,12 @@ public:
     static void log_file(const std::string& message);
 
     static void init(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path = "shaders") {
-        Engine(asset_path, log_file_dir, shader_path);
+        s_instance = std::make_unique<Engine>(asset_path, log_file_dir, shader_path);
     }
 
-private:
     Engine(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path):
         asset_path{ asset_path }, shader_path{ shader_path } {
         // assert(s_instance == nullptr);
-        s_instance = std::unique_ptr<Engine>(this);
         log_file_stream.open(log_file_dir / ("ev2_log-" + util::formatted_current_time() + ".txt"));
         if (!log_file_stream.is_open())
             throw engine_exception{"log file not open"};

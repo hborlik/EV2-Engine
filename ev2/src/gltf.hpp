@@ -8,14 +8,14 @@
 #ifndef EV2_GLTF_H
 #define EV2_GLTF_H
 
-#include <scene/scene.hpp>
+#include <scene/node.hpp>
 #include <renderer/renderer.hpp>
 
 #if 0
 
 namespace ev2 {
 
-class GLTFScene : public Scene {
+class GLTFScene : public Node {
 public:
     explicit GLTFScene(const std::string& path) : Scene{path} {
         vertex_buffer_id = ev2::renderer::Renderer::get_singleton().create_model();

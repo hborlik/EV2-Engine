@@ -9,16 +9,17 @@
 namespace fs = std::filesystem;
 
 GameState::GameState() {
-    scene = make_referenced<Scene>("scene0");
+    scene = Node::create_node<Node>("scene0");
+    scene_tree.change_scene(scene);
 
-    sun_light = scene->create_node<ev2::DirectionalLightNode>("directional_light");
+    sun_light = scene->create_child_node<ev2::DirectionalLightNode>("directional_light");
     sun_light->transform.set_position(glm::vec3{10, 100, 0});
 
-    auto light = scene->create_node<ev2::PointLightNode>("point_light");
+    auto light = scene->create_child_node<ev2::PointLightNode>("point_light");
     light->transform.set_position(glm::vec3{0, 5, -10});
     light->set_color(glm::vec3{1, 0, 0});
 
-    light = scene->create_node<ev2::PointLightNode>("point_light");
+    light = scene->create_child_node<ev2::PointLightNode>("point_light");
     light->transform.set_position(glm::vec3{0, 3, 10});
     light->set_color(glm::vec3{0, 1, 0});
 
@@ -106,12 +107,12 @@ GameState::GameState() {
 
 
     auto ground = ResourceManager::get_singleton().get_model( fs::path("models") / "cube.obj");
-    auto g_node = scene->create_node<VisualInstance>("ground");
+    auto g_node = scene->create_child_node<VisualInstance>("ground");
     g_node->set_model(ground);
     g_node->set_material_override(ground_material);
     g_node->transform.set_scale(glm::vec3{100, 0.1, 100});
 
-    ground_plane = scene->create_node<RigidBody>("Ground Collider");
+    ground_plane = scene->create_child_node<RigidBody>("Ground Collider");
     ground_plane->add_shape(make_referenced<BoxShape>(glm::vec3{50, 0.05, 50}));
     ground_plane->add_child(g_node);
     ground_plane->transform.set_position(glm::vec3{0, 0, 0});
@@ -132,30 +133,30 @@ GameState::GameState() {
     auto sphere = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "sphere.obj");
     auto wagon = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "Wagon.obj");
 
-    marker = scene->create_node<ev2::VisualInstance>("marker");
+    marker = scene->create_child_node<ev2::VisualInstance>("marker");
     marker->set_model(ground);
     marker->transform.set_scale(glm::vec3{0.2, 0.2, 0.2});
     marker->transform.set_position(glm::vec3{0, 3, 0});
 
-    auto h_node = scene->create_node<ev2::VisualInstance>("house");
+    auto h_node = scene->create_child_node<ev2::VisualInstance>("house");
     h_node->set_model(hid);
     h_node->transform.set_position(glm::vec3{30, 0, 0});
     h_node->transform.rotate({0.1, 0.5, 0});
     h_node->transform.set_scale(glm::vec3{0.1, 0.1, 0.1});
 
-    auto lh_node = scene->create_node<ev2::VisualInstance>("building");
+    auto lh_node = scene->create_child_node<ev2::VisualInstance>("building");
     lh_node->transform.set_position(glm::vec3{30, 0, -10});
     lh_node->set_model(building0);
 
-    auto w_node = scene->create_node<ev2::VisualInstance>("Wagon");
+    auto w_node = scene->create_child_node<ev2::VisualInstance>("Wagon");
     w_node->transform.set_position(glm::vec3{0, 0.43, -20});
     w_node->transform.rotate(glm::vec3{0, 0.2, -0.3});
     w_node->transform.set_scale(glm::vec3{0.2});
     w_node->set_model(wagon);
 
-    auto flies = scene->create_node<FireFlies>(this, "flies", 100);
+    auto flies = scene->create_child_node<FireFlies>(this, "flies", 100);
 
-    // auto instance_node = scene->create_node<ev2::InstancedGeometry>("instance_test");
+    // auto instance_node = scene->create_child_node<ev2::InstancedGeometry>("instance_test");
     // instance_node->instance_transforms.push_back(glm::translate(glm::identity<glm::mat4>(), {0, 10, 0}));
     // instance_node->instance_transforms.push_back(glm::translate(glm::identity<glm::mat4>(), {1, 10, 0}));
     // instance_node->instance_transforms.push_back(glm::translate(glm::identity<glm::mat4>(), {2, 10, 0}));
@@ -181,26 +182,22 @@ GameState::GameState() {
 }
 
 void GameState::update(float dt) {
-    scene->update(dt);
+    scene_tree.update(dt);
     time_day += time_speed * dt / DayLength;
     const float sun_rads = 2.0 * M_PI * time_day;
     
-    int j = 0;
-    for (ev2::Ref<Node> node : scene->get_children()) {
-        ev2::Ref<TreeNode> tree = node.ref_cast<Node>()->get_child(0).ref_cast<TreeNode>();
-        // if (j < 3){
-            if (tree) {
-                if (tree->growth_current < tree->growth_max) {
-                    tree->growth_current = tree->growth_current + tree->growth_rate * dt * (1/(log(tree->growth_current + 1.1f)));
-                    tree->setParams(tree->getParams(), tree->plantInfo.iterations, tree->growth_current);
-                    j++;
-                }
+    // int j = 0;
+    // for (ev2::Ref<Node> node : scene->get_children()) {
+    //     ev2::Ref<TreeNode> tree = node.ref_cast<Node>()->get_child(0).ref_cast<TreeNode>();
+    //     if (tree) {
+    //         if (tree->growth_current < tree->growth_max) {
+    //             tree->growth_current = tree->growth_current + tree->growth_rate * dt * (1/(log(tree->growth_current + 1.1f)));
+    //             tree->setParams(tree->getParams(), tree->plantInfo.iterations, tree->growth_current);
+    //             j++;
+    //         }
 
-            }
-        // } else {
-        //     break;
-        // }
-    }
+    //     }
+    // }
     renderer::Renderer::get_singleton().sun_position = sun_rads;
 
     float sun_brightness = std::pow(std::max<float>(sin(sun_rads), 0), 0.33);
@@ -219,7 +216,7 @@ void GameState::spawn_tree(const glm::vec3& position, float rotation, const std:
     int unique_id = (int)randomFloatTo(9999999);
     std::string unique_hit_tag = std::string("Tree_root_") + std::to_string(unique_id);
     
-    ev2::Ref<TreeNode> tree = scene->create_node<TreeNode>(this, "Tree", breedable, unique_id, new_fruit_material, new_leaf_material);
+    ev2::Ref<TreeNode> tree = scene->create_child_node<TreeNode>(this, "Tree", breedable, unique_id, new_fruit_material, new_leaf_material);
     auto debug = tree->get_parent();
     tree->plantInfo.ID = unique_id;
     tree->breedable = breedable;
@@ -231,7 +228,7 @@ void GameState::spawn_tree(const glm::vec3& position, float rotation, const std:
     glm::vec3 pos = position;
     pos.y = ev2::renderer::Renderer::get_singleton().get_terrain().height_query(position.x, position.z);
 
-    ev2::Ref<ev2::RigidBody> tree_hit_sphere = scene->create_node<ev2::RigidBody>(unique_hit_tag.c_str());
+    ev2::Ref<ev2::RigidBody> tree_hit_sphere = scene->create_child_node<ev2::RigidBody>(unique_hit_tag.c_str());
     tree_hit_sphere->add_shape(ev2::make_referenced<ev2::CapsuleShape>(.5 * params.find("thickness")->second/2, 5.0), glm::vec3{0, 2.5, 0});
     tree_hit_sphere->transform.set_position(pos);
     tree_hit_sphere->transform.set_rotation(glm::rotate(glm::identity<glm::quat>(), rotation, glm::vec3{0, 1, 0}));
@@ -241,12 +238,12 @@ void GameState::spawn_tree(const glm::vec3& position, float rotation, const std:
     {
         auto light_material = ResourceManager::get_singleton().get_material("light_material");
         auto cube = ResourceManager::get_singleton().get_model( fs::path("models") / "cube.obj");
-        auto light_geom = scene->create_node<VisualInstance>("ground");
+        auto light_geom = scene->create_child_node<VisualInstance>("ground");
         light_geom->set_model(cube);
         light_geom->set_material_override(light_material);
         light_geom->transform.set_scale(glm::vec3{0.1, 0.5, 0.1});
 
-        auto light = scene->create_node<ev2::PointLightNode>("point_light");
+        auto light = scene->create_child_node<ev2::PointLightNode>("point_light");
         light->transform.set_position(glm::vec3{1, 0.3, 0});
         light->set_color(color_0 * 3.f);
         light->add_child(light_geom);
@@ -330,13 +327,13 @@ void GameState::spawn_mountain_tree(const glm::vec3& position, float range_exten
 
 void GameState::spawn_box(const glm::vec3& position) {
     auto ground = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "cube.obj");
-    auto box_vis = scene->create_node<ev2::VisualInstance>("marker");
+    auto box_vis = scene->create_child_node<ev2::VisualInstance>("marker");
     box_vis->set_model(ground);
     box_vis->transform.set_scale(glm::vec3{0.5, 0.5, 0.5});
     box_vis->transform.set_position(glm::vec3{0, 0, 0});
     box_vis->set_material_override(highlight_material);
 
-    auto box = scene->create_node<ev2::RigidBody>("Box Rigidbody");
+    auto box = scene->create_child_node<ev2::RigidBody>("Box Rigidbody");
     box->add_shape(ev2::make_referenced<ev2::BoxShape>(glm::vec3{0.25, 0.25, 0.25}));
     box->add_child(box_vis);
     box->get_body()->setType(reactphysics3d::BodyType::DYNAMIC);
@@ -344,7 +341,7 @@ void GameState::spawn_box(const glm::vec3& position) {
 }
 
 void GameState::spawn_player(const glm::vec3& position) {
-    player = scene->create_node<Player>("player0", this);
+    player = scene->create_child_node<Player>("player0", this);
     player->transform.set_position(position);
 }
 

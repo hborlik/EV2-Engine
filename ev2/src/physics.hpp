@@ -57,6 +57,7 @@ class SphereShape : public ColliderShape {
 public:
     SphereShape(float radius) {
         sphere = Physics::get_singleton().get_physics_common().createSphereShape(radius);
+        assert(sphere);
     }
 
     virtual ~SphereShape() {
@@ -76,6 +77,7 @@ class BoxShape : public ColliderShape {
 public:
     BoxShape(const glm::vec3& extent) {
         box = Physics::get_singleton().get_physics_common().createBoxShape(reactphysics3d::Vector3{extent.x, extent.y, extent.z});
+        assert(box);
     }
 
     virtual ~BoxShape() {
@@ -95,6 +97,7 @@ class CapsuleShape : public ColliderShape {
 public:
     CapsuleShape(float radius, float height) {
         capsule = Physics::get_singleton().get_physics_common().createCapsuleShape(radius, height);
+        assert(capsule);
     }
 
     virtual ~CapsuleShape() {

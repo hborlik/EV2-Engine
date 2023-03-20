@@ -21,7 +21,7 @@ public:
 
     void on_init() override {
         ev2::RigidBody::on_init();
-        cam_first_person = create_node<ev2::CameraNode>("FP");
+        cam_first_person = create_child_node<ev2::CameraNode>("FP");
         add_child(cam_first_person);
 
         add_shape(ev2::make_referenced<ev2::CapsuleShape>(0.5, 2));

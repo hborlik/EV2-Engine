@@ -18,6 +18,8 @@
 
 namespace ev2 {
 
+class SceneTree;
+
 class Node : public Object {
 protected:
     Node() = default;
@@ -26,10 +28,17 @@ public:
     virtual ~Node() = default;
 
     template<typename T, typename... Args>
-    Ref<T> create_node(Args&&... args) {
+    Ref<T> create_child_node(Args&&... args) {
         Ref<T> node{new T(std::forward<Args&&>(args)...)};
         node->on_init();
         add_child(node);
+        return node;
+    }
+
+    template<typename T, typename... Args>
+    static Ref<T> create_node(Args&&... args) {
+        Ref<T> node{new T(std::forward<Args&&>(args)...)};
+        node->on_init();
         return node;
     }
 
@@ -98,10 +107,6 @@ public:
         return{};
     }
 
-    class Scene* get_scene() {
-        return scene;
-    }
-
     /**
      * @brief Trigger destruction events and remove node from scene
      * 
@@ -116,37 +121,29 @@ public:
     }
 
     virtual glm::mat4 get_transform() const {
-        if (transform_cache_valid)
-            return transform_cache;
-        
         glm::mat4 tr = transform.get_transform();
         if (parent)
             tr = parent->get_transform() * tr;
-
-        transform_cache = tr;
-        transform_cache_valid = true;
-        
         return tr;
     }
 
     glm::vec3 get_world_position() const {return glm::vec3(get_transform()[3]);}
 
-    const std::string name = "Node";
+    std::string name = "Node";
     Transform transform{};
 
 private:
-    friend class Scene;
+    friend class SceneTree;
 
     void _update(float dt);
     void _ready();
     void _update_pre_render();
+
+    bool is_ready = false;
     
     std::list<Ref<Node>> children;
     Node* parent = nullptr;
-    class Scene* scene = nullptr;
-
-    mutable glm::mat4   transform_cache;
-    mutable bool        transform_cache_valid = false;
+    SceneTree* scene_tree = nullptr;
 };
 
 }
