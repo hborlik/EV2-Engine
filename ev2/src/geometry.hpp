@@ -271,7 +271,7 @@ struct Frustum {
         using namespace glm;
         // 4 corners of the view frustum in clip space
         // clip space looks along +Z
-        vec4 clip_corners[8] = {
+        vec4 corners[8] = {
             vec4(-1, -1, -1, 1), // 0 near lower left
             vec4( 1, -1, -1, 1), // 1 near lower right
             vec4( 1,  1, -1, 1), // 2 near upper right
@@ -283,26 +283,25 @@ struct Frustum {
         };
 
         // transform to world space
-        mat4 inv_view_projection = inverse(view_projection);
-        vec4 world_corners[8];
+        const mat4 inv_view_projection = inverse(view_projection);
         for (int i = 0; i < 8; ++i) {
-            world_corners[i] = inv_view_projection * clip_corners[i];
-            world_corners[i] /= world_corners[i].w;
+            corners[i] = inv_view_projection * corners[i];
+            corners[i] /= corners[i].w;
         }
 
         // 6 planes (a, b, c) normal is cross(b - a, c - a)
         // left
-        planes[0] = Plane(world_corners[0], world_corners[4], world_corners[3]);
+        planes[0] = Plane(corners[0], corners[4], corners[3]);
         // right
-        planes[1] = Plane(world_corners[1], world_corners[2], world_corners[5]);
+        planes[1] = Plane(corners[1], corners[2], corners[5]);
         // top
-        planes[2] = Plane(world_corners[2], world_corners[3], world_corners[6]);
+        planes[2] = Plane(corners[2], corners[3], corners[6]);
         // bottom
-        planes[3] = Plane(world_corners[1], world_corners[5], world_corners[0]);
+        planes[3] = Plane(corners[1], corners[5], corners[0]);
         // near
-        planes[4] = Plane(world_corners[1], world_corners[0], world_corners[2]);
+        planes[4] = Plane(corners[1], corners[0], corners[2]);
         // far
-        planes[5] = Plane(world_corners[5], world_corners[6], world_corners[4]);
+        planes[5] = Plane(corners[5], corners[6], corners[4]);
     }
 
     // 6 inward pointing planes
