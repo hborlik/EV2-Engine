@@ -71,6 +71,8 @@ public:
 
     virtual void on_child_removed(Ref<Node> child) {}
 
+    virtual void on_transform_changed(Ref<Node> origin) {}
+
     /**
      * @brief call just before scene is rendered. Used to push changes to rendering server
      * 
@@ -120,32 +122,61 @@ public:
         return path;
     }
 
-    virtual glm::mat4 get_transform() const {
-        glm::mat4 tr = transform.get_transform();
-        if (parent)
-            tr = parent->get_transform() * tr;
+    virtual glm::mat4 get_world_transform() const {
+        glm::mat4 tr;
+        if (b_world_transform_dirty) {
+            tr = transform.get_transform();
+            if (parent)
+                tr = parent->get_world_transform() * tr;
+            world_transform_cache = tr;
+            b_world_transform_dirty = false;
+        } else
+            tr = world_transform_cache;
         return tr;
     }
 
-    glm::vec3 get_world_position() const {return glm::vec3(get_transform()[3]);}
+    glm::vec3 get_world_position() const {return glm::vec3(get_world_transform()[3]);}
 
+    void rotate(const glm::vec3& xyz) {transform.rotate(xyz);}
+
+    glm::mat4 get_transform() const noexcept {return transform.get_transform();}
+    glm::mat4 get_linear_transform() const noexcept {return transform.get_linear_transform();}
+    inline glm::vec3 get_position() const noexcept {return transform.get_position();}
+    inline glm::quat get_rotation() const noexcept {return transform.get_rotation();}
+    inline glm::vec3 get_scale() const noexcept {return transform.get_scale();}
+
+    inline void set_position(glm::vec3 pos) noexcept {transform.set_position(pos);_propagate_transform_changed(this);}
+    inline void set_rotation(glm::quat rot) noexcept {transform.set_rotation(rot);_propagate_transform_changed(this);}
+    inline void set_scale(glm::vec3 s) noexcept {transform.set_scale(s);_propagate_transform_changed(this);}
+
+    bool is_inside_tree() const noexcept {return scene_tree;}
+
+public:
     std::string name = "Node";
-    Transform transform{};
 
 private:
     friend class SceneTree;
 
-    void _update(float dt);
-    void _ready();
+    void _propagate_update(float dt);
+    void _propagate_ready();
+    void _propagate_enter_tree();
+    void _propagate_exit_tree();
+    void _propagate_transform_changed(Node* p_origin);
     void _update_pre_render();
 
+    void _add_as_child(Node* p_node);
+    void _remove_from_parent(Node* p_node);
+
     bool is_ready = false;
-    
+    Transform transform{};
     std::list<Ref<Node>> children;
     Node* parent = nullptr;
     SceneTree* scene_tree = nullptr;
+
+    mutable bool b_world_transform_dirty = true;
+    mutable glm::mat4 world_transform_cache{};
 };
 
-}
+} // namespace ev2
 
 #endif // EV2_NODE_H

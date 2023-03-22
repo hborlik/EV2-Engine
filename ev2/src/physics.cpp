@@ -138,14 +138,14 @@ void Physics::enable_debug_renderer(bool enable) {
 // Collider
 
 reactphysics3d::Transform PhysicsNode::get_physics_transform() const {
-    const glm::vec3 w_pos = glm::vec3(transform.get_position());
-    const glm::quat w_o = transform.get_rotation();
+    const glm::vec3 w_pos = glm::vec3(get_position());
+    const glm::quat w_o = get_rotation();
     const reactphysics3d::Vector3 position{w_pos.x, w_pos.y, w_pos.z};
     const reactphysics3d::Quaternion orientation{w_o.x, w_o.y, w_o.z, w_o.w};
     return reactphysics3d::Transform{position, orientation};
 }
 
-void PhysicsNode::set_cur_transform(const reactphysics3d::Transform& curr_tranform) {
+void PhysicsNode::update_physics_transform(const reactphysics3d::Transform& curr_tranform) {
     
     double factor = Physics::get_singleton().get_frame_interpolation();
     // Compute the interpolated transform of the rigid body 
@@ -156,8 +156,8 @@ void PhysicsNode::set_cur_transform(const reactphysics3d::Transform& curr_tranfo
 
     const reactphysics3d::Vector3 pos = interpolatedTransform.getPosition();
     const reactphysics3d::Quaternion qua = interpolatedTransform.getOrientation();
-    transform.set_position(glm::vec3{pos.x, pos.y, pos.z});
-    transform.set_rotation(glm::quat{qua.w, qua.x, qua.y, qua.z});
+    set_position(glm::vec3{pos.x, pos.y, pos.z});
+    set_rotation(glm::quat{qua.w, qua.x, qua.y, qua.z});
 }
 
 ColliderBody::ColliderBody(const std::string &name) : PhysicsNode{name} {
@@ -182,7 +182,10 @@ void ColliderBody::on_destroy() {
 }
 
 void ColliderBody::pre_render() {
-    body->setTransform(get_physics_transform());
+    if (m_transform_has_changed) {
+        body->setTransform(get_physics_transform());
+        m_transform_has_changed = false;
+    }
 }
 
 void ColliderBody::add_shape(Ref<ColliderShape> shape, const glm::vec3& pos) {
@@ -223,11 +226,14 @@ void RigidBody::on_destroy() {
 }
 
 void RigidBody::pre_render() {
-    if (body->getType() == reactphysics3d::BodyType::DYNAMIC)
-        set_cur_transform(body->getTransform());
-    else {
+    if (m_transform_has_changed) {
         body->setTransform(get_physics_transform());
+        m_transform_has_changed = false;
     }
+    // body position tracks physics simulation
+
+    if (body->getType() == reactphysics3d::BodyType::DYNAMIC)
+        update_physics_transform(body->getTransform());
 }
 
 void RigidBody::set_mass(float mass) {

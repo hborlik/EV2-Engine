@@ -9,7 +9,7 @@ void VisualInstance::on_init() {
 }
 
 void VisualInstance::on_ready() {
-    iid->transform = get_transform();
+    iid->transform = get_world_transform();
 }
 
 void VisualInstance::on_process(float delta) {
@@ -21,7 +21,7 @@ void VisualInstance::on_destroy() {
 }
 
 void VisualInstance::pre_render() {
-    iid->transform = get_transform();
+    iid->transform = get_world_transform();
 }
 
 void VisualInstance::set_model(std::shared_ptr<renderer::Drawable> model) {
@@ -78,7 +78,7 @@ void InstancedGeometry::on_destroy() {
 
 void InstancedGeometry::pre_render() {
     if (instance) {
-        instance->instance_world_transform = get_transform();
+        instance->instance_world_transform = get_world_transform();
         instance->instance_transform_buffer->copy_data(instance_transforms);
         instance->n_instances = instance_transforms.size();
     }
@@ -118,7 +118,7 @@ void CameraNode::update_internal() {
     
     camera.set_perspective(fov, aspect * r_aspect, m_near, m_far);
 
-    auto tr = get_transform();
+    auto tr = get_world_transform();
     camera.set_position(glm::vec3(tr[3]));
     camera.set_rotation(glm::quat_cast(tr));
 }
@@ -140,7 +140,7 @@ void DirectionalLightNode::on_destroy() {
 }
 
 void DirectionalLightNode::pre_render() {
-    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_transform()[3]));
+    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
 }
 
 void DirectionalLightNode::set_color(const glm::vec3& color) {
@@ -170,7 +170,7 @@ void PointLightNode::on_destroy() {
 }
 
 void PointLightNode::pre_render() {
-    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_transform()[3]));
+    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
 }
 
 void PointLightNode::set_color(const glm::vec3& color) {

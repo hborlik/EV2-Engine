@@ -138,7 +138,17 @@ void SceneEditor::show_node_editor_widget(Node* node) {
     ImGui::Text("%s", uuid_text.c_str());
     ImGui::Separator();
     ImGui::Text("Transform");
-    show_transform_editor(&node->transform);
+    // show_transform_editor(&node->transform);
+    ImGui::Separator();
+    if (auto itr = m_editor_types.find(typeid(*node)); itr != m_editor_types.end()) {
+        itr->second->show_editor(node);
+    }
+}
+
+void SceneEditor::add_custom_node_editor(std::shared_ptr<NodeEditor> editor) {
+    assert(editor);
+    if (m_editor_types.find(editor->get_edited_type()) == m_editor_types.end())
+        m_editor_types.emplace(editor->get_edited_type(), editor);
 }
 
 void SceneEditor::show_scene_tree_widget(int id, Node* node) {

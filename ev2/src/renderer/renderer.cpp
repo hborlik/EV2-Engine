@@ -507,11 +507,15 @@ int32_t Renderer::alloc_material_slot() {
 
 void Renderer::destroy_material(Material* material) {
     assert(material);
+    if (material->material_id < 0 || material->material_slot < 0)
+        return; // material not backed
     material_data_buffer[material->material_slot] = {};
     free_material_slots.push(material->material_slot);
-    material->material_slot = 0;
+
+    assert(materials.erase(material->material_id));
+
+    material->material_slot = -1;
     material->material_id = -1;
-    materials.erase(material->material_id);
 }
 
 LID Renderer::create_point_light() {
@@ -650,7 +654,7 @@ void Renderer::render(const Camera &camera) {
     // pre render data updates
     for (auto& m : materials) {
         Material* material = m.second;
-        material_data_buffer[material->material_slot].update_from(material);
+        material_data_buffer.at(material->material_slot).update_from(material);
     }
 
     for(mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {

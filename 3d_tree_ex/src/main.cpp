@@ -143,7 +143,7 @@ public:
             dt = float(ev2::window::getFrameTime());
         }
 
-        // game->scene->destroy();
+        game->scene->destroy();
      
         return 0;
     }
@@ -175,8 +175,8 @@ public:
 
                 boom = cam_t * glm::vec4(boom, 1.0f);
 
-                cam_orbital->transform.set_position(boom);
-                cam_orbital->transform.set_rotation(glm::quatLookAt(-glm::normalize(boom), glm::vec3{0, 1, 0}));
+                cam_orbital->set_position(boom);
+                cam_orbital->set_rotation(glm::quatLookAt(-glm::normalize(boom), glm::vec3{0, 1, 0}));
             }
                 break;
             case CAM_MODE_FLY:
@@ -184,7 +184,7 @@ public:
                 glm::quat cam_q = glm::rotate(glm::identity<glm::quat>(), (float)cam_y, glm::vec3{1, 0, 0});
                 cam_q = glm::rotate(glm::identity<glm::quat>(), (float)cam_x, {0, 1, 0}) * cam_q;
 
-                cam_fly->transform.set_rotation(cam_q);
+                cam_fly->set_rotation(cam_q);
             }
                 break;
         }
@@ -197,8 +197,8 @@ public:
                 {
                     glm::vec3 cam_forward = glm::normalize(cam_orbital->get_camera().get_forward() * glm::vec3{1, 0, 1});
                     glm::vec3 cam_right = glm::normalize(cam_orbital->get_camera().get_right() * glm::vec3{1, 0, 1});
-                    cam_orbital_root->transform.set_position(
-                        cam_orbital_root->transform.get_position() + 
+                    cam_orbital_root->set_position(
+                        cam_orbital_root->get_position() + 
                         (cam_forward * 1.0f * cam_boom_length * dt * input.y + 
                         cam_right * 1.0f * cam_boom_length * dt * input.x)
                     ); // camera movement on y plane
@@ -208,8 +208,8 @@ public:
                 {
                     glm::vec3 cam_forward = glm::normalize(cam_fly->get_camera().get_forward());
                     glm::vec3 cam_right = glm::normalize(cam_fly->get_camera().get_right());
-                    cam_fly->transform.set_position(
-                        cam_fly->transform.get_position()
+                    cam_fly->set_position(
+                        cam_fly->get_position()
                         + cam_forward * cam_boom_length * dt * input.y
                         + cam_right * cam_boom_length * dt * input.x
                     );
@@ -242,7 +242,7 @@ public:
                 case ev2::input::Key::Tab:
                     if (down) {
                         m_camera_mode = m_camera_mode == CAM_MODE_FLY ? CAM_MODE_ORBIT : CAM_MODE_FLY;
-                        cam_fly->transform.set_position(cam_orbital->get_world_position());
+                        cam_fly->set_position(cam_orbital->get_world_position());
                     }
                     break;
                 case ev2::input::Key::KeyP:

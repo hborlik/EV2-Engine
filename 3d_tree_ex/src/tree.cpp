@@ -358,7 +358,7 @@ void TreeNode::spawn_fruit(const glm::vec3& position) {
     // fruit->params = params;
     // fruit->generate(1.0f);
 
-    glm::vec3 wpos = get_transform() * glm::vec4{position, 1.0f};
+    glm::vec3 wpos = get_world_transform() * glm::vec4{position, 1.0f};
 
     // ev2::Ref<ev2::RigidBody> fruit_hit_sphere = get_scene()->create_node<ev2::RigidBody>("fruit");
     // fruit_hit_sphere->add_shape(ev2::make_referenced<ev2::SphereShape>(.5f), glm::vec3{0, 0, 0});

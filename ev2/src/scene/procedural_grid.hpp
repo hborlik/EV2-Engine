@@ -19,8 +19,11 @@ public:
 
     void generate(int n);
 
+    void on_init() override;
+
 private:
-    
+    struct Data;
+    std::unique_ptr<Data> m_data;
 };
 
 }

@@ -41,7 +41,9 @@ private:
     void node_removed(Node *p_node);
     void node_renamed(Node *p_node);
 
+private:
     Ref<Node> current_scene = nullptr;
+    int node_count = 0;
 };
 
 }

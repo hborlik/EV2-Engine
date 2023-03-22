@@ -43,7 +43,6 @@ private:
     bool enable_timestep = true;
     double interp_factor = 0.f;
     double accumulator = 0.0f;
-    int32_t next_collider_id = 100;
     reactphysics3d::PhysicsCommon physicsCommon;
     reactphysics3d::PhysicsWorld* world;
 };
@@ -118,23 +117,22 @@ class PhysicsNode : public Node {
 public:
     explicit PhysicsNode(const std::string &name) : Node{name} {}
 
-    /**
-     * @brief Get the transform of the Physics node, note this ignores parent transforms
-     *  Physics objects should be root objects in world
-     * 
-     * @return glm::mat4 
-     */
-    glm::mat4 get_transform() const override {
-        glm::mat4 tr = transform.get_transform();
-        return tr;
+    void on_transform_changed(Ref<Node> origin) {
+        if (origin.get() != this) {
+            m_transform_has_changed = true;
+        }
     }
 
 protected:
     reactphysics3d::Transform get_physics_transform() const;
-    void set_cur_transform(const reactphysics3d::Transform& curr_tranform);
+
+    void update_physics_transform(const reactphysics3d::Transform& curr_tranform);
+
+protected:
+    bool m_transform_has_changed = true;
 
 private:
-    reactphysics3d::Transform prev_transform;
+    reactphysics3d::Transform prev_transform{};
 };
 
 class ColliderBody : public PhysicsNode {
@@ -174,6 +172,17 @@ public:
 
     void pre_render() override;
 
+    /**
+     * @brief Get the transform of the RigidBody node, note this ignores parent transforms
+     *  Physics objects should be children of scene root
+     * 
+     * @return glm::mat4 
+     */
+    glm::mat4 get_world_transform() const override {
+        glm::mat4 tr = get_transform();
+        return tr;
+    }
+
     void add_shape(Ref<ColliderShape> shape, const glm::vec3& pos = {});
     Ref<ColliderShape> get_shape(int ind);
     size_t get_num_shapes() const {return shapes.size();}
@@ -197,6 +206,7 @@ private:
     reactphysics3d::RigidBody* body{};
     std::vector<Ref<ColliderShape>> shapes;
     std::vector<reactphysics3d::Collider*> colliders;
+
 };
 
 }
