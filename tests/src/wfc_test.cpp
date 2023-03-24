@@ -425,6 +425,36 @@ void test_pattern_validity1() {
     assert(p_center.valid(neighborhood));
 }
 
+void test_pattern_validity2() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    // values
+    Value v0{10};
+    Value v1{11};
+
+    Pattern p_center{v0, {v1, v1}};
+    Pattern PB{v1, {v0}};
+
+    unique_ptr<DNode> n_a = make_unique<DNode>("A", 10);
+    unique_ptr<DNode> n_b = make_unique<DNode>("B", 20);
+    unique_ptr<DNode> n_c = make_unique<DNode>("C", 30);
+
+    DNode *a = n_a.get();
+    a->domain.push_back(&PB);
+
+    DNode *b = n_b.get();
+    b->domain.push_back(&p_center);
+    b->domain.push_back(&PB);
+
+    DNode *c = n_c.get();
+    c->domain.push_back(&p_center);
+    c->domain.push_back(&PB);
+
+    std::vector<DNode*> neighborhood{a, b, c};
+
+    assert(p_center.valid(neighborhood));
+}
+
 int main() {
     sparse_test_empty();
     sparse_test_add();
@@ -449,9 +479,32 @@ int main() {
     // patterns
     test_pattern_validity0();
     test_pattern_validity1();
+    test_pattern_validity2();
 
-    NodeGrid ngrid{2, 2};
+    NodeGrid ngrid{3, 3};
     std::cout << ngrid.get_graph() << std::endl;
+
+    std::cout << to_string(ngrid) << std::endl;
+
+    Pattern PA{Value{10}, {Value{11}, Value{11}}};
+    Pattern PB{Value{11}, {Value{10}}};
+
+    std::vector<const Pattern*> patterns{&PA, &PB};
+
+    ngrid.reset(patterns);
+
+    std::cout << to_string(ngrid) << std::endl;
+
+    // wfc tests
+
+    WFCSolver solver{&ngrid.get_graph()};
+
+    solver.collapse(ngrid.at(0, 0));
+    std::cout << to_string(ngrid) << std::endl;
+
+    solver.propagate(ngrid.at(0, 0));
+
+    std::cout << to_string(ngrid) << std::endl;
 
     //
 

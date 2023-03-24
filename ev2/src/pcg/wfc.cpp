@@ -49,6 +49,11 @@ float DNode::entropy() const {
     return sum;
 }
 
+void DNode::set_value(const Pattern* p) noexcept {
+    value = p->cell_value;
+    domain = {p};
+}
+
 bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
@@ -117,8 +122,8 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
     std::sort(neigh_values.begin(), neigh_values.end(), sort_vn);
 
     // find the nodes associated with each required value by stepping through the sorted lists
-    auto vn_pos = neigh_values.begin();
     for (const auto& req : required) {
+        auto vn_pos = neigh_values.begin();
         bool has_single_neighbor = false;
         while(vn_pos != neigh_values.end()) {
             if (vn_pos->v == req.v) {
@@ -135,6 +140,8 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
             ++vn_pos;
         }
     }
+
+    // std::cout << dg << std::endl;
 
     float flow = ford_fulkerson(dg, source.get(), sink.get(), &dg);
 

@@ -112,7 +112,6 @@ public:
     virtual ~Node() = default;
 
     const int               node_id = -1;
-    Value                   value{};
     std::string             identifier = "";
 };
 
@@ -125,8 +124,11 @@ public:
     DNode(const std::string& identifier, int node_id) : Node{identifier, node_id} {}
 
     float entropy() const;
+
+    void set_value(const Pattern* p) noexcept;
     
     std::vector<const Pattern*> domain{};      // valid patterns for this node
+    Value value{};
 };
 
 template<typename T,
@@ -197,22 +199,25 @@ public:
 
     void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
+        assert(m_is_directed || a != b);
         internal_node* a_i = add_node(a);
         internal_node* b_i = add_node(b);
 
         // enforce populating only the upper triangular matrix
-        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
             std::swap(a_i, b_i);
-
-        // build adjacency information
-        a_i->adjacent_nodes.push_back(b);
-        if (!m_is_directed)
-            b_i->adjacent_nodes.push_back(a);
+            std::swap(a, b);
+        }
 
         coord c{ a_i->mat_coord, b_i->mat_coord };
 
         if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
             return; // already added
+
+        // build adjacency information
+        a_i->adjacent_nodes.push_back(b);
+        if (!m_is_directed)
+            b_i->adjacent_nodes.push_back(a);
 
         if (!m_is_directed && c.x == c.y)
             return; // no self loops (diagonals)
@@ -615,15 +620,21 @@ class Pattern
 public:
     explicit Pattern(const Value& v) noexcept: cell_value{ v } {}
 
-    Pattern(const Value& v, std::initializer_list<Value> l) noexcept: required_values{ l }, cell_value{ v } {}
+    Pattern(const Value& v, std::initializer_list<Value> l, float weight = 1.f) noexcept: required_values{ l }, cell_value{ v }, weight{weight} {}
 
     bool valid(const std::vector<DNode*>& neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};
-    float weight = 0.f; // relative probabilistic weight on this pattern
+    float weight = 1.f; // relative probabilistic weight on this pattern
 };
 
+/**
+ * @brief WFC has two stages. 
+ *      1. collapse a node to force it to have a single value
+ *      2. propagate the changes applied to that node
+ * 
+ */
 class WFCSolver
 {
 public:
@@ -638,32 +649,40 @@ public:
      */
     void propagate(DNode* node) {
         assert(node != nullptr);
+        std::queue<DNode*> propagation_stack;
         propagation_stack.push(node);
+        bool f = true; // force propagation on the first node
         while (!propagation_stack.empty()) {
             DNode* n = propagation_stack.front();
             propagation_stack.pop();
-            observe(n);
-            for (auto& neighbor_n : graph->adjacent_nodes(n)) {
-                DNode* neighbor = static_cast<DNode*>(neighbor_n);
-                if (neighbor->domain.size() == 1)
-                    propagation_stack.push(neighbor);
+            if (observe(n) || f) { // only update neighbors if the domain changed
+                f = false;
+                for (auto& neighbor_n : graph->adjacent_nodes(n)) {
+                    DNode* neighbor = static_cast<DNode*>(neighbor_n);
+                    // if (neighbor->domain.size() == 1)
+                        propagation_stack.push(neighbor);
+                }
             }
         }
     }
 
     /**
-     * @brief Observe the node and update its domain
+     * @brief 
      *
      * @param node
      */
-    void observe(DNode* node) {
+    bool observe(DNode* node) {
         assert(node != nullptr);
+        bool changed = false;
         decltype(node->domain) new_domain{};
         for (auto& p : node->domain) {
             if (p->valid(graph->adjacent_nodes(node)))
                 new_domain.push_back(p);
+            else
+                changed = true;
         }
         node->domain = new_domain;
+        return changed;
     }
 
     /**
@@ -677,7 +696,7 @@ public:
         static std::random_device rd;
         static std::mt19937 gen(rd());
         if (node->domain.size() == 1) {
-            node->value = node->domain[0]->cell_value;
+            node->set_value(node->domain[0]);
             return;
         } else {
             // weighted random selection of available domain values
@@ -686,11 +705,11 @@ public:
                 weights.push_back(p->weight);
             }
             std::discrete_distribution<int> dist(weights.begin(), weights.end());
-            node->value = node->domain[dist(gen)]->cell_value;
+            node->set_value(node->domain[dist(gen)]);
         }
     }
 
-    std::queue<DNode*> propagation_stack;
+    std::priority_queue<DNode*> entropy_stack;
     Graph<DNode>* graph;
 };
 
