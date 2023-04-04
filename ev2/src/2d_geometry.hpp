@@ -25,6 +25,6 @@ struct Polygon {
     bool is_degenerate() const;
 };
 
-}
+} // namespace ev2
 
 #endif // EV2_GEOMETRY_H

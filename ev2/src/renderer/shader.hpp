@@ -274,22 +274,39 @@ struct ProgramUniformBlockDescription
         GLint ArraySize = 0;   // number of array elements
         GLint ArrayStride = 0; // stride in bytes between array elements
     };
-    std::unordered_map<std::string, Layout> layouts;
+    std::unordered_map<std::string, int> layout_map;
+    std::vector<Layout> layouts;
 
     Layout get_layout(const std::string &name)
     {
-        auto itr = layouts.find(name);
-        if (itr != layouts.end())
-            return itr->second;
+        auto itr = layout_map.find(name);
+        if (itr != layout_map.end())
+            return layouts[itr->second];
         return {-1, -1, -1};
+    }
+
+    Layout get_layout(int ind) {
+        return layouts.at(ind);
     }
 
     GLint get_offset(const std::string &name)
     {
-        auto itr = layouts.find(name);
-        if (itr != layouts.end())
-            return itr->second.Offset;
-        return -1;
+        auto itr = layout_map.find(name);
+        if (itr != layout_map.end())
+            return layouts[itr->second].Offset;
+        throw std::out_of_range{name};
+    }
+
+    int get_index(const std::string &name) {
+        auto itr = layout_map.find(name);
+        if (itr != layout_map.end()) {
+            return itr->second;
+        }
+        throw std::out_of_range{name};
+    }
+
+    GLint get_offset(int ind) {
+        return layouts.at(ind).Offset;
     }
 
     bool is_valid() const noexcept {return location_index != -1;}
@@ -310,13 +327,33 @@ struct ProgramUniformBlockDescription
         if (is_valid())
         {
             GLint uoff = get_offset(paramName);
-            if (uoff != -1)
-            {
-                shaderBuffer.sub_data(data, (uint32_t)uoff);
-                return true;
-            }
+            shaderBuffer.sub_data(data, (uint32_t)uoff);
+            return true;
         }
         std::cerr << "Failed to set shader parameter " << paramName << std::endl;
+        return false;
+    }
+
+    /**
+     * @brief Set a Shader parameter in the target uniform block buffer.
+     * 
+     * @tparam T 
+     * @param paramName 
+     * @param data 
+     * @param shaderBuffer 
+     * @return true 
+     * @return false 
+     */
+    template <typename T>
+    bool set_parameter(int paramIndex, const T &data, Buffer &shaderBuffer)
+    {
+        if (is_valid())
+        {
+            GLint uoff = get_offset(paramIndex);
+            shaderBuffer.sub_data(data, (uint32_t)uoff);
+            return true;
+        }
+        std::cerr << "Failed to set shader parameter " << paramIndex << std::endl;
         return false;
     }
 

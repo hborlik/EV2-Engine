@@ -243,6 +243,24 @@ private:
 
 class Renderer : public Singleton<Renderer> {
 public:
+
+    struct ProgramData {
+        ProgramData() = default;
+        ProgramData(std::string name) : program{std::move(name)} {}
+
+        void init() {
+            mat_loc = program.getUniformInfo("materialId").Location;
+            vert_col_w_loc = program.getUniformInfo("vertex_color_weight").Location;
+            diffuse_sampler_loc = program.getUniformInfo("diffuse_tex").Location;
+        }
+
+        Program program{};
+        int mat_loc = -1;
+        int vert_col_w_loc = -1;
+        int diffuse_sampler_loc = -1;
+    };
+
+public:
     Renderer(uint32_t width, uint32_t height);
     ~Renderer();
 
@@ -295,7 +313,7 @@ public:
 private:
     friend Material;
 
-    void draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
+    void draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
 
     void update_material(mat_slot_t material_slot, const MaterialData& material);
 
@@ -367,38 +385,38 @@ private:
     int32_t next_light_id = 1000;
     int32_t shadow_directional_light_id = -1;
 
-    Program geometry_program;
+    ProgramData geometry_program;
     int gp_m_location;
     int gp_mv_location;
     int gp_g_location;
 
-    Program geometry_program_instanced;
+    ProgramData geometry_program_instanced;
     int gpi_m_location;
 
-    Program depth_program;
+    ProgramData depth_program;
     int sdp_m_location;
     int sdp_lpv_location;
 
-    Program directional_lighting_program;
-    int lp_p_location, lp_n_location, lp_as_location, lp_mt_location, lp_gao_location, lp_ls_location, lp_sdt_location;
+    ProgramData directional_lighting_program;
+    int lp_p_location, lp_n_location, lp_as_location, lp_mt_location, lp_gao_location, lp_ls_location, lp_sdt_location, lp_ldir_location, lp_lcol_location, lp_lamb_location;
 
-    Program point_lighting_program;
+    ProgramData point_lighting_program;
     int plp_p_location, plp_n_location, plp_as_location, plp_mt_location;
     int plp_ssbo_light_data_location;
 
-    Program ssao_program;
+    ProgramData ssao_program;
     int ssao_p_loc, ssao_n_loc, ssao_tex_noise_loc, ssao_radius_loc, ssao_bias_loc, ssao_nSamples_loc;
 
-    Program sky_program;
+    ProgramData sky_program;
     int sky_time_loc, sky_cirrus_loc, sky_cumulus_loc, sky_sun_position_loc, sky_output_mul_loc;
 
-    Program post_fx_bloom_combine_program;
+    ProgramData post_fx_bloom_combine_program;
     int post_fx_bc_hdrt_loc, post_fx_bc_emist_loc, post_fx_bc_thresh_loc;
 
-    Program post_fx_bloom_blur;
+    ProgramData post_fx_bloom_blur;
     int post_fx_bb_hor_loc, post_fx_bb_bloom_in_loc;
 
-    Program post_fx_program;
+    ProgramData post_fx_program;
     int post_fx_gamma_loc, post_fx_exposure_loc, post_fx_bloom_falloff_loc, post_fx_hdrt_loc, post_fx_bloomt_loc;
 
 
@@ -433,6 +451,15 @@ private:
 
     Buffer shader_globals;
     ProgramUniformBlockDescription globals_desc;
+    struct GlobalsOffsets {
+        int P_ind;
+        int PInv_ind;
+        int View_ind;
+        int VInv_ind;
+        int VP_ind;
+        int CameraPos_ind;
+        int CameraDir_ind;
+    } goffsets;
 
     Buffer lighting_materials;
     ProgramUniformBlockDescription lighting_materials_desc;

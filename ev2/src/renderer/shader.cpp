@@ -39,8 +39,8 @@ std::ostream& operator<<(std::ostream& os, const Program& input) {
     os << "Program uniform blocks:" << std::endl;
     for(const auto& [name, desc] : input.uniformBlocks) {
         os << "    UB: " << name << " at " << desc.location_index << " size: " << desc.block_size << " bytes" << std::endl;
-        for(const auto& [l_name, l_desc] : desc.layouts) {
-            os << "       U: " << l_name << " offset " << l_desc.Offset << " len " << l_desc.ArraySize << " stride " << l_desc.ArrayStride << std::endl;
+        for(const auto& [l_name, l_desc] : desc.layout_map) {
+            os << "       U: " << l_name << " offset " << desc.layouts[l_desc].Offset << " len " << desc.layouts[l_desc].ArraySize << " stride " << desc.layouts[l_desc].ArrayStride << std::endl;
         }
     }
     os << "    shader " << (input.isLinked() ? "linked" : "not linked") << std::endl;
@@ -419,6 +419,7 @@ void Program::updateProgramUniformBlockInfo() {
         ProgramUniformBlockDescription& pubd = uniformBlocks[blockName];
         pubd.location_index = binding;
         pubd.block_size = blockSize;
+        pubd.layouts = {};
 
         std::vector<GLuint> unifIndices(numActiveVars); // array of active variable indices associated with an active uniform block
         glGetProgramResourceiv(gl_reference, GL_UNIFORM_BLOCK, blockIx, 1, activeUnifProp, numActiveVars, NULL, (GLint*)unifIndices.data());
@@ -449,7 +450,8 @@ void Program::updateProgramUniformBlockInfo() {
 
             //std::cout << "UB: " << name << ", GL_UNIFORM_BLOCK " << unifIndices[unifIx] << ", Location " << values[2] << std::endl;
 
-            pubd.layouts[name] = ProgramUniformBlockDescription::Layout{offsets[unifIx], sizes[unifIx], strides[unifIx]};
+            pubd.layouts.emplace_back(ProgramUniformBlockDescription::Layout{offsets[unifIx], sizes[unifIx], strides[unifIx]});
+            pubd.layout_map[name] = pubd.layouts.size() - 1;
 
         }
 

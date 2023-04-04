@@ -48,7 +48,7 @@ void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
-void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuint gl_vao, int32_t material_override, const Buffer* instance_buffer, int32_t n_instances) {
+void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, const Buffer* instance_buffer, int32_t n_instances) {
     if (instance_buffer != nullptr && n_instances == 0) {
         return; // nothing to do
     }
@@ -60,9 +60,9 @@ void Renderer::draw(Drawable* dr, const Program& prog, bool use_materials, GLuin
         glCullFace((GLenum)dr->cull_mode);
     }
     glFrontFace((GLenum)dr->front_facing);
-    const int mat_loc = prog.getUniformInfo("materialId").Location;
-    const int vert_col_w_loc = prog.getUniformInfo("vertex_color_weight").Location;
-    const int diffuse_sampler_loc = prog.getUniformInfo("diffuse_tex").Location;
+    const int mat_loc = prog.mat_loc;
+    const int vert_col_w_loc = prog.vert_col_w_loc;
+    const int diffuse_sampler_loc = prog.diffuse_sampler_loc;
     const bool indexed = dr->vertex_buffer.get_indexed() != -1;
 
     glBindVertexArray(gl_vao);
@@ -289,110 +289,131 @@ void Renderer::init() {
     ShaderPreprocessor prep{"shaders"};
 
 
-    geometry_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry.glsl.vert", prep);
-    geometry_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
-    geometry_program.link();
+    geometry_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry.glsl.vert", prep);
+    geometry_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
+    geometry_program.program.link();
+    geometry_program.init();
 
-    gp_m_location = geometry_program.getUniformInfo("M").Location;
-    gp_mv_location = geometry_program.getUniformInfo("MV").Location;
-    gp_g_location = geometry_program.getUniformInfo("G").Location;
+    gp_m_location = geometry_program.program.getUniformInfo("M").Location;
+    gp_mv_location = geometry_program.program.getUniformInfo("MV").Location;
+    gp_g_location = geometry_program.program.getUniformInfo("G").Location;
 
-    geometry_program_instanced.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", prep);
-    geometry_program_instanced.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
-    geometry_program_instanced.link();
+    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", prep);
+    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
+    geometry_program_instanced.program.link();
+    geometry_program_instanced.init();
 
-    gpi_m_location = geometry_program_instanced.getUniformInfo("M").Location;
+    gpi_m_location = geometry_program_instanced.program.getUniformInfo("M").Location;
 
     // Initialize the GLSL programs
-    depth_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", prep);
-    depth_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", prep);
-    depth_program.link();
+    depth_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", prep);
+    depth_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", prep);
+    depth_program.program.link();
+    depth_program.init();
 
-    sdp_m_location = depth_program.getUniformInfo("M").Location;
-    sdp_lpv_location = depth_program.getUniformInfo("LPV").Location;
-
-
-    directional_lighting_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    directional_lighting_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "directional.glsl.frag", prep);
-    directional_lighting_program.link();
-
-    lp_p_location = directional_lighting_program.getUniformInfo("gPosition").Location;
-    lp_n_location = directional_lighting_program.getUniformInfo("gNormal").Location;
-    lp_as_location = directional_lighting_program.getUniformInfo("gAlbedoSpec").Location;
-    lp_mt_location = directional_lighting_program.getUniformInfo("gMaterialTex").Location;
-    lp_gao_location = directional_lighting_program.getUniformInfo("gAO").Location;
-    lp_ls_location = directional_lighting_program.getUniformInfo("LS").Location;
-    lp_sdt_location = directional_lighting_program.getUniformInfo("shadowDepth").Location;
+    sdp_m_location = depth_program.program.getUniformInfo("M").Location;
+    sdp_lpv_location = depth_program.program.getUniformInfo("LPV").Location;
 
 
-    point_lighting_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", prep);
-    point_lighting_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", prep);
-    point_lighting_program.link();
+    directional_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
+    directional_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "directional.glsl.frag", prep);
+    directional_lighting_program.program.link();
+    directional_lighting_program.init();
 
-    plp_p_location       = point_lighting_program.getUniformInfo("gPosition").Location;
-    plp_n_location       = point_lighting_program.getUniformInfo("gNormal").Location;
-    plp_as_location      = point_lighting_program.getUniformInfo("gAlbedoSpec").Location;
-    plp_mt_location      = point_lighting_program.getUniformInfo("gMaterialTex").Location;
+    lp_p_location = directional_lighting_program.program.getUniformInfo("gPosition").Location;
+    lp_n_location = directional_lighting_program.program.getUniformInfo("gNormal").Location;
+    lp_as_location = directional_lighting_program.program.getUniformInfo("gAlbedoSpec").Location;
+    lp_mt_location = directional_lighting_program.program.getUniformInfo("gMaterialTex").Location;
+    lp_gao_location = directional_lighting_program.program.getUniformInfo("gAO").Location;
+    lp_ls_location = directional_lighting_program.program.getUniformInfo("LS").Location;
+    lp_sdt_location = directional_lighting_program.program.getUniformInfo("shadowDepth").Location;
+    lp_ldir_location = directional_lighting_program.program.getUniformInfo("lightDir").Location;
+    lp_lcol_location = directional_lighting_program.program.getUniformInfo("lightColor").Location;
+    lp_lamb_location = directional_lighting_program.program.getUniformInfo("lightAmbient").Location;
 
-    plp_ssbo_light_data_location = point_lighting_program.getProgramResourceLocation(GL_SHADER_STORAGE_BLOCK, "lights_in");
+
+    point_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", prep);
+    point_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", prep);
+    point_lighting_program.program.link();
+    point_lighting_program.init();
+
+    plp_p_location       = point_lighting_program.program.getUniformInfo("gPosition").Location;
+    plp_n_location       = point_lighting_program.program.getUniformInfo("gNormal").Location;
+    plp_as_location      = point_lighting_program.program.getUniformInfo("gAlbedoSpec").Location;
+    plp_mt_location      = point_lighting_program.program.getUniformInfo("gMaterialTex").Location;
+
+    plp_ssbo_light_data_location = point_lighting_program.program.getProgramResourceLocation(GL_SHADER_STORAGE_BLOCK, "lights_in");
 
     point_light_data_buffer = std::make_unique<Buffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
 
 
-    ssao_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    ssao_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", prep);
-    ssao_program.link();
+    ssao_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
+    ssao_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", prep);
+    ssao_program.program.link();
+    ssao_program.init();
 
-    ssao_p_loc         = ssao_program.getUniformInfo("gPosition").Location;
-    ssao_n_loc         = ssao_program.getUniformInfo("gNormal").Location;
-    ssao_tex_noise_loc = ssao_program.getUniformInfo("texNoise").Location;
-    ssao_radius_loc    = ssao_program.getUniformInfo("radius").Location;
-    ssao_bias_loc      = ssao_program.getUniformInfo("bias").Location;
-    ssao_nSamples_loc  = ssao_program.getUniformInfo("nSamples").Location;
+    ssao_p_loc         = ssao_program.program.getUniformInfo("gPosition").Location;
+    ssao_n_loc         = ssao_program.program.getUniformInfo("gNormal").Location;
+    ssao_tex_noise_loc = ssao_program.program.getUniformInfo("texNoise").Location;
+    ssao_radius_loc    = ssao_program.program.getUniformInfo("radius").Location;
+    ssao_bias_loc      = ssao_program.program.getUniformInfo("bias").Location;
+    ssao_nSamples_loc  = ssao_program.program.getUniformInfo("nSamples").Location;
 
     load_ssao_uniforms();
 
 
-    sky_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sky.glsl.vert", prep);
-    sky_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "sky.glsl.frag", prep);
-    sky_program.link();
-    sky_time_loc        = sky_program.getUniformInfo("time").Location;
-    sky_cirrus_loc      = sky_program.getUniformInfo("cirrus").Location;
-    sky_cumulus_loc     = sky_program.getUniformInfo("cumulus").Location;
-    sky_sun_position_loc= sky_program.getUniformInfo("sun_position").Location;
-    sky_output_mul_loc  = sky_program.getUniformInfo("output_mul").Location;
+    sky_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sky.glsl.vert", prep);
+    sky_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "sky.glsl.frag", prep);
+    sky_program.program.link();
+    sky_program.init();
+    sky_time_loc        = sky_program.program.getUniformInfo("time").Location;
+    sky_cirrus_loc      = sky_program.program.getUniformInfo("cirrus").Location;
+    sky_cumulus_loc     = sky_program.program.getUniformInfo("cumulus").Location;
+    sky_sun_position_loc= sky_program.program.getUniformInfo("sun_position").Location;
+    sky_output_mul_loc  = sky_program.program.getUniformInfo("output_mul").Location;
 
-    post_fx_bloom_combine_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_bloom_combine_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", prep);
-    post_fx_bloom_combine_program.link();
-    post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.getUniformInfo("hdrBuffer").Location;
-    post_fx_bc_emist_loc = post_fx_bloom_combine_program.getUniformInfo("emissiveBuffer").Location;
-    post_fx_bc_thresh_loc = post_fx_bloom_combine_program.getUniformInfo("bloom_threshold").Location;
+    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
+    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", prep);
+    post_fx_bloom_combine_program.program.link();
+    post_fx_bloom_combine_program.init();
+    post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.program.getUniformInfo("hdrBuffer").Location;
+    post_fx_bc_emist_loc = post_fx_bloom_combine_program.program.getUniformInfo("emissiveBuffer").Location;
+    post_fx_bc_thresh_loc = post_fx_bloom_combine_program.program.getUniformInfo("bloom_threshold").Location;
 
-    post_fx_bloom_blur.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_bloom_blur.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", prep);
-    post_fx_bloom_blur.link();
-    post_fx_bb_hor_loc = post_fx_bloom_blur.getUniformInfo("horizontal").Location;
-    post_fx_bb_bloom_in_loc = post_fx_bloom_blur.getUniformInfo("bloom_blur_in").Location;
+    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
+    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", prep);
+    post_fx_bloom_blur.program.link();
+    post_fx_bloom_blur.init();
+    post_fx_bb_hor_loc = post_fx_bloom_blur.program.getUniformInfo("horizontal").Location;
+    post_fx_bb_bloom_in_loc = post_fx_bloom_blur.program.getUniformInfo("bloom_blur_in").Location;
 
-    post_fx_program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", prep);
-    post_fx_program.link();
-    post_fx_gamma_loc           = post_fx_program.getUniformInfo("gamma").Location;
-    post_fx_exposure_loc        = post_fx_program.getUniformInfo("exposure").Location;
-    post_fx_bloom_falloff_loc   = post_fx_program.getUniformInfo("bloom_falloff").Location;
-    post_fx_hdrt_loc            = post_fx_program.getUniformInfo("hdrBuffer").Location;
-    post_fx_bloomt_loc          = post_fx_program.getUniformInfo("bloomBuffer").Location;
+    post_fx_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
+    post_fx_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", prep);
+    post_fx_program.program.link();
+    post_fx_program.init();
+    post_fx_gamma_loc           = post_fx_program.program.getUniformInfo("gamma").Location;
+    post_fx_exposure_loc        = post_fx_program.program.getUniformInfo("exposure").Location;
+    post_fx_bloom_falloff_loc   = post_fx_program.program.getUniformInfo("bloom_falloff").Location;
+    post_fx_hdrt_loc            = post_fx_program.program.getUniformInfo("hdrBuffer").Location;
+    post_fx_bloomt_loc          = post_fx_program.program.getUniformInfo("bloomBuffer").Location;
 
     // program block inputs
-    globals_desc = geometry_program.getUniformBlockInfo("Globals");
+    globals_desc = geometry_program.program.getUniformBlockInfo("Globals");
+    goffsets.P_ind = globals_desc.get_index("P");
+    goffsets.PInv_ind = globals_desc.get_index("PInv");
+    goffsets.View_ind = globals_desc.get_index("View");
+    goffsets.VInv_ind = globals_desc.get_index("VInv");
+    goffsets.VP_ind = globals_desc.get_index("VP");
+    goffsets.CameraPos_ind = globals_desc.get_index("CameraPos");
+    goffsets.CameraDir_ind = globals_desc.get_index("CameraDir");
+
     shader_globals.allocate(globals_desc.block_size);
 
-    lighting_materials_desc = directional_lighting_program.getUniformBlockInfo("MaterialsInfo");
+    lighting_materials_desc = directional_lighting_program.program.getUniformBlockInfo("MaterialsInfo");
     lighting_materials.allocate(lighting_materials_desc.block_size);
 
     // extract all offsets for material buffer
-    for (const auto& [name, layout] : lighting_materials_desc.layouts) {
+    for (const auto& [name, ind] : lighting_materials_desc.layout_map) {
         std::size_t b_begin = name.find('[');
         std::size_t b_end = name.find(']');
         if (b_begin != std::string::npos) {
@@ -403,36 +424,36 @@ void Renderer::init() {
             std::string var_name = name.substr(b_end + 2);
             MaterialData& data_ref = material_data_buffer[index];
             if (var_name == "diffuse") {
-                data_ref.diffuse_offset = layout.Offset;
+                data_ref.diffuse_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "emissive") {
-                data_ref.emissive_offset = layout.Offset;
+                data_ref.emissive_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "metallic") {
-                data_ref.metallic_offset = layout.Offset;
+                data_ref.metallic_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "subsurface") {
-                data_ref.subsurface_offset = layout.Offset;
+                data_ref.subsurface_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "specular") {
-                data_ref.specular_offset = layout.Offset;
+                data_ref.specular_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "roughness") {
-                data_ref.roughness_offset = layout.Offset;
+                data_ref.roughness_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "specularTint") {
-                data_ref.specularTint_offset = layout.Offset;
+                data_ref.specularTint_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "clearcoat") {
-                data_ref.clearcoat_offset = layout.Offset;
+                data_ref.clearcoat_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "clearcoatGloss") {
-                data_ref.clearcoatGloss_offset = layout.Offset;
+                data_ref.clearcoatGloss_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "anisotropic") {
-                data_ref.anisotropic_offset = layout.Offset;
+                data_ref.anisotropic_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "sheen") {
-                data_ref.sheen_offset = layout.Offset;
+                data_ref.sheen_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "sheenTint") {
-                data_ref.sheenTint_offset = layout.Offset;
+                data_ref.sheenTint_offset = lighting_materials_desc.layouts[ind].Offset;
             } else {
                 throw engine_exception{"invalid material array name " + var_name};
             }
         }
     }
 
-    ssao_kernel_desc = ssao_program.getUniformBlockInfo("Samples");
+    ssao_kernel_desc = ssao_program.program.getUniformBlockInfo("Samples");
     ssao_kernel_buffer.allocate(ssao_kernel_desc.block_size);
     auto tgt_layout = ssao_kernel_desc.get_layout("samples[0]");
     ssao_kernel_buffer.sub_data(ssaoKernel, tgt_layout.Offset, tgt_layout.ArrayStride);
@@ -448,7 +469,7 @@ void Renderer::init() {
     glm::vec3 scaling = glm::vec3{2} / (point_light_drawable->bounding_box.pMax - point_light_drawable->bounding_box.pMin);
     point_light_geom_base_scale = scaling.x;
 
-    point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.getAttributeMap());
+    point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.program.getAttributeMap());
 
     // additional effect initialization
     Camera default_camera{};
@@ -477,9 +498,9 @@ void Renderer::update_material(mat_slot_t material_slot, const MaterialData& mat
 }
 
 void Renderer::load_ssao_uniforms() {
-    glProgramUniform1f(ssao_program.getHandle(), ssao_bias_loc, ssao_bias);
-    glProgramUniform1f(ssao_program.getHandle(), ssao_radius_loc, ssao_radius);
-    glProgramUniform1ui(ssao_program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
+    glProgramUniform1f(ssao_program.program.getHandle(), ssao_bias_loc, ssao_bias);
+    glProgramUniform1f(ssao_program.program.getHandle(), ssao_radius_loc, ssao_radius);
+    glProgramUniform1ui(ssao_program.program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
 Ref<Material> Renderer::create_material() {
@@ -672,13 +693,13 @@ void Renderer::render(const Camera &camera) {
 
 
     // update globals buffer with frame info
-    globals_desc.set_parameter("P", P, shader_globals);
-    globals_desc.set_parameter("PInv", glm::inverse(P), shader_globals);
-    globals_desc.set_parameter("View", V, shader_globals);
-    globals_desc.set_parameter("VInv", glm::inverse(V), shader_globals);
-    globals_desc.set_parameter("VP", VP, shader_globals);
-    globals_desc.set_parameter("CameraPos", camera.get_position(), shader_globals);
-    globals_desc.set_parameter("CameraDir", camera.get_forward(), shader_globals);
+    globals_desc.set_parameter(goffsets.P_ind, P, shader_globals);
+    globals_desc.set_parameter(goffsets.PInv_ind, glm::inverse(P), shader_globals);
+    globals_desc.set_parameter(goffsets.View_ind, V, shader_globals);
+    globals_desc.set_parameter(goffsets.VInv_ind, glm::inverse(V), shader_globals);
+    globals_desc.set_parameter(goffsets.VP_ind, VP, shader_globals);
+    globals_desc.set_parameter(goffsets.CameraPos_ind, camera.get_position(), shader_globals);
+    globals_desc.set_parameter(goffsets.CameraDir_ind, camera.get_forward(), shader_globals);
 
     glm::mat4 light_vp;
 
@@ -692,7 +713,7 @@ void Renderer::render(const Camera &camera) {
 
     if (shadow_directional_light_id >= 0) {
         //set up shadow shader
-        depth_program.use();
+        depth_program.program.use();
         depth_fbo.bind();
         //set up light's depth map
         glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
@@ -741,7 +762,7 @@ void Renderer::render(const Camera &camera) {
                 draw(m.drawable.get(), depth_program, false, m.gl_vao);
             }
         }
-        depth_program.unbind();
+        depth_program.program.unbind();
         depth_fbo.unbind();
     }
 
@@ -751,7 +772,7 @@ void Renderer::render(const Camera &camera) {
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, __LINE__, -1, "Geometry Pass");
 
     g_buffer.bind();
-    geometry_program.use();
+    geometry_program.program.use();
 
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -797,12 +818,12 @@ void Renderer::render(const Camera &camera) {
             draw(m.drawable.get(), geometry_program, true, m.gl_vao, mat_id_override);
         }
     }
-    geometry_program.unbind();
+    geometry_program.program.unbind();
 
     // std::cout << "Culled " << cull_count << " models" << std::endl;
 
     // render instanced geometry
-    geometry_program_instanced.use();
+    geometry_program_instanced.program.use();
     // bind global shader UBO to shader
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
@@ -814,7 +835,7 @@ void Renderer::render(const Camera &camera) {
             draw(m.drawable.get(), geometry_program_instanced, true, m.gl_vao, -1, m.instance_transform_buffer.get(), m.n_instances);
         }
     }
-    geometry_program_instanced.unbind();
+    geometry_program_instanced.program.unbind();
 
     // terrain render
     const RenderState current_state{
@@ -844,7 +865,7 @@ void Renderer::render(const Camera &camera) {
     glDisable(GL_DEPTH_TEST); // overdraw
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL );
     
-    ssao_program.use();
+    ssao_program.program.use();
 
     if (ssao_p_loc >= 0) {
         glActiveTexture(GL_TEXTURE0);
@@ -877,7 +898,7 @@ void Renderer::render(const Camera &camera) {
     normals->unbind();
     ssao_kernel_noise->unbind();
 
-    ssao_program.unbind();
+    ssao_program.program.unbind();
     ssao_buffer.unbind();
 
     glPopDebugGroup();
@@ -907,7 +928,7 @@ void Renderer::render(const Camera &camera) {
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // setup lighting program
-    directional_lighting_program.use();
+    directional_lighting_program.program.use();
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
 
@@ -952,9 +973,9 @@ void Renderer::render(const Camera &camera) {
 
     for (auto& litr : directional_lights) {
         auto& l = litr.second;
-        gl::glUniform(glm::normalize(l.position), directional_lighting_program.getUniformInfo("lightDir").Location);
-        gl::glUniform(l.color, directional_lighting_program.getUniformInfo("lightColor").Location);
-        gl::glUniform(l.ambient, directional_lighting_program.getUniformInfo("lightAmbient").Location);
+        gl::glUniform(glm::normalize(l.position), lp_ldir_location);
+        gl::glUniform(l.color, lp_lcol_location);
+        gl::glUniform(l.ambient, lp_lamb_location);
         
         draw_screen_space_triangle();
     }
@@ -967,10 +988,10 @@ void Renderer::render(const Camera &camera) {
     ssao_kernel_color->unbind();
     shadow_depth_tex->unbind();
 
-    directional_lighting_program.unbind();
+    directional_lighting_program.program.unbind();
 
     // pointlight pass
-    point_lighting_program.use();
+    point_lighting_program.program.use();
     shader_globals.bind_range(globals_desc.location_index);
 
     if (plp_n_location >= 0) {
@@ -1030,7 +1051,7 @@ void Renderer::render(const Camera &camera) {
     albedo_spec->unbind();
     material_tex->unbind();
 
-    point_lighting_program.unbind();
+    point_lighting_program.program.unbind();
 
     // sky program
     // draw into non lit pixels in hdr fbo
@@ -1044,15 +1065,15 @@ void Renderer::render(const Camera &camera) {
 
 
     float time = (float)glfwGetTime() - 0.0f;
-    glProgramUniform1f(sky_program.getHandle(), sky_time_loc, time*cloud_speed);
-    glProgramUniform1f(sky_program.getHandle(), sky_sun_position_loc, sun_position);
-    glProgramUniform1f(sky_program.getHandle(), sky_output_mul_loc, sky_brightness);
+    glProgramUniform1f(sky_program.program.getHandle(), sky_time_loc, time*cloud_speed);
+    glProgramUniform1f(sky_program.program.getHandle(), sky_sun_position_loc, sun_position);
+    glProgramUniform1f(sky_program.program.getHandle(), sky_output_mul_loc, sky_brightness);
 
-    sky_program.use();
+    sky_program.program.use();
     shader_globals.bind_range(globals_desc.location_index);
     draw_screen_space_triangle();
 
-    sky_program.unbind();
+    sky_program.program.unbind();
     lighting_buffer.unbind();
 
     glPopDebugGroup();
@@ -1067,7 +1088,7 @@ void Renderer::render(const Camera &camera) {
     glDisable(GL_DEPTH_TEST); // sst
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL );
 
-    post_fx_bloom_combine_program.use();
+    post_fx_bloom_combine_program.program.use();
 
     if (post_fx_bc_hdrt_loc >= 0) {
         glActiveTexture(GL_TEXTURE0);
@@ -1085,12 +1106,12 @@ void Renderer::render(const Camera &camera) {
 
     draw_screen_space_triangle();
 
-    post_fx_bloom_combine_program.unbind();
+    post_fx_bloom_combine_program.program.unbind();
     bloom_thresh_combine.unbind();
 
     // bloom blur
     int bloom_output_tex_ind = 0;
-    post_fx_bloom_blur.use();
+    post_fx_bloom_blur.program.use();
     for (int i = 0; i < bloom_iterations * 2; i++) {
         bloom_output_tex_ind = (i + 1) % 2;
 
@@ -1106,7 +1127,7 @@ void Renderer::render(const Camera &camera) {
 
         bloom_blur_swap_fbo[bloom_output_tex_ind].unbind();
     }
-    post_fx_bloom_blur.unbind();
+    post_fx_bloom_blur.program.unbind();
 
     glPopDebugGroup();
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, __LINE__, -1, "Post Pass");
@@ -1116,7 +1137,7 @@ void Renderer::render(const Camera &camera) {
     glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    post_fx_program.use();
+    post_fx_program.program.use();
 
     gl::glUniformf(exposure, post_fx_exposure_loc);
     gl::glUniformf(bloom_falloff, post_fx_bloom_falloff_loc);
@@ -1138,7 +1159,7 @@ void Renderer::render(const Camera &camera) {
 
     hdr_texture->unbind();
 
-    post_fx_program.unbind();
+    post_fx_program.program.unbind();
 
     glPopDebugGroup();
 
