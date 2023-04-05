@@ -15,10 +15,6 @@ namespace ev2::renderer {
 using namespace ev2;
 using namespace ev2::gl;
 
-Buffer::Buffer(BindingTarget target, Usage usage) : target{target}, usage{usage}, capacity{}, gl_reference{} {
-    glGenBuffers(1, &gl_reference);
-}
-
 Buffer::~Buffer() {
     glDeleteBuffers(1, &gl_reference);
 }

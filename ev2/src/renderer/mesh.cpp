@@ -142,7 +142,7 @@ VertexBuffer VertexBuffer::vbInitArrayVertexSpec(const std::vector<float>& buffe
     // map the attributes defined in the layout
     vb.add_accessors_from_layout(0, layout);
 
-    return std::move(vb);
+    return vb;
 }
 
 std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitDefault() {

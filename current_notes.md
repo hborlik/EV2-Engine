@@ -4,6 +4,24 @@ Modeling and rendering are two core research problems in computer graphics. Show
 
 !!!WFC!!!
 
+### Schedule
+
+2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
+    1.  Think about the data structures that will be used to generate a scene graph.
+   
+3.  Jan 27 : 
+4.  Feb 03 : *Graph progress* Data structures for WFC
+5.  Feb 10 : 
+6.  Feb 17 : 
+7.  Feb 24 : 
+8.  Mar 03 : 
+9.  Mar 10 : Graph implementations are working and mostly tested. Need to finish WFC
+10. Mar 17 : 
+
+Two week goal (April 17)
+1. Visuals for wfc
+2. n^2 sphere bounding intersections
+
 1. Break input image into tiles
 2. Interpret tiles as values that can appear in a given neighborhood 
 3. Build adjacency matrix (neighborhoods and values)
@@ -81,27 +99,7 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
     
     *[Constraint Satisfaction Problems](file:///run/media/hborlik/T7/grad%20stuff/research/graph_theory/ConstraintSatisfactionProblems.pdf)
 
-    
-5.  Feb 10 : Abstract due!
-6.  Feb 17 : 
-7.  Feb 24 : 
-8.  Mar 03 : 
-9.  Mar 10 : 
-10. Mar 17 : 
 
-### Schedule
-
-2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
-    1.  Think about the data structures that will be used to generate a scene graph.
-   
-3.  Jan 27 : 
-4.  Feb 03 : *Graph progress* Data structures for WFC
-5.  Feb 10 : 
-6.  Feb 17 : 
-7.  Feb 24 : 
-8.  Mar 03 : 
-9.  Mar 10 : Graph implementations are working and mostly tested. Need to finish WFC
-10. Mar 17 : 
 
 ### current milestones
 1. implement terrain rendering

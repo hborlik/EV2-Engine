@@ -19,7 +19,9 @@ namespace ev2::renderer {
 class Buffer {
 public:
 
-    Buffer(gl::BindingTarget target, gl::Usage usage);
+    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, target{target}, usage{usage}, gl_reference{} {
+        glCreateBuffers(1, &gl_reference);
+    }
 
     template<typename T>
     Buffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
