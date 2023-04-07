@@ -642,15 +642,21 @@ public:
         assert(graph != nullptr);
     }
 
+    void step_wfc() {
+
+    }
+
     /**
      * @brief Propagate the wave function collapse algorithm
      *
      * @param node
      */
-    void propagate(DNode* node) {
+    DNode* propagate(DNode* node) {
         assert(node != nullptr);
         std::queue<DNode*> propagation_stack;
         propagation_stack.push(node);
+        DNode* min_e = nullptr;
+        float entropy = 0.f;
         bool f = true; // force propagation on the first node
         while (!propagation_stack.empty()) {
             DNode* n = propagation_stack.front();
@@ -663,7 +669,12 @@ public:
                         propagation_stack.push(neighbor);
                 }
             }
+            if (float en = n->entropy(); n != node && n->domain.size() > 1 && (!min_e || en < entropy)) {
+                min_e = n;
+                entropy = en;
+            }
         }
+        return min_e;
     }
 
     /**
@@ -709,7 +720,6 @@ public:
         }
     }
 
-    std::priority_queue<DNode*> entropy_stack;
     Graph<DNode>* graph;
 };
 

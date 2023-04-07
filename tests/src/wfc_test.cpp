@@ -499,12 +499,19 @@ int main() {
 
     WFCSolver solver{&ngrid.get_graph()};
 
-    solver.collapse(ngrid.at(0, 0));
-    std::cout << to_string(ngrid) << std::endl;
+    DNode* next = ngrid.at(0, 0);
 
-    solver.propagate(ngrid.at(0, 0));
+    while(next) {
+        std::cout << next->identifier << std::endl;
 
-    std::cout << to_string(ngrid) << std::endl;
+        solver.collapse(next);
+
+        std::cout << to_string(ngrid) << std::endl;
+
+        next = solver.propagate(next);
+
+        std::cout << to_string(ngrid) << std::endl;
+    }
 
     //
 
