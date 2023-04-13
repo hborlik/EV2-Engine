@@ -1,30 +1,17 @@
 ## Thesis Notes
 
-Modeling and rendering are two core research problems in computer graphics. Show how this tool can add to existing work. How it integrates with another project. Can find a paper to build on.
-
-!!!WFC!!!
-
 ### Schedule
 
 2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
     1.  Think about the data structures that will be used to generate a scene graph.
-   
-3.  Jan 27 : 
-4.  Feb 03 : *Graph progress* Data structures for WFC
-5.  Feb 10 : 
-6.  Feb 17 : 
-7.  Feb 24 : 
-8.  Mar 03 : 
-9.  Mar 10 : Graph implementations are working and mostly tested. Need to finish WFC
-10. Mar 17 : 
 
 Two week goal (April 17)
 1. Visuals for wfc
 2. n^2 sphere bounding intersections
 
-1. Break input image into tiles
-2. Interpret tiles as values that can appear in a given neighborhood 
-3. Build adjacency matrix (neighborhoods and values)
+3. Break input image into tiles
+4. Interpret tiles as values that can appear in a given neighborhood 
+5. Build adjacency matrix (neighborhoods and values)
    1. associated weight for how often they appear in the input image
 Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic/constrain driven modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
 
@@ -32,38 +19,6 @@ Notes about good papers:
 [example](https://ieeexplore-ieee-org.ezproxy.lib.calpoly.edu/stamp/stamp.jsp?tp=&arnumber=9709532)
 2-3 pages on results, Introduction clearly states contributions and motivations. 
 
-## Abstract
-This thesis presents a tool that interactively generates procedural outdoor 3D scenes. This goal of this tool is to allow for iterative modifications to a partially complete scene. PCG is incorporated to the artistic process by allowing the existing structure of the scene to be extended. This thesis uses a modified Wave Function Collapse (WFC) algorithm, which allows it to a operate in an unstructured 3D environment. WFC solves problems known as Constraint Satisfaction Problems (CSP), that is, it finds solutions (valid placements of tiles) to problems where there is set of valid configurations for neighboring tiles. The main aim of this research is to take advantage of the properties of WFC in order to generate game content procedurally in an unstructured 3D environment.
-
-## Introduction
-Wave Function Collapse (WFC) [cite orig WFC] is a probabilistic algorithm that takes patterns from a given input, and uses it to model outputs with similar local properties. It has been used in the creation of images, 2D textures, and more recently, 3D objects[cite]. In constraint satisfaction problems, local consistency is a property that describes the requirements of constraints and subsets of variables. WFC is a specific approach to solving the arc consistency problem. Two variables are arc consistent if its value is consistent with some allowed value of a second variable [cite]. 
-
-The Constraint Satisfaction Problem (CSP) is a type of problem that can be expressed in terms of variables, domains, and constraints. A CSP involves finding a solution to a set of constraints which must be satisfied in order to find a valid solution. The variables represent the objects that are being solved for, the domains represent the range of possible values for each variable, and the constraints are restrictions on the values the variables can take. A CSP is a mathematical problem and can be solved using various approaches. Some alternative methods are backtracking, and branch-and-bound [cite].
-
-The goals of this project are to implement a flexible WFC graph algorithm in C++, and then use it to generate procedural placements for 3D objects. In addition, this project attempts to explore the possibilities of using WFC in a 3D environment by experimenting with different parameters and configurations. Experiments are performed in a custom rendering engine, created with the intent of supplying an environment for exploring procedural generation of 3D scenes. 
-
-The implementation is tested on different types of 3D objects, and the results are evaluated to determine the effectiveness of the algorithm in this context. 
-
-The project includes the following components:
-
-1. Designing and implementing a flexible WFC algorithm in C++.
-2. Testing the algorithm on different types of 3D objects.
-3. Evaluating the algorithm by comparing the results with other existing algorithms.
-4. Exploring the possibilities of using WFC in a 3D environment by experimenting with different parameters and constraints.
-5. Developing a custom rendering engine to visualize the generated placements.
-
-## Design Goals
-
-1. Flexible WFC for 3D irregular scenes
-2. Easily reconfigurable and data defined behavior
-
-## Research Questions
-
-1. Is it possible to extend WFC to an unstructured 3d environment?
-2. Does WFC generate plausible results when extended to this environment?
-3. What are the implications for scene authoring?
-4. How does WFC compare to other methods of 3d procedural generation?
-5. What other applications could WFC be used for in a 3d unstructured environment?
 
 Jan 20 meeting notes: data structures for graph representation and understand WFC.
     Write an abstract! (three week deadline) Feb 10

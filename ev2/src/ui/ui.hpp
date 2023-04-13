@@ -38,6 +38,9 @@ public:
     void show_scene_explorer(Node* scene, bool* p_open);
     void show_node_editor_widget(Node* node);
 
+    void set_selected_node(Node* node) noexcept {selected_node = node;}
+    Node* get_selected_node() const noexcept {return selected_node;}
+
     void add_custom_node_editor(std::shared_ptr<NodeEditor> editor);
 
 private:
