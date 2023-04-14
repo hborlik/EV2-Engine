@@ -56,10 +56,7 @@ public:
     bool place_child = false;
     float cam_x = 0, cam_y = 0;
     float cam_boom_length = 10.0f;
-    int32_t window_width = 1920;
-    int32_t window_height = 1080;
 
-    bool show_debug = false;
     enum CameraMode {
         CAM_MODE_ORBIT = 0,
         CAM_MODE_FLY
@@ -222,7 +219,8 @@ public:
         }
     }
 
-    void onKey(ev2::input::Key::Enum key, ev2::input::Modifier mods, bool down) override {
+    void on_key(ev2::input::Key::Enum key, ev2::input::Modifier mods, bool down) override {
+        Application::on_key(key, mods, down);
         ImGuiIO& io = ImGui::GetIO();
         switch (key) {
             case ev2::input::Key::Esc:
@@ -276,6 +274,7 @@ public:
     void on_char(uint32_t scancode) override {}
 
     void on_scroll(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos) override {
+        Application::on_scroll(mouse_x, mouse_y, scroll_pos);
         auto& io = ImGui::GetIO();
         if (!io.WantCaptureMouse) {
             static int32_t scroll_last = scroll_pos;
@@ -286,30 +285,18 @@ public:
     }
 
     void cursor_pos(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos) override {
-        if (!show_debug) {
-            glm::vec2 scr_size = ev2::window::getWindowSize();
-            glm::vec2 s_pos = ev2::window::getCursorPosition() / scr_size;
-            ev2::input::SetMousePosition(s_pos);
-        }
+        Application::cursor_pos(mouse_x, mouse_y, scroll_pos);
     }
 
     void on_mouse_button(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos, ev2::input::MouseButton::Enum button, bool down) override {
+        Application::on_mouse_button(mouse_x, mouse_y, scroll_pos, button, down);
+
         mouse_p = ev2::window::getCursorPosition();
         if (button == 1)
             left_mouse_down = down;
         if (button == 3)
             right_mouse_down = down;
-        ev2::input::SetMouseButton(button, down);
     }
-
-    void on_window_size_change(int32_t width, int32_t height) override {
-        if (ev2::renderer::Renderer::is_initialized())
-            ev2::renderer::Renderer::get_singleton().set_resolution(width, height);
-        window_width = width;
-        window_height = height;
-    }
-
-    void on_drop_file(const std::string& path) override {}
 };
 
 //Callback for miniaudio.

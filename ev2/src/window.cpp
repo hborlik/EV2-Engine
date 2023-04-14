@@ -426,7 +426,7 @@ void Context::keyCb(GLFWwindow* _window, int32_t _key, int32_t _scancode, int32_
     input::Key::Enum key = translateKey(_key);
     bool down = (_action == GLFW_PRESS || _action == GLFW_REPEAT);
     if (static_context->application)
-        static_context->application->onKey(key, mods, down);
+        static_context->application->on_key(key, mods, down);
 }
 
 void Context::charCb(GLFWwindow* _window, uint32_t _scancode)

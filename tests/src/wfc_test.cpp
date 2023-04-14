@@ -455,32 +455,7 @@ void test_pattern_validity2() {
     assert(p_center.valid(neighborhood));
 }
 
-int main() {
-    sparse_test_empty();
-    sparse_test_add();
-    sparse_directed_add();
-
-    dense_test_empty();
-    dense_test_add();
-    dense_directed_add();
-
-    // bfs tests
-    dense_bfs_no_soln();
-    dense_bfs_no_soln_directional();
-    dense_bfs_soln_directional0();
-    dense_bfs_soln_directional1();
-    dense_bfs_soln_0();
-
-    // ford_fulkerson algo tests
-    dense_flow_soln_directional0();
-    dense_flow_soln_directional1();
-    dense_flow_soln_directional2();
-
-    // patterns
-    test_pattern_validity0();
-    test_pattern_validity1();
-    test_pattern_validity2();
-
+void wfc_solver_grid0() {
     NodeGrid ngrid{3, 3};
     std::cout << ngrid.get_graph() << std::endl;
 
@@ -512,8 +487,36 @@ int main() {
 
         std::cout << to_string(ngrid) << std::endl;
     }
+}
 
-    //
+int main() {
+    sparse_test_empty();
+    sparse_test_add();
+    sparse_directed_add();
+
+    dense_test_empty();
+    dense_test_add();
+    dense_directed_add();
+
+    // bfs tests
+    dense_bfs_no_soln();
+    dense_bfs_no_soln_directional();
+    dense_bfs_soln_directional0();
+    dense_bfs_soln_directional1();
+    dense_bfs_soln_0();
+
+    // ford_fulkerson algo tests
+    dense_flow_soln_directional0();
+    dense_flow_soln_directional1();
+    dense_flow_soln_directional2();
+
+    // patterns
+    test_pattern_validity0();
+    test_pattern_validity1();
+    test_pattern_validity2();
+
+    // wfc
+    wfc_solver_grid0();
 
     cout << "Done" << endl;
 
