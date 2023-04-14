@@ -9,6 +9,7 @@
 
 #include <scene/node.hpp>
 #include <scene/scene_tree.hpp>
+#include <application.hpp>
 #include <resource.hpp>
 #include <physics.hpp>
 #include <player.h>
@@ -20,13 +21,11 @@ using namespace ev2;
 
 class GameState {
 public:
-    GameState();
+    GameState(Application* app);
     
     glm::vec3 sunset_color{253/255.0f, 94/255.0, 83/255.0};
     glm::vec3 night_ambient{0.13, 0.16, 0.21};
 
-    ev2::SceneTree scene_tree{};
-    ev2::Ref<Node> scene = nullptr;
     ev2::Ref<ev2::renderer::Material> tree_bark;
     ev2::Ref<ev2::renderer::Material> highlight_material;
 
@@ -47,6 +46,8 @@ public:
     ev2::Ref<TreeNode> selected_tree_1;
     ev2::Ref<TreeNode> selected_tree_2;
     ma_engine engine;
+
+    Application* app = nullptr;
 
     float time_accumulator = 0.0f;
     float time_day = 0.0f;

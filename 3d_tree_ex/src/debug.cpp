@@ -93,9 +93,3 @@ void show_tree_window(GameState* game, ev2::Ref<TreeNode> selected_tree) {
     ImGui::Text("P = %d", selected_tree->plantInfo.iterations);
     ImGui::End();
 }
-
-void show_scene_window(GameState* game) {
-    static SceneEditor se{};
-
-    se.editor(game->scene.get());
-}

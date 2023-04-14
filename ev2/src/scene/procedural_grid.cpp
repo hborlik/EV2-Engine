@@ -2,6 +2,7 @@
 
 #include <pcg/grid.hpp>
 #include <pcg/wfc.hpp>
+#include <ui/imgui.hpp>
 
 namespace ev2 {
 
@@ -15,8 +16,21 @@ ProceduralGrid::ProceduralGrid() {
     
 }
 
+void ProceduralGrid::generate(int n) {
+    m_data = std::make_unique<Data>(n, n);
+}
+
 void ProceduralGrid::on_init() {
-    m_data = std::make_unique<Data>(10, 10);
+    generate(10);
+}
+
+void ProceduralGridEditor::show_editor(Node* node) {
+    ProceduralGrid* n = dynamic_cast<ProceduralGrid*>(node);
+    if (n) {
+        if (ImGui::Button("Generate")) {
+            n->generate(10);
+        }
+    }
 }
 
 }

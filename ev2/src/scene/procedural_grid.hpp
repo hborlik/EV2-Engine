@@ -10,6 +10,7 @@
 #define EV2_PROCEDURAL_GRID_HPP
 
 #include <scene/node.hpp>
+#include <ui/ui.hpp>
 
 namespace ev2 {
 
@@ -24,6 +25,11 @@ public:
 private:
     struct Data;
     std::unique_ptr<Data> m_data;
+};
+
+class ProceduralGridEditor : public NodeEditorT<ProceduralGrid> {
+public:
+    void show_editor(Node* node) override;
 };
 
 }

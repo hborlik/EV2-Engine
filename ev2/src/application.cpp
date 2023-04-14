@@ -2,8 +2,61 @@
 
 #include <window.hpp>
 #include <renderer/renderer.hpp>
+#include <physics.hpp>
+#include <ui/imgui.hpp>
+#include <ui/imgui_impl_glfw.hpp>
+#include <ui/imgui_impl_opengl3.hpp>
 
 namespace ev2 {
+
+void Application::process(float dt) {
+    on_process(dt);
+}
+
+void Application::imgui() {
+    GLFWwindow * window = ev2::window::getContextWindow();
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    on_render_ui();
+
+    // Rendering
+    ImGui::Render();
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+    glViewport(0, 0, display_w, display_h);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+int Application::run() {
+    // game->scene_tree.change_scene(game->scene.get());
+
+    float dt = 0.05f;
+    while(window::frame()) {
+        process(dt); // application update
+        scene_tree.update(dt); // scene graph update
+        Physics::get_singleton().simulate(dt); // finally, physics update
+
+        scene_tree.update_pre_render(); // compute all transforms in scene and pass to renderer
+
+        auto camera_node = get_current_camera();
+
+        renderer::Renderer::get_singleton().render(camera_node->get_camera()); // render scene
+
+        imgui();
+        dt = float(window::getFrameTime());
+    }
+
+    current_scene->destroy();
+    
+    return 0;
+}
+
+void Application::on_process(float dt) {
+
+}
 
 void Application::on_key(input::Key::Enum key, input::Modifier mods, bool down) {
 
@@ -38,6 +91,11 @@ void Application::on_window_size_change(int32_t width, int32_t height) {
 
 void Application::on_drop_file(const std::string& path) {
 
+}
+
+void Application::on_render_ui() {
+    if (show_debug)
+        scene_editor.editor(current_scene.get());
 }
 
 

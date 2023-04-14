@@ -139,8 +139,8 @@ void SceneEditor::show_node_editor_widget(Node* node) {
     ImGui::Separator();
     ImGui::Text("Transform");
     // show_transform_editor(&node->transform);
-    ImGui::Separator();
     if (auto itr = m_editor_types.find(typeid(*node)); itr != m_editor_types.end()) {
+        ImGui::Separator();
         itr->second->show_editor(node);
     }
 }

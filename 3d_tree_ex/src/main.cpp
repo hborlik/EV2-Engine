@@ -22,14 +22,11 @@
 #include <Sphere.h>
 #include <physics.hpp>
 #include <renderer/renderer.hpp>
-#include <physics.hpp>
 #include <scene/visual_nodes.hpp>
 #include <debug.h>
 #include <game.h>
 
 #include <ui/imgui.hpp>
-#include <ui/imgui_impl_glfw.hpp>
-#include <ui/imgui_impl_opengl3.hpp>
 
 namespace fs = std::filesystem;
 ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -74,16 +71,11 @@ public:
         return cam_orbital;
     }
 
-    void imgui() {
-        GLFWwindow * window = ev2::window::getContextWindow();
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+    void on_render_ui() override {
+        Application::on_render_ui();
 
         if (show_debug) {
             show_settings_editor_window(game.get());
-            show_scene_window(game.get());
         }
         if (game->selected_tree_1) {
             ImGui::SetNextWindowSize(ImVec2(window_width/5, window_height/5));
@@ -96,54 +88,24 @@ public:
             show_tree_window(game.get(), game->selected_tree_2);
         }
 
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 
     void initialize() {
-        game = std::make_unique<GameState>();
+        set_current_scene(Node::create_node<Node>("scene0"));
 
-        cam_orbital      = game->scene->create_child_node<ev2::CameraNode>("Orbital");
-        cam_orbital_root = game->scene->create_child_node<ev2::Node>("cam_orbital_root");
+        game = std::make_unique<GameState>(this);
+
+        cam_orbital      = get_current_scene()->create_child_node<ev2::CameraNode>("Orbital");
+        cam_orbital_root = get_current_scene()->create_child_node<ev2::Node>("cam_orbital_root");
 
         cam_orbital_root->add_child(cam_orbital);
 
-        cam_fly = game->scene->create_child_node<ev2::CameraNode>("FlyCam");
+        cam_fly = get_current_scene()->create_child_node<ev2::CameraNode>("FlyCam");
 
         // ev2::ResourceManager::get_singleton().loadGLTF(fs::path("models") / "Box.gltf");
        
     }
 
-
-    int run() {
-        // game->scene_tree.change_scene(game->scene.get());
-
-        float dt = 0.05f;
-        while(ev2::window::frame()) {
-            update(dt); // application update for key events
-            game->update(dt); // scene graph update
-            ev2::Physics::get_singleton().simulate(dt); // finally, physics update
-
-            game->scene_tree.update_pre_render(); // compute all transforms in scene and pass to renderer
-            ev2::ResourceManager::get_singleton().pre_render(); // does nothing
-
-            auto camera_node = getCameraNode();
-            if (!show_debug)
-                camera_node = game->cam_first_person;
-
-            ev2::renderer::Renderer::get_singleton().render(camera_node->get_camera()); // render scene
-            imgui();
-            dt = float(ev2::window::getFrameTime());
-        }
-
-        game->scene->destroy();
-     
-        return 0;
-    }
 
     void toggleWireframe() {
         static bool enabled = false;
@@ -152,7 +114,10 @@ public:
     }
 
 
-    void update(float dt) {
+    void on_process(float dt) override {
+        Application::on_process(dt);
+
+        set_current_camera(getCameraNode());
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -359,7 +324,7 @@ int main(int argc, char *argv[]) {
     fs::path log_path = fs::path("logs");
 
     ev2::EV2_init(args, asset_path, log_path);
-    ev2::window::setWindowTitle("Plant Game");
+    ev2::window::setWindowTitle("SC-WFC Sandbox");
 
     std::unique_ptr<TestApp> app = std::make_unique<TestApp>(asset_path);
     ev2::window::setApplication(app.get());
