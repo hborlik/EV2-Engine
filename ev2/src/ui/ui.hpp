@@ -45,7 +45,7 @@ public:
 
 private:
     void show_scene_tree_widget(int id, Node* node);
-    void show_transform_editor(Transform* tr);
+    void show_transform_editor(Node* node);
 
 private:
     Node* selected_node;

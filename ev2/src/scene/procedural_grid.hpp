@@ -16,7 +16,7 @@ namespace ev2 {
 
 class ProceduralGrid : public Node {
 public:
-    ProceduralGrid();
+    ProceduralGrid(std::string name) : Node{std::move(name)} {}
 
     void generate(int n);
 
@@ -24,7 +24,7 @@ public:
 
 private:
     struct Data;
-    std::unique_ptr<Data> m_data;
+    std::shared_ptr<Data> m_data{};
 };
 
 class ProceduralGridEditor : public NodeEditorT<ProceduralGrid> {

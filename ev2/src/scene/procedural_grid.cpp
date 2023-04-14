@@ -12,12 +12,8 @@ struct ProceduralGrid::Data {
     pcg::NodeGrid grid;
 };
 
-ProceduralGrid::ProceduralGrid() {
-    
-}
-
 void ProceduralGrid::generate(int n) {
-    m_data = std::make_unique<Data>(n, n);
+    m_data = std::make_shared<Data>(n, n);
 }
 
 void ProceduralGrid::on_init() {

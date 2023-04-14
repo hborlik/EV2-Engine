@@ -15,6 +15,8 @@
 #include <input.hpp>
 #include <application.hpp>
 
+#define GL_MIN_SEVERITY GL_DEBUG_SEVERITY_LOW
+
 using namespace ev2;
 
 namespace {
@@ -33,6 +35,9 @@ void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
     std::string output_source{};
     std::string output_type{};
     std::string output_message{message};
+
+    if (severity >= GL_MIN_SEVERITY)
+        return;
 
     switch (severity)
     {

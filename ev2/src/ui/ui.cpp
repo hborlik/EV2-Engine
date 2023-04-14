@@ -134,11 +134,12 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
 void SceneEditor::show_node_editor_widget(Node* node) {
     if (!node)
         return;
+    ImGui::Text("Node type %s", util::name_demangle(typeid(*node).name()).c_str());
     std::string uuid_text = "UUID: " + node->uuid;
     ImGui::Text("%s", uuid_text.c_str());
     ImGui::Separator();
     ImGui::Text("Transform");
-    // show_transform_editor(&node->transform);
+    show_transform_editor(node);
     if (auto itr = m_editor_types.find(typeid(*node)); itr != m_editor_types.end()) {
         ImGui::Separator();
         itr->second->show_editor(node);
@@ -218,25 +219,25 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     }
 }
 
-void SceneEditor::show_transform_editor(Transform* tr) {
-    if (!tr)
+void SceneEditor::show_transform_editor(Node* node) {
+    if (!node)
         return;
 
-    glm::vec3 v = tr->get_position();
+    glm::vec3 v = node->get_position();
     if (ImGui::DragFloat3("position", glm::value_ptr(v), 0.1, 0.f, 0.f, "%.3f")) {
-        tr->set_position(v);
+        node->set_position(v);
     }
 
-    glm::quat q = tr->get_rotation();
+    glm::quat q = node->get_rotation();
     glm::vec3 euler = glm::eulerAngles(q);
     if (ImGui::DragFloat3("rotation", glm::value_ptr(euler), 0.01, 0.f, 0.f, "%.3f")) {
         q = glm::quat{euler};
-        tr->set_rotation(q);
+        node->set_rotation(q);
     }
 
-    v = tr->get_scale();
+    v = node->get_scale();
     if (ImGui::DragFloat3("scale", glm::value_ptr(v), 0.05, 0.f, 0.f, "%.3f")) {
-        tr->set_scale(v);
+        node->set_scale(v);
     }
 
 }

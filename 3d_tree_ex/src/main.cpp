@@ -21,8 +21,8 @@
 #include <resource.hpp>
 #include <Sphere.h>
 #include <physics.hpp>
-#include <renderer/renderer.hpp>
 #include <scene/visual_nodes.hpp>
+#include <scene/procedural_grid.hpp>
 #include <debug.h>
 #include <game.h>
 
@@ -93,6 +93,10 @@ public:
     void initialize() {
         set_current_scene(Node::create_node<Node>("scene0"));
 
+        scene_editor.add_custom_node_editor(std::make_shared<ev2::ProceduralGridEditor>());
+
+        get_current_scene()->create_child_node<ev2::ProceduralGrid>("procedural grid");
+
         game = std::make_unique<GameState>(this);
 
         cam_orbital      = get_current_scene()->create_child_node<ev2::CameraNode>("Orbital");
@@ -116,6 +120,8 @@ public:
 
     void on_process(float dt) override {
         Application::on_process(dt);
+
+        game->update(dt);
 
         set_current_camera(getCameraNode());
 
