@@ -20,7 +20,6 @@ public:
 
     void on_init() override;
     void on_ready() override;
-    void on_process(float delta) override;
     void on_destroy() override;
 
     void pre_render() override;

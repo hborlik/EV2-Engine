@@ -178,6 +178,7 @@ void ColliderBody::on_process(float delta) {
 }
 
 void ColliderBody::on_destroy() {
+    PhysicsNode::on_destroy();
     Physics::get_singleton().get_physics_world()->destroyCollisionBody(body);
 }
 

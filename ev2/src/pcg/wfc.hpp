@@ -643,8 +643,11 @@ public:
     }
 
     void step_wfc() {
-
+        collapse(next_node);
+        next_node = propagate(next_node);
     }
+
+    bool can_continue() noexcept {return next_node != nullptr;}
 
     /**
      * @brief Propagate the wave function collapse algorithm
@@ -720,7 +723,8 @@ public:
         }
     }
 
-    Graph<DNode>* graph;
+    Graph<DNode>* graph = nullptr;
+    DNode* next_node = nullptr;
 };
 
 } // namespace pcg

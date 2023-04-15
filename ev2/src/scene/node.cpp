@@ -39,8 +39,6 @@ void Node::destroy() {
 
     if (parent)
         parent->remove_child(this->get_ref().ref_cast<Node>());
-
-    on_destroy();
 }
 
 void Node::_propagate_update(float dt) {

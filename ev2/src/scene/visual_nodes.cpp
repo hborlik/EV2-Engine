@@ -12,10 +12,6 @@ void VisualInstance::on_ready() {
     iid->transform = get_world_transform();
 }
 
-void VisualInstance::on_process(float delta) {
-    
-}
-
 void VisualInstance::on_destroy() {
     renderer::Renderer::get_singleton().destroy_model_instance(iid);
 }

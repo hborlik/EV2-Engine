@@ -36,7 +36,12 @@ public:
         
     }
 
-    void reset(const std::vector<const pcg::Pattern*>& patterns) {
+    /**
+     * @brief reset the domains available for each node in grid
+     * 
+     * @param patterns 
+     */
+    void reset_domains(const std::vector<const pcg::Pattern*>& patterns) {
         for (int y = 0; y < height; ++y) {
             for(int x = 0; x < width; ++x) {
                 DNode* n = at(x, y);

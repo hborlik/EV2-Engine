@@ -61,12 +61,6 @@ public:
      */
     virtual void on_process(float delta) {}
 
-    /**
-     * @brief called before node is removed from the scene
-     * 
-     */
-    virtual void on_destroy() {}
-
     virtual void on_child_added(Ref<Node> child, int index) {}
 
     virtual void on_child_removed(Ref<Node> child) {}

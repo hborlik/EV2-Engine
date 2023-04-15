@@ -466,7 +466,7 @@ void wfc_solver_grid0() {
 
     std::vector<const Pattern*> patterns{&PA, &PB};
 
-    ngrid.reset(patterns);
+    ngrid.reset_domains(patterns);
 
     std::cout << to_string(ngrid) << std::endl;
 

@@ -138,7 +138,10 @@
 			"core": "cpp",
 			"geometry": "cpp",
 			"*.txx": "cpp",
-			"version": "cpp"
+			"version": "cpp",
+			"__hash_table": "cpp",
+			"__tree": "cpp",
+			"__nullptr": "cpp"
 		},
 		"cmake.buildDirectory": "${workspaceRoot}/build",
 		"glsllint.glslangValidatorPath": "../glslang-master-windows-x64-Release/bin/glslangValidator.exe"

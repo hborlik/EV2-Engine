@@ -23,6 +23,9 @@ public:
     void on_init() override;
 
 private:
+    float m_grid_spacing = 1.f;
+
+private:
     struct Data;
     std::shared_ptr<Data> m_data{};
 };

@@ -137,6 +137,7 @@ void SceneEditor::show_node_editor_widget(Node* node) {
     ImGui::Text("Node type %s", util::name_demangle(typeid(*node).name()).c_str());
     std::string uuid_text = "UUID: " + node->uuid;
     ImGui::Text("%s", uuid_text.c_str());
+    // ImGui::
     ImGui::Separator();
     ImGui::Text("Transform");
     show_transform_editor(node);
