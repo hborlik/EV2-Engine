@@ -61,7 +61,7 @@ void ProceduralGridEditor::show_editor(Node* node) {
     ProceduralGrid* n = dynamic_cast<ProceduralGrid*>(node);
     if (n) {
         if (ImGui::Button("Generate")) {
-            n->generate(10);
+            n->generate(30);
         }
     }
 }

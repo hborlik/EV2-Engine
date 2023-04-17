@@ -8,6 +8,13 @@
 Two week goal (April 17)
 1. Visuals for wfc
 2. n^2 sphere bounding intersections
+   
+Goal April 24
+1. Placing WFC Nodes, unsolved nodes represented by a cube
+2. Visuals with 2 or 3 models
+
+May 1 
+1. Abstract
 
 3. Break input image into tiles
 4. Interpret tiles as values that can appear in a given neighborhood 
