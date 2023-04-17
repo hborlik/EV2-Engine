@@ -24,9 +24,6 @@ void Node::remove_child(Ref<Node> node) {
         throw engine_exception{"Node: " + name + " does not have child " + node->name};
     }
 
-    if (scene_tree)
-        scene_tree->node_removed(node.get());
-
     on_child_removed(node);
 }
 
@@ -38,11 +35,19 @@ void Node::destroy() {
         c->_remove_from_parent(this); // prevent child from calling remove_child and invalidating children list
         c->destroy();
     }
+    children = {};
 
     if (parent)
         parent->remove_child(this->get_ref().ref_cast<Node>());
 
+    if (scene_tree)
+        _propagate_exit_tree();
+
+    parent = nullptr;
+    scene_tree = nullptr;
+    
     on_destroy();
+
     m_is_destroyed = true;
 }
 
@@ -120,9 +125,6 @@ void Node::_add_as_child(Node* p_node) {
 void Node::_remove_from_parent(Node* p_node) {
     assert(p_node != this);
     assert(parent == p_node);
-
-    if (scene_tree)
-        _propagate_exit_tree();
     
     parent = nullptr;
 }

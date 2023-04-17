@@ -82,7 +82,7 @@ public:
     void add_child(Ref<Node> node);
 
     /**
-     * @brief simply removes a child from this nodes children list. This does not destroy the child node
+     * @brief simply removes a child from this nodes children list. This does not destroy the child node.
      * 
      * @param node 
      */
@@ -95,6 +95,7 @@ public:
      * @return Ref<Node> 
      */
     Ref<Node> get_child(int index) {
+        assert(index >= 0);
         if (index > children.size())
             return {};
         int i = 0;
