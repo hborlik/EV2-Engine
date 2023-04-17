@@ -31,6 +31,8 @@ void Node::remove_child(Ref<Node> node) {
 }
 
 void Node::destroy() {
+    if (m_is_destroyed)
+        return;
     // cleanup children
     for (auto& c : children) {
         c->_remove_from_parent(this); // prevent child from calling remove_child and invalidating children list
@@ -39,6 +41,9 @@ void Node::destroy() {
 
     if (parent)
         parent->remove_child(this->get_ref().ref_cast<Node>());
+
+    on_destroy();
+    m_is_destroyed = true;
 }
 
 void Node::_propagate_update(float dt) {
@@ -50,7 +55,7 @@ void Node::_propagate_update(float dt) {
 }
 
 void Node::_propagate_ready() {
-    is_ready = true;
+    m_is_ready = true;
     on_ready();
 
     for (auto& c : children) {

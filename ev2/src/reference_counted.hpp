@@ -24,14 +24,11 @@ public:
     void decrement() {
         count--;
         if (count == 0) {
-            on_destroy();
             delete this; // TODO offload deletion to a cleanup thread
         }
     }
 
     void increment() noexcept {count++;}
-
-    virtual void on_destroy() = 0;
 };
 
 template<typename T>
@@ -188,11 +185,6 @@ public:
     ReferenceCounted<T> operator=(const ReferenceCounted<T>& o) = delete;
     ReferenceCounted<T> operator=(ReferenceCounted<T>&& o) = delete;
 
-    /**
-     * @brief called to notify object that its reference count has fallen to 0
-     * 
-     */
-    virtual void on_destroy() {}
 
     Ref<T> get_ref() noexcept {return Ref<T>{this};}
 

@@ -55,6 +55,12 @@ public:
     virtual void on_ready() {}
 
     /**
+     * @brief called when the node has been flagged for destruction, and has been removed from the scene
+     * 
+     */
+    virtual void on_destroy() {};
+
+    /**
      * @brief per frame update function
      * 
      * @param delta 
@@ -74,6 +80,12 @@ public:
     virtual void pre_render() {};
 
     void add_child(Ref<Node> node);
+
+    /**
+     * @brief simply removes a child from this nodes children list. This does not destroy the child node
+     * 
+     * @param node 
+     */
     void remove_child(Ref<Node> node);
 
     /**
@@ -144,6 +156,7 @@ public:
     inline void set_scale(glm::vec3 s) noexcept {transform.set_scale(s);_propagate_transform_changed(this);}
 
     bool is_inside_tree() const noexcept {return scene_tree;}
+    bool is_destroyed() const noexcept {return m_is_destroyed;}
 
 public:
     std::string name = "Node";
@@ -161,7 +174,8 @@ private:
     void _add_as_child(Node* p_node);
     void _remove_from_parent(Node* p_node);
 
-    bool is_ready = false;
+    bool m_is_ready = false;
+    bool m_is_destroyed = false;
     Transform transform{};
     std::list<Ref<Node>> children;
     Node* parent = nullptr;

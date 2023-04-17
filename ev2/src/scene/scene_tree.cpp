@@ -22,7 +22,7 @@ void SceneTree::node_renamed(Node *p_node) {
 }
 
 void SceneTree::update(float dt) {
-    if (!current_scene->is_ready) {
+    if (!current_scene->m_is_ready) {
         current_scene->_propagate_ready();
     }
     current_scene->_propagate_update(dt);

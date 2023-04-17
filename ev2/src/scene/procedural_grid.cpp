@@ -23,7 +23,7 @@ void ProceduralGrid::generate(int n) {
 
     auto l = get_children();
     for (auto c : l)
-        remove_child(c);
+        c->destroy();
 
     m_data = std::make_shared<Data>(n, n);
 
