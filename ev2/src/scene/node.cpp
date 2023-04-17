@@ -30,7 +30,7 @@ void Node::remove_child(Ref<Node> node) {
 void Node::destroy() {
     if (m_is_destroyed)
         return;
-    // cleanup children
+    // fast remove and destroy all children
     for (auto& c : children) {
         c->_remove_from_parent(this); // prevent child from calling remove_child and invalidating children list
         c->destroy();

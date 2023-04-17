@@ -19,7 +19,6 @@
 #include <window.hpp>
 #include <renderer/mesh.hpp>
 #include <resource.hpp>
-#include <Sphere.h>
 #include <physics.hpp>
 #include <scene/visual_nodes.hpp>
 #include <scene/procedural_grid.hpp>

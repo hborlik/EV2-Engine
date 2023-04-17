@@ -54,7 +54,6 @@ void Player::on_process(float dt) {
     auto si = ev2::Physics::get_singleton().raycast_scene(cast, 200.0f);
     if (si) {        
         ev2::Ref<TreeNode> tree = si->hit.ref_cast<ev2::Node>()->get_child(0).ref_cast<TreeNode>();
-        ev2::Ref<Fruit> fruit = si->hit.ref_cast<Fruit>();
         if (tree)
         {
             if (tree->breedable && ev2::input::GetMouseButton(ev2::input::MouseButton::Left))
@@ -68,9 +67,6 @@ void Player::on_process(float dt) {
                     tree->set_material_override(game->highlight_material);
                 }               
             }
-        } else if (fruit) 
-        {
-            fruit->set_material_override(game->highlight_material);
         } else {
             if (ev2::input::GetKeyDown(ev2::input::Key::KeyL))
                 game->spawn_random_tree(si->point, 0, 9, 0.0f);

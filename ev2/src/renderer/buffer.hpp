@@ -19,7 +19,7 @@ namespace ev2::renderer {
 class Buffer {
 public:
 
-    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, target{target}, usage{usage}, gl_reference{} {
+    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, gl_reference{}, target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference);
     }
 

@@ -158,11 +158,10 @@ struct P_3 : public MonopodialProduction {
 
 }
 
-TreeNode::TreeNode(GameState* game, const std::string& name, bool has_leafs, int u_id, ev2::Ref<ev2::renderer::Material> fruit_material, ev2::Ref<ev2::renderer::Material> leaf_material) : 
+TreeNode::TreeNode(GameState* game, const std::string& name, bool has_leafs, int u_id, ev2::Ref<ev2::renderer::Material> leaf_material) : 
     ev2::VisualInstance{name}, 
     game{game}, 
     has_leafs{has_leafs}, 
-    fruit_material{fruit_material}, 
     leaf_material{leaf_material} {
 
     buffer_layout.add_attribute(ev2::renderer::VertexAttributeLabel::Vertex)
@@ -193,21 +192,6 @@ void TreeNode::on_init() {
             leaf_material->sheen = randomFloatRange(0.0001, 0.8);;
             leaf_material->sheenTint = 0.5f;
             leaf_material->diffuse_tex = ResourceManager::get_singleton().get_image("coffee_leaf1.png")->texture;
-        }
-
-        if (!fruit_material) {
-            fruit_material = ev2::renderer::Renderer::get_singleton().create_material();
-            fruit_material->diffuse = glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
-            fruit_material->emissive = randomFloatRange(0.0001, 1.) * glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
-            fruit_material->metallic = randomFloatRange(0.0001, 0.3);
-            fruit_material->subsurface = randomFloatRange(0.5, 1);
-            fruit_material->specular = randomFloatRange(0.0001, 0.2);;
-            fruit_material->roughness = randomFloatRange(0.0001, 1);;
-            fruit_material->specularTint = 0.f;
-            fruit_material->clearcoat = randomFloatRange(0.0001, 1.0);;
-            fruit_material->clearcoatGloss = 0.63;
-            fruit_material->sheen = randomFloatRange(0.0001, 0.8);;
-            fruit_material->sheenTint = 0.5f;
         }
 
         leafs = create_child_node<ev2::InstancedGeometry>("leafs");
@@ -301,36 +285,6 @@ void TreeNode::generate(int iterations) {
             }
         }
 
-        if ((growth_current >= growth_max) && !fruits_spawned) {
-            fruit_params.n1 = randomFloatRange(.2f, .5f);
-            fruit_params.n2 =  randomFloatRange(.9f, 2.f);
-            fruit_params.n3 =  randomFloatRange(.9f, 2.f);
-            fruit_params.m =   (int)randomFloatRange(1, 7.f);
-            fruit_params.a =   randomFloatRange(.99f, 1.05f);
-            fruit_params.b =   randomFloatRange(.99f, 1.05f);
-
-            fruit_params.q1 =  randomFloatRange(.2f, .5f);
-            fruit_params.q2 =  randomFloatRange(.9f, 2.f);
-            fruit_params.q3 =  randomFloatRange(.9f, 2.f);
-            fruit_params.k =   (int)randomFloatRange(1, 3.f);
-            fruit_params.c =   randomFloatRange(.99f, 1.05f);
-
-            fruits = create_child_node<Fruit>("Fruit", fruit_params, 0.05f);
-            fruits->set_material_override(fruit_material);
-            fruits->generate(1.0f);
-
-            #if 0
-            for (const auto& ind : tree_skeleton.endpoints) {
-                if (randomFloatRange(0.f, 1.f) <= fruit_spawn_rate)
-                {
-                    glm::vec3 pos = tree_skeleton.joints[ind].position + glm::vec3{0, -0.5, 0};
-                    spawn_fruit(pos);
-                }
-            }
-            #endif // 0
-            fruits_spawned = true;
-        }
-
         ptree::DefaultColorizer dc{c0, c1, tree.max_joint_depth};
 
         std::vector<ptree::Vertex> vertices;
@@ -351,88 +305,6 @@ void TreeNode::generate(int iterations) {
         tree_geometry->primitives.clear();
         tree_geometry->primitives.push_back(ev2::renderer::Primitive{0, indices.size(), -1});
     }
-}
-
-void TreeNode::spawn_fruit(const glm::vec3& position) {
-    // ev2::Ref<Fruit> fruit = create_node<Fruit>("Fruit", params, 0.05f);
-    // fruit->params = params;
-    // fruit->generate(1.0f);
-
-    glm::vec3 wpos = get_world_transform() * glm::vec4{position, 1.0f};
-
-    // ev2::Ref<ev2::RigidBody> fruit_hit_sphere = get_scene()->create_node<ev2::RigidBody>("fruit");
-    // fruit_hit_sphere->add_shape(ev2::make_referenced<ev2::SphereShape>(.5f), glm::vec3{0, 0, 0});
-    // auto light = create_child_node<ev2::PointLightNode>("point_light");
-    // light->set_color(fruit_material->get_material()->diffuse * 0.5f);
-    // fruit_hit_sphere->add_child(light);
-
-    // fruit_hit_sphere->transform.set_position(wpos);
-    // fruit_hit_sphere->add_child(fruit);
-
-    fruits->add_fruit(position);
-    fruits->set_material_override(fruit_material);
-
-    // fruit_hit_sphere->get_body()->setType(reactphysics3d::BodyType::DYNAMIC);
-
-    // 
-}
-
-Fruit::Fruit(const std::string& name, const SuperShapeParams& params, float growth_dt) : ev2::InstancedGeometry{name}, supershape{radius_mul, 50, 50, params}, growth_dt{growth_dt} {
-    
-}
-
-Fruit::Fruit(const std::string& name) : ev2::InstancedGeometry{name}, supershape{radius_mul, 50, 50} {
-    
-}
-
-void Fruit::on_init() {
-
-    const std::vector<uint32_t>& indices = supershape.getIndicesv();
-
-    std::vector<ev2::renderer::Primitive> ev_meshs;
-    ev_meshs.push_back(ev2::renderer::Primitive{0, indices.size(), -1});
-
-    geometry = std::make_shared<ev2::renderer::Drawable>(
-        ev2::renderer::VertexBuffer::vbInitSphereArrayVertexData(supershape.getInterleavedVerticesv(), indices),
-        std::move(ev_meshs),
-        std::vector<Ref<ev2::renderer::Material>>{},
-        AABB{},
-        Sphere{glm::vec3{0.f}, 0.05f},
-        renderer::FrustumCull::Sphere,
-        ev2::gl::CullMode::BACK,
-        ev2::gl::FrontFacing::CCW);
-}
-
-void Fruit::on_process(float dt) {
-    if (growth < 1.0f) {
-        growth += dt * growth_dt;
-
-        instance_transforms.clear();
-        for (auto& f: fruit_transforms) {
-            f.set_scale(glm::vec3{growth});
-            instance_transforms.push_back(f.get_transform());
-        }
-    }
-}
-
-void Fruit::generate(float growth) {
-
-    SuperShapeParams updated_params = params;
-    updated_params.n1 = params.n1 * growth * growth;
-    updated_params.n2 = params.n2 * growth * growth * growth;
-    updated_params.n3 = params.n3 * growth;
-    updated_params.q2 = params.q2 * growth * growth;
-
-    
-    supershape = SuperSphere(radius_mul, 20, 20, updated_params);
-    const std::vector<uint32_t>& indices = supershape.getIndicesv();
-    const std::vector<float> vbuffer = supershape.getInterleavedVerticesv();
-
-    geometry->vertex_buffer.get_buffer(0)->copy_data(vbuffer);
-    geometry->vertex_buffer.get_buffer(geometry->vertex_buffer.get_indexed())->copy_data(indices);
-
-    geometry->primitives.clear();
-    geometry->primitives.push_back(ev2::renderer::Primitive{0, indices.size(), -1});
 }
 
 

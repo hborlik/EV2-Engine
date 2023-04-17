@@ -14,7 +14,6 @@
 #include <physics.hpp>
 #include <player.h>
 #include <tree.h>
-#include <Sphere.h>
 #include <miniaudio.h>
 
 using namespace ev2;
@@ -58,7 +57,7 @@ public:
 
     void spawn_tree(const glm::vec3& position, float rotation, const std::map<std::string, float>& params, 
                         int iterations, glm::vec3 color_0, glm::vec3 color_1, float starting_growth, float adjusted_leaf_scale, 
-                        ev2::Ref<ev2::renderer::Material> new_leaf_material, ev2::Ref<ev2::renderer::Material> new_fruit_material, 
+                        ev2::Ref<ev2::renderer::Material> new_leaf_material, 
                         float fruit_spawn_rate, bool breedable);
     void spawn_mountain_tree(const glm::vec3& position, float range_extent, int iterations);
     void spawn_random_tree(const glm::vec3& position, float range_extent, int iterations, float starting_growth);

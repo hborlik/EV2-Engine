@@ -9,13 +9,9 @@
 
 #include <scene/visual_nodes.hpp>
 #include <renderer/mesh.hpp>
-
-#include <Sphere.h>
-
 #include <procedural_tree.hpp>
-
 #include <random_generators.h>
-#include <Sphere.h>
+
 struct PlantInfo {
     bool selected = false;
     bool parent = false;
@@ -25,17 +21,15 @@ struct PlantInfo {
     glm::vec3 position;
     glm::vec3 color;
     glm::quat rot;
-    SuperSphere geometry;
     PlantInfo()
     {
         ID = -1;
     }
-    PlantInfo(int IDin, glm::vec3 pos, glm::vec3 col, SuperSphere geo) 
+    PlantInfo(int IDin, glm::vec3 pos, glm::vec3 col) 
     {
         ID = IDin;
         position = pos;
         color = col; 
-        geometry = geo; 
         rot = glm::quatLookAt(glm::vec3(randomFloatTo(2) - 1, 0, randomFloatTo(2) - 1), glm::vec3{0, 1, 0});
     }
 };
@@ -46,35 +40,9 @@ struct PNVertex {
     glm::vec3 color;
 };
 
-class Fruit : public ev2::InstancedGeometry {
-public:
-    Fruit(const std::string& name, const SuperShapeParams& params, float growth_dt);
-    Fruit(const std::string& name);
-
-    void on_init() override;
-    void on_process(float dt) override;
-
-    void generate(float growth);
-
-    void add_fruit(const glm::vec3& pos) {
-        ev2::Transform ft{};
-        ft.set_position(pos);
-        fruit_transforms.push_back(ft);
-    }
-
-    std::vector<ev2::Transform> fruit_transforms;
-
-    const float radius_mul = 0.25f;
-    float growth = 0.01f;
-    float growth_dt = 0.01f;
-    SuperSphere supershape{};
-    SuperShapeParams params{};
-};
-
 class TreeNode : public ev2::VisualInstance {
 public:
     explicit TreeNode(class GameState* game, const std::string& name, bool has_leafs = false, int u_id = -1,
-                     ev2::Ref<ev2::renderer::Material> fruit_material = nullptr,
                      ev2::Ref<ev2::renderer::Material> leaf_material = nullptr);
 
     void on_init() override;
@@ -82,9 +50,7 @@ public:
 
     void generate(int iterations);
     void setParams(const std::map<std::string, float>& paramsNew, int iterations, float growth);
-    void spawn_fruit(const glm::vec3& position);
     std::map<std::string, float> getParams() {return params;}
-    ev2::Ref<ev2::renderer::Material> fruit_material;
     ev2::Ref<ev2::renderer::Material> leaf_material;
     
     bool breedable = true;
@@ -107,10 +73,8 @@ public:
     std::shared_ptr<ev2::renderer::Drawable> tree_geometry;
 
     PlantInfo plantInfo{};
-    SuperShapeParams fruit_params{};
     
     ev2::Ref<ev2::InstancedGeometry> leafs;
-    ev2::Ref<Fruit> fruits;
     
     class GameState* const game;
 };
