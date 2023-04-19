@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <unordered_map>
 
 #include <pcg/wfc.hpp>
 #include <renderer/renderer.hpp>
@@ -17,12 +18,21 @@ class SCWFCGraphNode : public VisualInstance, pcg::DGraphNode {
 public:
     explicit SCWFCGraphNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, pcg::DGraphNode{name, uuid_hash}, m_scwfc{scwfc} {}
 
-    void on_transform_changed(Ref<ev2::Node> origin) override {
+    void on_init() override {
+        VisualInstance::on_init();
 
+        m_scwfc->
+    }
+
+    void on_transform_changed(Ref<ev2::Node> origin) override {
+        VisualInstance::on_transform_changed(origin);
+        if (m_bounding_sphere)
+            m_bounding_sphere->center = get_world_position();
     }
 
 private:
     SCWFC* m_scwfc = nullptr;
+    Sphere* m_bounding_sphere = nullptr;
 };
 
 std::shared_ptr<renderer::Drawable> SCWFCObjectDatabase::get_model_for_id(int id) {
@@ -54,11 +64,17 @@ std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& pat
 
 //////
 
+struct SphereOwner {
+
+};
+
 struct SCWFC::Data {
     Data() : graph{}, solver{&graph} {}
 
     pcg::SparseGraph<pcg::DGraphNode> graph;
     pcg::WFCSolver solver;
+
+    std::unordered_map<Sphere, SphereOwner> sc_particles;
 };
 
 void SCWFC::wfc_solve(int steps) {
