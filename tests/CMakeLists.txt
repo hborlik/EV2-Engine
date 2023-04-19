@@ -60,3 +60,15 @@ set_target_properties(geometry_test PROPERTIES
     CXX_EXTENSIONS NO
 )
 target_link_libraries(geometry_test PRIVATE ev2)
+
+
+add_executable(serializers_tests "src/serializers_tests.cpp" ${include})
+target_include_directories(serializers_tests PRIVATE
+    "include"
+)
+set_target_properties(serializers_tests PROPERTIES 
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+    CXX_EXTENSIONS NO
+)
+target_link_libraries(serializers_tests PRIVATE ev2)

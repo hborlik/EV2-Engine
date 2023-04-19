@@ -87,3 +87,6 @@ add_subdirectory(tinyobjloader)
 
 add_library(tinygltfloader INTERFACE)
 target_include_directories(tinygltfloader INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinygltfloader)
+
+add_library(nlohmann INTERFACE)
+target_include_directories(nlohmann INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/nlohmann)

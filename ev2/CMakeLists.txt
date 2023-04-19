@@ -21,7 +21,7 @@ PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(ev2 PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d)
+target_link_libraries(ev2 PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d nlohmann)
 
 target_include_directories(ev2 PUBLIC ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(ev2 PUBLIC ${OPENGL_LIBRARY})

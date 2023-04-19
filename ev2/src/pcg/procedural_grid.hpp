@@ -16,7 +16,7 @@ namespace ev2 {
 
 class ProceduralGrid : public Node {
 public:
-    ProceduralGrid(std::string name) : Node{std::move(name)} {}
+    explicit ProceduralGrid(std::string name) : Node{std::move(name)} {}
 
     void generate(int n);
 

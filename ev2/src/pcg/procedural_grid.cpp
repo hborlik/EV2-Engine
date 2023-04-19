@@ -1,4 +1,4 @@
-#include <scene/procedural_grid.hpp>
+#include <pcg/procedural_grid.hpp>
 
 #include <filesystem>
 
@@ -46,7 +46,7 @@ void ProceduralGrid::generate(int n) {
         for (int j = 0; j < n; ++j) {
             pcg::DNode* d_node = m_data->grid.at(i, j);
             if (d_node->domain.size() != 0) {
-                auto nnode = create_child_node<VisualInstance>("pcg visual []" + std::to_string(i) + ", " + std::to_string(j) + "]");
+                auto nnode = create_child_node<VisualInstance>("pcg visual [" + std::to_string(i) + ", " + std::to_string(j) + "]");
                 nnode->set_model(cube);
                 nnode->set_position(glm::vec3{i * m_grid_spacing, 0, j * m_grid_spacing});
             }
