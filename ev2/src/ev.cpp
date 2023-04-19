@@ -28,7 +28,8 @@
 namespace ev2 {
 
 Object::Object() : 
-    uuid{util::get_unique_id()} {
+    uuid{util::get_unique_id()},
+    uuid_hash{std::hash<std::string>{}(uuid)} {
 
 }
 

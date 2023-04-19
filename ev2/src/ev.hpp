@@ -27,6 +27,7 @@ public:
     virtual ~Object() = default;
 
     const std::string uuid;
+    const std::size_t uuid_hash;
 };
 
 class engine_exception : public std::exception {

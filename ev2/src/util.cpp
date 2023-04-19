@@ -8,9 +8,9 @@
 
 namespace ev2::util {
 
-std::string name_demangle(const std::string& mangled_name) noexcept {
+std::string name_demangle(std::string_view mangled_name) noexcept {
     int status;
-    char* demangled_name = abi::__cxa_demangle(mangled_name.c_str(), 0, 0, &status);
+    char* demangled_name = abi::__cxa_demangle(mangled_name.data(), 0, 0, &status);
     std::string name{demangled_name};
     if (demangled_name)
         std::free(demangled_name);

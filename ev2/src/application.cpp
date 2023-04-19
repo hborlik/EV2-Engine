@@ -89,7 +89,7 @@ void Application::on_window_size_change(int32_t width, int32_t height) {
     window_height = height;
 }
 
-void Application::on_drop_file(const std::string& path) {
+void Application::on_drop_file(std::string_view path) {
 
 }
 

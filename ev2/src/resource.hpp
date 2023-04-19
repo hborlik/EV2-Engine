@@ -110,7 +110,6 @@ public:
     // Ref<GLTFScene> loadGLTF(const std::filesystem::path& filename, bool normalize = false);
 
     Ref<renderer::Material> get_material(const std::string& name);
-    int32_t get_material_id(const std::string& name);
 
     const auto& get_materials() const {return materials;}
 

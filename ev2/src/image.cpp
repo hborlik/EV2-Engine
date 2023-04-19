@@ -53,7 +53,7 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
 
     if (data) {
         if (ncomps > 4) {
-            std::cerr << "Failed to load texture " + path << "invalid ncomps " << ncomps << std::endl;
+            std::cerr << "Failed to load texture " << path << "invalid ncomps " << ncomps << std::endl;
             stbi_image_free(data);
             throw std::runtime_error{"Failed to load texture " + path};
         }

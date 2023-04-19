@@ -31,7 +31,7 @@ public:
     virtual void cursor_pos(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos);
     virtual void on_mouse_button(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos, input::MouseButton::Enum button, bool down);
     virtual void on_window_size_change(int32_t width, int32_t height);
-    virtual void on_drop_file(const std::string& path);
+    virtual void on_drop_file(std::string_view path);
 
     virtual void on_render_ui();
 

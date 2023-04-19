@@ -371,7 +371,7 @@ public:
         return glfwGetTime() - lastTime;
     }
 
-    void setWindowTitle(const std::string& title) {
+    void setWindowTitle(std::string_view title) {
         glfwSetWindowTitle(window_ptr, title.data());
     }
 
@@ -511,7 +511,7 @@ bool frame() {
     return static_context->frame();
 }
 
-void setWindowTitle(const std::string& title) {
+void setWindowTitle(std::string_view title) {
     static_context->setWindowTitle(title);
 }
 

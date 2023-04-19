@@ -25,7 +25,7 @@ public:
     }
 
     template<typename T>
-    static void log_file(const std::string& message);
+    static void log_file(std::string_view message);
 
     static void init(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path = "shaders") {
         s_instance = std::make_unique<Engine>(asset_path, log_file_dir, shader_path);
@@ -50,8 +50,8 @@ private:
 };
 
 template<typename T>
-void Engine::log_file(const std::string& message) {
-    std::string mstr = std::string("[") + util::type_name<T>() + "]:" + message + "\n";
+void Engine::log_file(std::string_view message) {
+    std::string mstr = std::string("[") + util::type_name<T>() + "]:" + message.data() + "\n";
     s_instance->log_file_stream << mstr;
 }
 
