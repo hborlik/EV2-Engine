@@ -94,7 +94,7 @@ private:
 
 std::unique_ptr<Image> load_image(const std::string& path);
 
-std::unique_ptr<Image> load_image_16(std::string_view path);
+std::unique_ptr<Image> load_image_16(const std::string& path);
 
 }
 

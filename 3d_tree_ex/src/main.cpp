@@ -21,7 +21,7 @@
 #include <resource.hpp>
 #include <physics.hpp>
 #include <scene/visual_nodes.hpp>
-#include <scene/procedural_grid.hpp>
+#include <pcg/procedural_grid.hpp>
 #include <debug.h>
 #include <game.h>
 

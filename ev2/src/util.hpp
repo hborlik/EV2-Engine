@@ -13,7 +13,7 @@
 
 namespace ev2::util {
 
-std::string name_demangle(const std::string& mangled_name) noexcept;
+std::string name_demangle(std::string_view mangled_name) noexcept;
 
 /**
  * @brief Attempt to demangle a compiler generated name
