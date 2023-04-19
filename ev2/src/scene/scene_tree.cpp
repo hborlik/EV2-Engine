@@ -23,20 +23,20 @@ void SceneTree::node_renamed(Node *p_node) {
 
 void SceneTree::update(float dt) {
     if (!current_scene->m_is_ready) {
-        current_scene->_propagate_ready();
+        current_scene->node_propagate_ready();
     }
-    current_scene->_propagate_update(dt);
+    current_scene->node_propagate_update(dt);
 }
 
 void SceneTree::update_pre_render() {
-    current_scene->_update_pre_render();
+    current_scene->node_propagate_pre_render();
 }
 
 void SceneTree::change_scene(Ref<Node> p_scene) {
     current_scene = p_scene;
     if (current_scene) {
         current_scene->scene_tree = this;
-        current_scene->_propagate_enter_tree();
+        current_scene->node_propagate_enter_tree();
     }
 }
 

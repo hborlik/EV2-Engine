@@ -152,9 +152,9 @@ public:
     inline glm::quat get_rotation() const noexcept {return transform.get_rotation();}
     inline glm::vec3 get_scale() const noexcept {return transform.get_scale();}
 
-    inline void set_position(glm::vec3 pos) noexcept {transform.set_position(pos);_propagate_transform_changed(this);}
-    inline void set_rotation(glm::quat rot) noexcept {transform.set_rotation(rot);_propagate_transform_changed(this);}
-    inline void set_scale(glm::vec3 s) noexcept {transform.set_scale(s);_propagate_transform_changed(this);}
+    inline void set_position(glm::vec3 pos) noexcept {transform.set_position(pos);node_propagate_transform_changed(this);}
+    inline void set_rotation(glm::quat rot) noexcept {transform.set_rotation(rot);node_propagate_transform_changed(this);}
+    inline void set_scale(glm::vec3 s) noexcept {transform.set_scale(s);node_propagate_transform_changed(this);}
 
     bool is_inside_tree() const noexcept {return scene_tree;}
     bool is_destroyed() const noexcept {return m_is_destroyed;}
@@ -165,15 +165,15 @@ public:
 private:
     friend class SceneTree;
 
-    void _propagate_update(float dt);
-    void _propagate_ready();
-    void _propagate_enter_tree();
-    void _propagate_exit_tree();
-    void _propagate_transform_changed(Node* p_origin);
-    void _update_pre_render();
+    void node_propagate_update(float dt);
+    void node_propagate_ready();
+    void node_propagate_enter_tree();
+    void node_propagate_exit_tree();
+    void node_propagate_transform_changed(Node* p_origin);
+    void node_propagate_pre_render();
 
-    void _add_as_child(Node* p_node);
-    void _remove_from_parent(Node* p_node);
+    void add_as_child(Node* p_node);
+    void remove_from_parent(Node* p_node);
 
     bool m_is_ready = false;
     bool m_is_destroyed = false;

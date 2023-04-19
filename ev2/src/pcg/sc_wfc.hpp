@@ -68,12 +68,6 @@ public:
     void on_child_removed(Ref<Node> child) override;
 
 private:
-    friend class SCWFCGraphNode;
-
-    Sphere* create_sphere();
-    void destroy_sphere();
-
-private:
     struct Data;
     std::shared_ptr<Data> m_data{};
 };

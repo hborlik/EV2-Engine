@@ -64,17 +64,11 @@ std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& pat
 
 //////
 
-struct SphereOwner {
-
-};
-
 struct SCWFC::Data {
     Data() : graph{}, solver{&graph} {}
 
     pcg::SparseGraph<pcg::DGraphNode> graph;
     pcg::WFCSolver solver;
-
-    std::unordered_map<Sphere, SphereOwner> sc_particles;
 };
 
 void SCWFC::wfc_solve(int steps) {
