@@ -37,7 +37,7 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 1, data);
 
-        std::cout << "Loaded texture " << path << std::endl;
+        // std::cout << "Loaded texture " << path << std::endl;
         // stbi_image_free(data);
         return image;
     } else {
@@ -62,7 +62,7 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 2, (uint8_t*)data);
 
-        std::cout << "Loaded texture " << path << std::endl;
+        // std::cout << "Loaded texture " << path << std::endl;
         // stbi_image_free(data);
         return image;
     } else {

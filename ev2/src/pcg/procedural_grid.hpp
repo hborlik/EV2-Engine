@@ -14,6 +14,8 @@
 
 namespace ev2 {
 
+class SCWFCObjectDatabase;
+
 class ProceduralGrid : public Node {
 public:
     explicit ProceduralGrid(std::string name) : Node{std::move(name)} {}
@@ -28,6 +30,7 @@ private:
 private:
     struct Data;
     std::shared_ptr<Data> m_data{};
+    std::shared_ptr<SCWFCObjectDatabase> obj_db;
 };
 
 class ProceduralGridEditor : public NodeEditorT<ProceduralGrid> {

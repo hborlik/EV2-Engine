@@ -53,14 +53,14 @@ class Value
 {
 public:
     Value() = default;
-    explicit Value(int cell_id): cell_id{ cell_id } {}
+    explicit Value(int cell_id): val{ cell_id } {}
 
-    int cell_id = 0; // cell tile identifier
+    int val = 0; // cell tile identifier
 
 private:
 
     friend bool operator==(const Value& a, const Value& b) noexcept {
-        return a.cell_id == b.cell_id;
+        return a.val == b.val;
     }
 };
 
@@ -93,7 +93,7 @@ struct hash<pcg::Value>
     size_t operator()(const pcg::Value& k) const {
         using std::hash;
 
-        return hash<int>()(k.cell_id);
+        return hash<int>()(k.val);
     }
 };
 
@@ -103,13 +103,13 @@ namespace pcg {
 
 class Pattern;
 
-class Node {
+class GraphNode {
 public:
-    Node(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
+    GraphNode(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
         assert(node_id > 0);
     }
 
-    virtual ~Node() = default;
+    virtual ~GraphNode() = default;
 
     const int               node_id = -1;
     std::string             identifier = "";
@@ -119,9 +119,9 @@ public:
  * @brief Domain Node used in WFC for tracking valid domain on a cell
  * 
  */
-class DNode : public Node {
+class DGraphNode : public GraphNode {
 public:
-    DNode(const std::string& identifier, int node_id) : Node{identifier, node_id} {}
+    DGraphNode(const std::string& identifier, int node_id) : GraphNode{identifier, node_id} {}
 
     float entropy() const;
 
@@ -132,7 +132,7 @@ public:
 };
 
 template<typename T,
-    typename = std::enable_if_t<std::is_base_of_v<Node, T>>>
+    typename = std::enable_if_t<std::is_base_of_v<GraphNode, T>>>
 class Graph {
 public:
     virtual ~Graph() {}
@@ -609,7 +609,7 @@ private:
  * @param residual_graph optional residual graph output
  * @return int max flow
  */
-float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node* sink, DenseGraph<Node>* residual_graph);
+float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph);
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output
@@ -622,7 +622,7 @@ public:
 
     Pattern(const Value& v, std::initializer_list<Value> l, float weight = 1.f) noexcept: required_values{ l }, cell_value{ v }, weight{weight} {}
 
-    bool valid(const std::vector<DNode*>& neighborhood) const;
+    bool valid(const std::vector<DGraphNode*>& neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};
@@ -638,7 +638,7 @@ public:
 class WFCSolver
 {
 public:
-    WFCSolver(Graph<DNode>* graph): graph{ graph } {
+    WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {
         assert(graph != nullptr);
     }
 
@@ -654,20 +654,20 @@ public:
      *
      * @param node
      */
-    DNode* propagate(DNode* node) {
+    DGraphNode* propagate(DGraphNode* node) {
         assert(node != nullptr);
-        std::queue<DNode*> propagation_stack;
+        std::queue<DGraphNode*> propagation_stack;
         propagation_stack.push(node);
-        DNode* min_e = nullptr;
+        DGraphNode* min_e = nullptr;
         float entropy = 0.f;
         bool f = true; // force propagation on the first node
         while (!propagation_stack.empty()) {
-            DNode* n = propagation_stack.front();
+            DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
             if (observe(n) || f) { // only update neighbors if the domain changed
                 f = false;
                 for (auto& neighbor_n : graph->adjacent_nodes(n)) {
-                    DNode* neighbor = static_cast<DNode*>(neighbor_n);
+                    DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
                     // if (neighbor->domain.size() == 1)
                         propagation_stack.push(neighbor);
                 }
@@ -685,7 +685,7 @@ public:
      *
      * @param node
      */
-    bool observe(DNode* node) {
+    bool observe(DGraphNode* node) {
         assert(node != nullptr);
         bool changed = false;
         decltype(node->domain) new_domain{};
@@ -704,7 +704,7 @@ public:
      *
      * @param node
      */
-    void collapse(DNode* node) {
+    void collapse(DGraphNode* node) {
         assert(node != nullptr);
         assert(node->domain.size() >= 1); // TODO need to backtrack here, and not crash the program
         static std::random_device rd;
@@ -723,8 +723,8 @@ public:
         }
     }
 
-    Graph<DNode>* graph = nullptr;
-    DNode* next_node = nullptr;
+    Graph<DGraphNode>* graph = nullptr;
+    DGraphNode* next_node = nullptr;
 };
 
 } // namespace pcg

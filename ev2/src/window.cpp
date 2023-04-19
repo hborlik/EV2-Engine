@@ -14,6 +14,7 @@
 #include <ev.hpp>
 #include <input.hpp>
 #include <application.hpp>
+#include <engine.hpp>
 
 #define EV_GL_MIN_SEVERITY GL_DEBUG_SEVERITY_LOW
 #define EV_GL_ALLOW_NOTIFICATIONS false
@@ -113,7 +114,7 @@ void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
         break;
     }
 
-    std::cout << "[" << std::setprecision(5) << std::fixed << glfwGetTime() << "] OpenGL[" << output_source << ":" << output_severity << ":" << output_type << "] " << output_message << std::endl;
+    ev2::Engine::get_singleton().log( "OpenGL[" + output_source + ":" + output_severity + ":" + output_type + "] " + output_message);
 }
 
 

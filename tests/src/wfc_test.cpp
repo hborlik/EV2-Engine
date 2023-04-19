@@ -11,10 +11,10 @@ using namespace pcg;
 void sparse_test_empty() {
     std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
-    SparseGraph<Node> s{};
+    SparseGraph<GraphNode> s{};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
 
     assert(s.adjacent(n_a.get(), n_b.get()) == 0.f);
 }
@@ -23,23 +23,23 @@ void sparse_test_empty() {
 void dense_test_empty() {
     std::cout << __FUNCTION__ << std::endl;
     // ensure empty graph behaves properly
-    DenseGraph<Node> s{100};
+    DenseGraph<GraphNode> s{100};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
 
     assert(s.adjacent(n_a.get(), n_b.get()) == 0.f);
 }
 
-void adjacent_abc(Graph<Node>* s) {
+void adjacent_abc(Graph<GraphNode>* s) {
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
     s->add_edge(n_a.get(), n_b.get(), 1.1f);
     s->add_edge(n_b.get(), n_c.get(), 1.2f);
@@ -54,28 +54,28 @@ void adjacent_abc(Graph<Node>* s) {
 
 void sparse_test_add() {
     std::cout << __FUNCTION__ << std::endl;
-    SparseGraph<Node> s{};
+    SparseGraph<GraphNode> s{};
 
     adjacent_abc(&s);
 }
 
 void dense_test_add() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> s{4};
+    DenseGraph<GraphNode> s{4};
 
     adjacent_abc(&s);
 }
 
-void directed_adjacent_abc(Graph<Node>* s) {
+void directed_adjacent_abc(Graph<GraphNode>* s) {
     assert(s->is_directed());
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
     s->add_edge(a, b, 1.1f);
     s->add_edge(b, a, 2.2f);
@@ -95,75 +95,75 @@ void directed_adjacent_abc(Graph<Node>* s) {
 
 void sparse_directed_add() {
     std::cout << __FUNCTION__ << std::endl;
-    SparseGraph<Node> s{true};
+    SparseGraph<GraphNode> s{true};
 
     directed_adjacent_abc(&s);
 }
 
 void dense_directed_add() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> d{4, true};
+    DenseGraph<GraphNode> d{4, true};
 
     directed_adjacent_abc(&d);
 }
 
 void dense_bfs_no_soln() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10};
+    DenseGraph<GraphNode> g{10};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(a, b, path) == false);
 }
 
 void dense_bfs_no_soln_directional() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
+    DenseGraph<GraphNode> g{10, true};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
     g.add_edge(b, a, 1.f);
     g.add_edge(a, c, 1.f);
     g.add_edge(b, c, 1.f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(a, b, path) == false);
 }
 
 void dense_bfs_soln_directional0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
+    DenseGraph<GraphNode> g{10, true};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
     g.add_edge(a, b, 1.f);
     g.add_edge(b, c, 1.f);
     g.add_edge(c, a, 1.f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(a, c, path) == true);
     assert(path.size() == 3);
 
-    std::vector<Node *> path_correct {
+    std::vector<GraphNode *> path_correct {
         a, b, c
     };
     assert(path_correct == path);
@@ -171,21 +171,21 @@ void dense_bfs_soln_directional0() {
 
 void dense_bfs_soln_directional1() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
+    DenseGraph<GraphNode> g{10, true};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
-    unique_ptr<Node> n_d = make_unique<Node>("D", 4);
-    unique_ptr<Node> n_e = make_unique<Node>("E", 5);
-    unique_ptr<Node> n_f = make_unique<Node>("F", 6);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 4);
+    unique_ptr<GraphNode> n_e = make_unique<GraphNode>("E", 5);
+    unique_ptr<GraphNode> n_f = make_unique<GraphNode>("F", 6);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
-    Node *d = n_d.get();
-    Node *e = n_e.get();
-    Node *f = n_f.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
+    GraphNode *e = n_e.get();
+    GraphNode *f = n_f.get();
 
     g.add_edge(a, b, 1.f);
     g.add_edge(b, c, 1.f);
@@ -195,11 +195,11 @@ void dense_bfs_soln_directional1() {
     g.add_edge(d, e, 1.f);
     g.add_edge(e, f, 1.f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(a, c, path) == true);
     assert(path.size() == 3);
 
-    std::vector<Node *> path_correct {
+    std::vector<GraphNode *> path_correct {
         a, b, c
     };
     assert(path_correct == path);
@@ -207,25 +207,25 @@ void dense_bfs_soln_directional1() {
 
 void dense_bfs_soln_0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, false};
+    DenseGraph<GraphNode> g{10, false};
 
-    unique_ptr<Node> n_a = make_unique<Node>("A", 1);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 2);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 3);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
 
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
 
     g.add_edge(a, b, 1.f);
     g.add_edge(b, c, 1.f);
     g.add_edge(c, a, 1.f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(a, c, path) == true);
     assert(path.size() == 2);
 
-    std::vector<Node *> path_correct {
+    std::vector<GraphNode *> path_correct {
         a, c
     };
     assert(path_correct == path);
@@ -233,21 +233,21 @@ void dense_bfs_soln_0() {
 
 void dense_flow_soln_directional0() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
+    DenseGraph<GraphNode> g{10, true};
 
-    unique_ptr<Node> n_s = make_unique<Node>("source", 1);
-    unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
-    unique_ptr<Node> n_a = make_unique<Node>("A", 3);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 4);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 5);
-    unique_ptr<Node> n_d = make_unique<Node>("D", 6);
+    unique_ptr<GraphNode> n_s = make_unique<GraphNode>("source", 1);
+    unique_ptr<GraphNode> n_t = make_unique<GraphNode>("sink", 2);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 3);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 4);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 5);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 6);
 
-    Node *s = n_s.get();
-    Node *t = n_t.get();
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
-    Node *d = n_d.get();
+    GraphNode *s = n_s.get();
+    GraphNode *t = n_t.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
 
     g.add_edge(s, a, 1.f);
     g.add_edge(a, b, 1.f);
@@ -255,7 +255,7 @@ void dense_flow_soln_directional0() {
     g.add_edge(c, d, 1.f);
     g.add_edge(d, t, 1.f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(s, t, path) == true);
 
     float max_flow = ford_fulkerson(g, s, t, &g);
@@ -264,22 +264,22 @@ void dense_flow_soln_directional0() {
 
 void dense_flow_soln_directional1() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
-    DenseGraph<Node> r{10, true};
+    DenseGraph<GraphNode> g{10, true};
+    DenseGraph<GraphNode> r{10, true};
 
-    unique_ptr<Node> n_s = make_unique<Node>("source", 1);
-    unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
-    unique_ptr<Node> n_a = make_unique<Node>("A", 3);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 4);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 5);
-    unique_ptr<Node> n_d = make_unique<Node>("D", 6);
+    unique_ptr<GraphNode> n_s = make_unique<GraphNode>("source", 1);
+    unique_ptr<GraphNode> n_t = make_unique<GraphNode>("sink", 2);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 3);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 4);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 5);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 6);
 
-    Node *s = n_s.get();
-    Node *t = n_t.get();
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
-    Node *d = n_d.get();
+    GraphNode *s = n_s.get();
+    GraphNode *t = n_t.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
 
     g.add_edge(s, a, 1.f);
     g.add_edge(s, b, 1.f);
@@ -291,7 +291,7 @@ void dense_flow_soln_directional1() {
     g.add_edge(c, t, 1.1f);
     g.add_edge(d, t, 1.1f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(s, t, path) == true);
 
     std::cout << g << std::endl;
@@ -304,22 +304,22 @@ void dense_flow_soln_directional1() {
 
 void dense_flow_soln_directional2() {
     std::cout << __FUNCTION__ << std::endl;
-    DenseGraph<Node> g{10, true};
-    DenseGraph<Node> r{10, true};
+    DenseGraph<GraphNode> g{10, true};
+    DenseGraph<GraphNode> r{10, true};
 
-    unique_ptr<Node> n_s = make_unique<Node>("source", 1);
-    unique_ptr<Node> n_t = make_unique<Node>("sink", 2);
-    unique_ptr<Node> n_a = make_unique<Node>("A", 3);
-    unique_ptr<Node> n_b = make_unique<Node>("B", 4);
-    unique_ptr<Node> n_c = make_unique<Node>("C", 5);
-    unique_ptr<Node> n_d = make_unique<Node>("D", 6);
+    unique_ptr<GraphNode> n_s = make_unique<GraphNode>("source", 1);
+    unique_ptr<GraphNode> n_t = make_unique<GraphNode>("sink", 2);
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 3);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 4);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 5);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 6);
 
-    Node *s = n_s.get();
-    Node *t = n_t.get();
-    Node *a = n_a.get();
-    Node *b = n_b.get();
-    Node *c = n_c.get();
-    Node *d = n_d.get();
+    GraphNode *s = n_s.get();
+    GraphNode *t = n_t.get();
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
 
     g.add_edge(s, a, 1.f);
     g.add_edge(s, b, 1.f);
@@ -332,7 +332,7 @@ void dense_flow_soln_directional2() {
     g.add_edge(c, t, 1.1f);
     g.add_edge(d, t, 1.1f);
 
-    std::vector<Node *> path;
+    std::vector<GraphNode *> path;
     assert(g.bfs(s, t, path) == true);
 
     std::cout << g << std::endl;
@@ -359,27 +359,27 @@ void test_pattern_validity0() {
     Pattern p2{v2, {}};
     Pattern p3{v3, {}};
 
-    unique_ptr<DNode> n_a = make_unique<DNode>("A", 10);
-    unique_ptr<DNode> n_b = make_unique<DNode>("B", 20);
-    unique_ptr<DNode> n_c = make_unique<DNode>("C", 30);
-    unique_ptr<DNode> n_d = make_unique<DNode>("D", 40);
+    unique_ptr<DGraphNode> n_a = make_unique<DGraphNode>("A", 10);
+    unique_ptr<DGraphNode> n_b = make_unique<DGraphNode>("B", 20);
+    unique_ptr<DGraphNode> n_c = make_unique<DGraphNode>("C", 30);
+    unique_ptr<DGraphNode> n_d = make_unique<DGraphNode>("D", 40);
 
-    DNode *a = n_a.get();
+    DGraphNode *a = n_a.get();
     a->domain.push_back(&p1);
     a->domain.push_back(&p2);
     a->domain.push_back(&p3);
 
-    DNode *b = n_b.get();
+    DGraphNode *b = n_b.get();
     b->domain.push_back(&p1);
     b->domain.push_back(&p2);
     b->domain.push_back(&p3);
 
-    DNode *c = n_c.get();
+    DGraphNode *c = n_c.get();
     c->domain.push_back(&p1);
     c->domain.push_back(&p2);
     c->domain.push_back(&p3);
 
-    std::vector<DNode*> neighborhood{a, b, c};
+    std::vector<DGraphNode*> neighborhood{a, b, c};
 
     assert(p_center.valid(neighborhood));
 }
@@ -402,25 +402,25 @@ void test_pattern_validity1() {
     Pattern p3{v3, {}};
     Pattern p4{v4, {}};
 
-    unique_ptr<DNode> n_a = make_unique<DNode>("A", 10);
-    unique_ptr<DNode> n_b = make_unique<DNode>("B", 20);
-    unique_ptr<DNode> n_c = make_unique<DNode>("C", 30);
-    unique_ptr<DNode> n_d = make_unique<DNode>("D", 40);
+    unique_ptr<DGraphNode> n_a = make_unique<DGraphNode>("A", 10);
+    unique_ptr<DGraphNode> n_b = make_unique<DGraphNode>("B", 20);
+    unique_ptr<DGraphNode> n_c = make_unique<DGraphNode>("C", 30);
+    unique_ptr<DGraphNode> n_d = make_unique<DGraphNode>("D", 40);
 
-    DNode *a = n_a.get();
+    DGraphNode *a = n_a.get();
     a->domain.push_back(&p1);
 
-    DNode *b = n_b.get();
+    DGraphNode *b = n_b.get();
     b->domain.push_back(&p2);
 
-    DNode *c = n_c.get();
+    DGraphNode *c = n_c.get();
     c->domain.push_back(&p3);
 
-    DNode *d = n_d.get();
+    DGraphNode *d = n_d.get();
     d->domain.push_back(&p4);
     d->domain.push_back(&p2);
 
-    std::vector<DNode*> neighborhood{a, b, c, d};
+    std::vector<DGraphNode*> neighborhood{a, b, c, d};
 
     assert(p_center.valid(neighborhood));
 }
@@ -435,22 +435,22 @@ void test_pattern_validity2() {
     Pattern p_center{v0, {v1, v1}};
     Pattern PB{v1, {v0}};
 
-    unique_ptr<DNode> n_a = make_unique<DNode>("A", 10);
-    unique_ptr<DNode> n_b = make_unique<DNode>("B", 20);
-    unique_ptr<DNode> n_c = make_unique<DNode>("C", 30);
+    unique_ptr<DGraphNode> n_a = make_unique<DGraphNode>("A", 10);
+    unique_ptr<DGraphNode> n_b = make_unique<DGraphNode>("B", 20);
+    unique_ptr<DGraphNode> n_c = make_unique<DGraphNode>("C", 30);
 
-    DNode *a = n_a.get();
+    DGraphNode *a = n_a.get();
     a->domain.push_back(&PB);
 
-    DNode *b = n_b.get();
+    DGraphNode *b = n_b.get();
     b->domain.push_back(&p_center);
     b->domain.push_back(&PB);
 
-    DNode *c = n_c.get();
+    DGraphNode *c = n_c.get();
     c->domain.push_back(&p_center);
     c->domain.push_back(&PB);
 
-    std::vector<DNode*> neighborhood{a, b, c};
+    std::vector<DGraphNode*> neighborhood{a, b, c};
 
     assert(p_center.valid(neighborhood));
 }
@@ -474,7 +474,7 @@ void wfc_solver_grid0() {
 
     WFCSolver solver{&ngrid.get_graph()};
 
-    DNode* next = ngrid.at(0, 0);
+    DGraphNode* next = ngrid.at(0, 0);
 
     while(next) {
         std::cout << next->identifier << std::endl;

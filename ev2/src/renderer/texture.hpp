@@ -17,8 +17,7 @@ namespace ev2::renderer {
 
 class Texture {
 public:
-    explicit Texture(gl::TextureType texture_type);
-    Texture(gl::TextureType texture_type, gl::TextureFilterMode filterMode);
+    Texture(gl::TextureType texture_type, gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR);
 
     ~Texture() {
         if (glIsTexture(handle))

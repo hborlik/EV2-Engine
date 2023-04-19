@@ -6,11 +6,11 @@
 
 namespace pcg {
 
-float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node* sink, DenseGraph<Node>* residual_graph) {
+float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph) {
     // based on https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
     assert(source && sink);
 
-    DenseGraph<Node> residual = dg;
+    DenseGraph<GraphNode> residual = dg;
 
     float max_flow = 0.f;
 
@@ -41,7 +41,7 @@ float ford_fulkerson(const DenseGraph<Node>& dg, const Node* source, const Node*
     return max_flow;
 }
 
-float DNode::entropy() const {
+float DGraphNode::entropy() const {
     float sum = 0;
     for (auto& p : domain) {
         sum += p->weight;
@@ -49,12 +49,12 @@ float DNode::entropy() const {
     return sum;
 }
 
-void DNode::set_value(const Pattern* p) noexcept {
+void DGraphNode::set_value(const Pattern* p) noexcept {
     value = p->cell_value;
     domain = {p};
 }
 
-bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
+bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
      * if all requirements are satisfied, return true
@@ -67,26 +67,26 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
 
     struct ValueAndNode {
         Value v;
-        Node* p;
+        GraphNode* p;
     };
     std::vector<ValueAndNode> neigh_values{};   // values in neighborhood with associated node in flow graph
     std::vector<ValueAndNode> required{};       // required values and associated node in flow graph
 
     // extra two capacity for source and sink
-    DenseGraph<Node> dg{ (int)neighborhood.size() + (int)required_values.size() + 2, true };
+    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_values.size() + 2, true };
 
     /* construct flow graph */
 
     // node references
-    auto source = std::make_unique<Node>("source", 2);
-    auto sink = std::make_unique<Node>("sink", 3);
-    std::vector<std::unique_ptr<Node>> req_nodes{};
-    std::vector<std::unique_ptr<Node>> neigh_nodes{};
+    auto source = std::make_unique<GraphNode>("source", 2);
+    auto sink = std::make_unique<GraphNode>("sink", 3);
+    std::vector<std::unique_ptr<GraphNode>> req_nodes{};
+    std::vector<std::unique_ptr<GraphNode>> neigh_nodes{};
     
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
     for (auto& rv : required_values) {
-        auto req_node = std::make_unique<Node>("req:" + std::to_string(rv.cell_id), ++id);
+        auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv.val), ++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
             .v = rv,
@@ -99,7 +99,7 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
 
     // for each neighbor, create a node in flow graph and connect it to sink
     for (const auto& node : neighborhood) {
-        auto domain_node = std::make_unique<Node>(node->identifier, ++id);
+        auto domain_node = std::make_unique<GraphNode>(node->identifier, ++id);
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
         for (const auto& val : node->domain) {
             neigh_values.emplace_back(ValueAndNode{
@@ -114,7 +114,7 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
 
     auto sort_vn = [](const ValueAndNode& a, const ValueAndNode& b) {
         // sorted high to low cell values
-        return a.v.cell_id < b.v.cell_id;
+        return a.v.val < b.v.val;
     };
 
     // sort by the cell values
@@ -132,7 +132,7 @@ bool Pattern::valid(const std::vector<DNode*>& neighborhood) const {
                 dg.add_edge(req.p, vn_pos->p, 1.f);
                 // there is at least one node satisfying the requirement
                 has_single_neighbor = true;
-            } else if (vn_pos->v.cell_id > req.v.cell_id) {
+            } else if (vn_pos->v.val > req.v.val) {
                 if (has_single_neighbor == false)
                     return false;
                 break; // did not match value

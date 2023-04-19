@@ -944,7 +944,7 @@ std::unique_ptr<Image> LoadDmapTexture16(int dmapID, int smapID, const std::stri
 
 std::unique_ptr<ev2::Image> LoadDmapTexture()
 {
-    std::string path = Engine::get().asset_path / g_terrain.dmap.pathToFile;
+    std::string path = Engine::get_singleton().asset_path / g_terrain.dmap.pathToFile;
     std::cout << "Loading Dmap Texture: " << path << "\n";
     if (!g_terrain.dmap.pathToFile.empty()) {
         return LoadDmapTexture16(TEXTURE_DMAP,

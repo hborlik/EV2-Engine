@@ -1,5 +1,7 @@
 #include <physics.hpp>
 
+#include <engine.hpp>
+
 using namespace reactphysics3d;
 
 namespace ev2 {
@@ -215,7 +217,7 @@ void RigidBody::on_init() {
 void RigidBody::on_ready() {
     body->setTransform(get_physics_transform());
     if (colliders.empty())
-        std::cout << __FILE__ << ":" << std::to_string(__LINE__) << " " << __FUNCTION__ << " no colliders for RigidBody" << std::endl;
+        Engine::get_singleton().log_t<RigidBody>( std::string{__FILE__} + ":" + std::to_string(__LINE__) + " " + __FUNCTION__ + " no colliders for RigidBody");
 }
 
 void RigidBody::on_process(float delta) {

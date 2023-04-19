@@ -6,17 +6,11 @@
 
 namespace ev2::renderer {
 
-Texture::Texture(gl::TextureType texture_type) : texture_type{texture_type} {
+Texture::Texture(gl::TextureType texture_type, gl::TextureFilterMode filterModeMin, gl::TextureFilterMode filterModeMag) : texture_type{texture_type} {
     GL_CHECKED_CALL(glGenTextures(1, &handle));
 
-    set_params();
-}
-
-Texture::Texture(gl::TextureType texture_type, gl::TextureFilterMode filterMode) : texture_type{texture_type} {
-    GL_CHECKED_CALL(glGenTextures(1, &handle));
-
-    m_mag_filter = filterMode;
-    m_min_filter = filterMode;
+    m_mag_filter = filterModeMag;
+    m_min_filter = filterModeMin;
 
     set_params();
 }

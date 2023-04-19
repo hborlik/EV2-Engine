@@ -10,34 +10,37 @@
 #include <fstream>
 #include <filesystem>
 #include <memory>
+#include <iostream>
+#include <chrono>
 
+#include <singleton.hpp>
 #include <ev.hpp>
 #include <util.hpp>
 
 namespace ev2 {
 
 namespace fs = std::filesystem;
-class Engine {
+class Engine : public Singleton<Engine> {
 public:
 
-    static Engine& get() {
-        return *(s_instance.get());
-    }
-
-    template<typename T>
-    static void log_file(std::string_view message);
-
-    static void init(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path = "shaders") {
-        s_instance = std::make_unique<Engine>(asset_path, log_file_dir, shader_path);
-    }
-
-    Engine(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path):
-        asset_path{ asset_path }, shader_path{ shader_path } {
+    Engine(const fs::path& asset_path, const fs::path& log_file_dir, const fs::path& shader_path = "shaders"):
+        asset_path{ asset_path }, shader_path{ shader_path }, log_file_stream{}, m_engine_init{std::chrono::steady_clock::now()} {
         // assert(s_instance == nullptr);
         log_file_stream.open(log_file_dir / ("ev2_log-" + util::formatted_current_time() + ".txt"));
         if (!log_file_stream.is_open())
             throw engine_exception{"log file not open"};
     }
+
+    template<typename T>
+    static void log_file(std::string_view message);
+
+    template<typename T>
+    static void log_t(std::string_view message);
+
+    static void log(std::string_view message);
+
+    std::string formatted_log_elapsed_time();
+    double elapsed_time();
 
 public:
     fs::path asset_path;
@@ -45,14 +48,20 @@ public:
 
 private:
     std::ofstream log_file_stream;
-
-    static std::unique_ptr<Engine> s_instance;
+    std::chrono::time_point<std::chrono::steady_clock> m_engine_init;
 };
 
 template<typename T>
 void Engine::log_file(std::string_view message) {
-    std::string mstr = std::string("[") + util::type_name<T>() + "]:" + message.data() + "\n";
-    s_instance->log_file_stream << mstr;
+    log_t<T>(message);
+    std::string mstr = std::string("[") + get_singleton().formatted_log_elapsed_time() + " " + util::type_name<T>() + "]:" + message.data() + "\n";
+    get_singleton().log_file_stream << mstr;
+}
+
+template<typename T>
+void Engine::log_t(std::string_view message) {
+    std::string mstr = std::string("[") + get_singleton().formatted_log_elapsed_time() + " " + util::type_name<T>() + "]:" + message.data() + "\n";
+    std::cout << mstr;
 }
 
 } // namespace

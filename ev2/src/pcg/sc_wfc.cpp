@@ -10,13 +10,19 @@
 #include <scene/serializers.hpp>
 
 namespace fs = std::filesystem;
-using json = nlohmann::json;
 
 namespace ev2 {
 
-class SCWFCGraphNode : public VisualInstance, pcg::DNode {
+class SCWFCGraphNode : public VisualInstance, pcg::DGraphNode {
 public:
-    explicit SCWFCGraphNode(const std::string &name) : VisualInstance{name}, pcg::DNode{name, uuid_hash} {}
+    explicit SCWFCGraphNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, pcg::DGraphNode{name, uuid_hash}, m_scwfc{scwfc} {}
+
+    void on_transform_changed(Ref<ev2::Node> origin) override {
+
+    }
+
+private:
+    SCWFC* m_scwfc = nullptr;
 };
 
 std::shared_ptr<renderer::Drawable> SCWFCObjectDatabase::get_model_for_id(int id) {
@@ -32,9 +38,16 @@ void SCWFCObjectDatabase::add_model(std::shared_ptr<renderer::Drawable> d, int i
 
 
 std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& path) {
+    using json = nlohmann::json;
     auto db = std::make_unique<SCWFCObjectDatabase>();
 
     std::string json_str = read_file(path);
+
+    json j = json::parse(json_str);
+    for (auto& entry : j) {
+        SCWFCObjectMetadata metadata;
+        entry.get_to(metadata);
+    }
 
     return db;
 }
@@ -44,7 +57,7 @@ std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& pat
 struct SCWFC::Data {
     Data() : graph{}, solver{&graph} {}
 
-    pcg::SparseGraph<pcg::DNode> graph;
+    pcg::SparseGraph<pcg::DGraphNode> graph;
     pcg::WFCSolver solver;
 };
 
@@ -65,6 +78,8 @@ void SCWFC::sc_propagate_from(Ref<Node> node) {
 
 void SCWFC::reset() {
     m_data = std::make_shared<Data>();
+
+    auto nnode = create_child_node<SCWFCGraphNode>("SC seed node", this);
 }
 
 void SCWFC::on_init() {

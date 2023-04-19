@@ -12,6 +12,7 @@
 
 #include <renderer/buffer.hpp>
 #include <renderer/renderer.hpp>
+#include <engine.hpp>
 
 namespace {
 
@@ -288,7 +289,7 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
                                 base_dir.c_str());
     if (!warn.empty())
     {
-        std::cout << "WARN: " << warn << std::endl;
+        Engine::get_singleton().log("WARN: " + warn);
     }
     if (!err.empty())
     {
@@ -405,7 +406,7 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
             std::map<int, glm::vec3> smoothVertexNormals;
             if (!regen_all_normals && (hasSmoothingGroup(shapes[s]) > 0))
             {
-                std::cout << "Compute smoothingNormal for shape [" << s << "]" << std::endl;
+                Engine::get_singleton().log("Compute smoothingNormal for shape [" + std::to_string(s) + "]");
                 computeSmoothingNormals(attrib, shapes[s], smoothVertexNormals);
             }
 
@@ -755,7 +756,7 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
                 return {};
         }
 
-        auto texture = std::make_shared<renderer::Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR);
+        auto texture = std::make_shared<renderer::Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR, gl::TextureFilterMode::LINEAR);
         texture->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
         texture->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
         texture->set_image2D(internal_format, image->width(), image->height(), pixel_format, gl::PixelType::UNSIGNED_BYTE, image->data());
@@ -764,7 +765,7 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
         image_res->texture = texture;
 
         images.insert({filename.generic_string(), image_res});
-        std::cout << "Loaded image " << filename.generic_string() << std::endl;
+        Engine::get_singleton().log("Loaded image " + filename.generic_string());
         return image_res;
     } else {
         std::cerr << "Failed to load image " + filename.generic_string() << std::endl;
@@ -789,7 +790,7 @@ std::unique_ptr<Model> loadObj(const std::filesystem::path& filename, const std:
     std::vector<tinyobj::material_t> materials;
     std::vector<float> buffer;
     std::vector<DrawObject> drawObjects;
-    std::cout << base_dir / filename << std::endl;
+    Engine::get_singleton().log("Loading obj " + (base_dir / filename).generic_string());
     bool success = LoadObjAndConvert(bmin, bmax, &drawObjects, materials, buffer, (base_dir / filename).generic_string(), base_dir.generic_string());
     if (success) {
         std::vector<MaterialData> ev_mat(materials.size());
@@ -858,8 +859,8 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
         int width, height, nrChannels;
         unsigned char *image = stbi_load(file.c_str(), &width, &height, &nrChannels, 0);
         if(image) {
-            std::cout << "Loaded texture data: " << file << ", w = " << width
-                << ", h = " << height << ", channels = " << nrChannels << std::endl;
+            Engine::get_singleton().log("Loaded texture data: " + file + ", w = " + std::to_string(width)
+                + ", h = " + std::to_string(height) + ", channels = " + std::to_string(nrChannels));
 
             out = std::make_unique<renderer::Texture>(gl::TextureType::TEXTURE_2D);
             if(nrChannels == 1) {

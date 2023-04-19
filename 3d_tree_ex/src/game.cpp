@@ -159,7 +159,7 @@ GameState::GameState(Application* app) : app{app} {
     // instance_node->instance_transforms.push_back(glm::translate(glm::identity<glm::mat4>(), {2, 10, 0}));
     // instance_node->instance_transforms.push_back(glm::translate(glm::identity<glm::mat4>(), {3, 10, 0}));
 
-    for (int n = 0; n < 2000; n++)
+    for (int n = 0; n < 100; n++)
     {
         spawn_random_tree(glm::vec3{}, 700, 9, 1.0f);
     }

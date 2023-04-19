@@ -47,7 +47,7 @@ shader_error::shader_error(std::string shaderName, std::string errorString) noex
 }
 
 void EV2_init(const Args& args, const std::filesystem::path& asset_path, const std::filesystem::path& log_file_dir) {
-    Engine::init(asset_path, log_file_dir);
+    Engine::initialize(asset_path, log_file_dir);
 
     #if defined(IMGUI_IMPL_OPENGL_ES2)
         // GL ES 2.0 + GLSL 100
@@ -86,14 +86,14 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
     renderer::Renderer::get_singleton().init();
     Physics::initialize();
 
-    Engine::get().log_file<Engine>("Initialized");
+    Engine::get_singleton().log_file<Engine>("Initialized");
 }
 
 void EV2_shutdown() {
     Physics::shutdown();
     ResourceManager::shutdown();
     renderer::Renderer::shutdown();
-    Engine::get().log_file<Engine>("Shutdown");
+    Engine::get_singleton().log_file<Engine>("Shutdown");
 }
 
 Args::Args(int argc, char* argv[]) {

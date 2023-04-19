@@ -11,13 +11,14 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <string>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 
-#define GL_CHECKED_CALL(call) {isGLError(); (call); if(isGLError()) std::cerr << __FILE__ << ":" << __LINE__ << " GL_CHECKED_CALL error" << std::endl;}
+
+#define GL_CHECKED_CALL(call) {isGLError(); (call); if(isGLError()) std::cerr << "GL_CHECKED_CALL error at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;}
 
 #define GL_ERROR_CHECK(call, var) {clearGLErrors(); (call); var = getGLError();}
 
