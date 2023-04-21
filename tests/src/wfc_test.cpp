@@ -6,7 +6,7 @@
 #include <pcg/grid.hpp>
 
 using namespace std;
-using namespace pcg;
+using namespace wfc;
 
 void sparse_test_empty() {
     std::cout << __FUNCTION__ << std::endl;
@@ -456,7 +456,7 @@ void test_pattern_validity2() {
 }
 
 void wfc_solver_grid0() {
-    NodeGrid ngrid{3, 3};
+    ev2::pcg::NodeGrid ngrid{3, 3};
     std::cout << ngrid.get_graph() << std::endl;
 
     std::cout << to_string(ngrid) << std::endl;

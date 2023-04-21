@@ -12,7 +12,7 @@
 #include <scene/node.hpp>
 #include <ui/ui.hpp>
 
-namespace ev2 {
+namespace ev2::pcg {
 
 class SCWFCObjectDatabase;
 

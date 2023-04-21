@@ -15,19 +15,15 @@ namespace ev2::renderer {
 using namespace ev2;
 using namespace ev2::gl;
 
-Buffer::~Buffer() {
-    glDeleteBuffers(1, &gl_reference);
-}
-
 void Buffer::allocate(std::size_t bytes) {
-    glBindBuffer((GLenum)target, gl_reference);
+    glBindBuffer((GLenum)target, (GLuint)gl_reference);
     GL_CHECKED_CALL(glBufferData((GLenum)target, bytes, NULL, (GLenum)usage));
     glBindBuffer((GLenum)target, 0);
     capacity = bytes;
 }
 
 void Buffer::copy_data(std::size_t size, const void* data) {
-    glBindBuffer((GLenum)target, gl_reference);
+    glBindBuffer((GLenum)target, (GLuint)gl_reference);
     glBufferData((GLenum)target, size, data, (GLenum)usage);
     glBindBuffer((GLenum)target, 0);
     capacity = size;

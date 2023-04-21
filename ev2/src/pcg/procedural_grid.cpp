@@ -10,14 +10,14 @@
 
 namespace fs = std::filesystem;
 
-namespace ev2 {
+namespace ev2::pcg {
 
 struct ProceduralGrid::Data {
     Data(int w, int h) : grid{w, h}, solver{&grid.get_graph()} {}
 
     pcg::NodeGrid grid;
 
-    pcg::WFCSolver solver;
+    wfc::WFCSolver solver;
 };
 
 void ProceduralGrid::generate(int n) {
@@ -28,10 +28,10 @@ void ProceduralGrid::generate(int n) {
 
     m_data = std::make_shared<Data>(n, n);
 
-    pcg::Pattern PA{pcg::Value{10}, {pcg::Value{11}, pcg::Value{11}}};
-    pcg::Pattern PB{pcg::Value{11}, {pcg::Value{10}}};
+    wfc::Pattern PA{wfc::Value{10}, {wfc::Value{11}, wfc::Value{11}}};
+    wfc::Pattern PB{wfc::Value{11}, {wfc::Value{10}}};
 
-    std::vector<const pcg::Pattern*> patterns{&PA, &PB};
+    std::vector<const wfc::Pattern*> patterns{&PA, &PB};
 
     m_data->grid.reset_domains(patterns);
 
@@ -45,7 +45,7 @@ void ProceduralGrid::generate(int n) {
 
     for (int i = 0; i < n; ++i)
         for (int j = 0; j < n; ++j) {
-            pcg::DGraphNode* d_node = m_data->grid.at(i, j);
+            wfc::DGraphNode* d_node = m_data->grid.at(i, j);
             if (d_node->domain.size() >= 1) {
                 auto nnode = create_child_node<VisualInstance>("pcg visual [" + std::to_string(i) + ", " + std::to_string(j) + "]");
                 nnode->set_model(d_node->domain.size() == 1 ? obj_db->get_model_for_id(d_node->domain[0]->cell_value.val) : obj_db->get_model_for_id(-1));

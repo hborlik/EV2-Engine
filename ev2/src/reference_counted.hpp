@@ -188,6 +188,9 @@ public:
 
     Ref<T> get_ref() noexcept {return Ref<T>{this};}
 
+    template<typename U, typename = std::enable_if_t<std::is_base_of_v<T, U>>>
+    Ref<U> get_ref() noexcept {return Ref<T>{this}.template ref_cast<U>();}
+
     uint32_t get_ref_count() const noexcept {return count;}
 
 };

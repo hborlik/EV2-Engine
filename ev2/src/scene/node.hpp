@@ -20,7 +20,7 @@ namespace ev2 {
 
 class SceneTree;
 
-class Node : public Object {
+class Node : public ObjectT<Node> {
 protected:
     Node() = default;
     explicit Node(const std::string& name) : name{name} {}
@@ -112,7 +112,7 @@ public:
 
     Ref<Node> get_parent() const {
         if (parent)
-            return parent->get_ref().ref_cast<Node>();
+            return parent->get_ref<Node>();
         return{};
     }
 

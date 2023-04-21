@@ -10,12 +10,13 @@
 #define EV2_SC_WHC_HPP
 
 #include <functional>
+#include <optional>
 
 #include <scene/node.hpp>
 #include <ui/ui.hpp>
 #include <geometry.hpp>
 
-namespace ev2 {
+namespace ev2::pcg {
 
 class renderer::Drawable;
 
@@ -48,7 +49,7 @@ std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& pat
 
 class SCWFC : public Node {
 public:
-    explicit SCWFC(std::string name) : Node{std::move(name)} {}
+    explicit SCWFC(std::string name);
 
     /**
      * @brief solve WFC domains steps times 
@@ -68,17 +69,39 @@ public:
     void on_child_removed(Ref<Node> child) override;
 
 private:
+    std::optional<glm::vec3> does_intersect_any(const Sphere& sph);
+
+private:
     struct Data;
     std::shared_ptr<Data> m_data{};
+    std::shared_ptr<SCWFCObjectDatabase> obj_db;
 };
 
 /**
  * @brief Defines the custom editor behavior for SCWFC nodes in scene
  * 
  */
-class SCWFCEditor : public NodeEditorT<SCWFC> {
+class SCWFCNodeEditor : public NodeEditorT<SCWFC> {
 public:
     void show_editor(Node* node) override;
+};
+
+class SCWFCEditor : public EditorTool {
+public:
+    void show_editor_tool() override;
+    std::string get_name() const override {
+        return "SCWFCEditor";
+    }
+
+    void on_selected_node(Node* node) override {
+        if (node) {
+            Ref<SCWFC> n = node->get_ref<SCWFC>();
+            if (n) m_scwfc_node = n;
+        }
+    }
+
+private:
+    Ref<SCWFC> m_scwfc_node{};
 };
 
 }

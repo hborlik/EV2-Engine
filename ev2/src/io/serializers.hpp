@@ -1,13 +1,13 @@
 /**
  * @file serializers.hpp
  * @brief 
- * @date 2023-04-18
+ * @date 2023-04-19
  * 
  * @copyright Copyright (c) 2023
  * 
  */
-#ifndef EV2_SCENE_SERIALIZERS_HPP
-#define EV2_SCENE_SERIALIZERS_HPP
+#ifndef EV2_IO_SERIALIZERS_HPP
+#define EV2_IO_SERIALIZERS_HPP
 
 #include <vector>
 #include <fstream>
@@ -16,6 +16,29 @@
 #include <pcg/sc_wfc.hpp>
 
 #include <json.hpp>
+
+namespace ev2::io {
+
+auto read_file(std::string_view path) -> std::string {
+    // from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c
+    constexpr auto read_size = std::size_t(4096);
+    auto stream = std::ifstream(path.data());
+    stream.exceptions(std::ios_base::badbit);
+
+    if (!stream) {
+        throw std::ios_base::failure("file does not exist");
+    }
+    
+    auto out = std::string();
+    auto buf = std::string(read_size, '\0');
+    while (stream.read(&buf[0], read_size)) {
+        out.append(buf, 0, stream.gcount());
+    }
+    out.append(buf, 0, stream.gcount());
+    return out;
+}
+
+} // namespace ev2::io
 
 namespace ev2 {
 
@@ -50,6 +73,10 @@ void from_json(const nlohmann::json& j, OBB& p) {
     p.half_extents = {barr.at(0), barr.at(1), barr.at(2)};
 }
 
+} // namespace ev2
+
+namespace ev2::pcg {
+
 void to_json(nlohmann::json& j, const SCWFCObjectMetadata& p) {
     j = nlohmann::json{{"name", p.name}, {"asset_path", p.asset_path}, {"properties", p.properties}, {"propagation_patterns", p.propagation_patterns}};
 }
@@ -61,25 +88,8 @@ void from_json(const nlohmann::json& j, SCWFCObjectMetadata& p) {
     j.at("propagation_patterns").get_to(p.propagation_patterns);
 }
 
-auto read_file(std::string_view path) -> std::string {
-    // from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c
-    constexpr auto read_size = std::size_t(4096);
-    auto stream = std::ifstream(path.data());
-    stream.exceptions(std::ios_base::badbit);
+} // namespace pcg
 
-    if (!stream) {
-        throw std::ios_base::failure("file does not exist");
-    }
-    
-    auto out = std::string();
-    auto buf = std::string(read_size, '\0');
-    while (stream.read(&buf[0], read_size)) {
-        out.append(buf, 0, stream.gcount());
-    }
-    out.append(buf, 0, stream.gcount());
-    return out;
-}
 
-}
 
-#endif // EV2_SCENE_SERIALIZERS_HPP
+#endif // EV2_PCG_SERIALIZERS_HPP

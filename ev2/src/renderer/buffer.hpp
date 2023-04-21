@@ -13,44 +13,37 @@
 #include <vector>
 
 #include <renderer/ev_gl.hpp>
+#include <util.hpp>
 
 namespace ev2::renderer {
 
 class Buffer {
 public:
 
-    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, gl_reference{}, target{target}, usage{usage} {
-        glCreateBuffers(1, &gl_reference);
+    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, gl_reference{0}, target{target}, usage{usage} {
+        glCreateBuffers(1, &gl_reference.v);
     }
 
     template<typename T>
     Buffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
-        glCreateBuffers(1, &gl_reference);
+        glCreateBuffers(1, &gl_reference.v);
         copy_data(data);
     }
 
     Buffer(gl::BindingTarget target, gl::Usage usage, std::size_t size, const void* data) : target{target}, usage{usage} {
-        glCreateBuffers(1, &gl_reference);
+        glCreateBuffers(1, &gl_reference.v);
         copy_data(size, data);
     }
 
-    virtual ~Buffer();
-
-    Buffer(const Buffer& o) = delete;
-    Buffer& operator=(const Buffer&) = delete;
-
-    Buffer(Buffer&& o) {
-        *this = std::move(o);
+    virtual ~Buffer() {
+        glDeleteBuffers(1, &gl_reference.v);
     }
 
-    Buffer& operator=(Buffer&& o) {
-        std::swap(capacity, o.capacity);
-        std::swap(gl_reference, o.gl_reference);
-        std::swap(target, o.target);
-        std::swap(usage, o.usage);
+    // Buffer(const Buffer& o) = delete;
+    // Buffer& operator=(const Buffer&) = delete;
 
-        return *this;
-    }
+    Buffer(Buffer&& o) = default;
+    Buffer& operator=(Buffer&& o) = default;
 
     /**
      * @brief Allocate buffer large enough to contain all data in source and copy data into buffer.
@@ -93,13 +86,13 @@ public:
     /**
      * @brief Bind this buffer to its target
      */
-    void bind() const { glBindBuffer((GLenum)target, gl_reference); }
+    void bind() const { glBindBuffer((GLenum)target, (GLuint)gl_reference); }
 
     /**
      * @brief Bind this buffer at given index of the binding point.
      * Buffer target must be one of GL_ATOMIC_COUNTER_BUFFER, GL_TRANSFORM_FEEDBACK_BUFFER, GL_UNIFORM_BUFFER or GL_SHADER_STORAGE_BUFFER.
      */
-    void bind(GLuint index) {glBindBufferBase((GLenum)target, index, gl_reference);}
+    void bind(GLuint index) {glBindBufferBase((GLenum)target, index, (GLuint)gl_reference);}
 
     /**
      * @brief binds the range to the generic buffer binding point specified by target and to given index of the binding point.
@@ -114,7 +107,7 @@ public:
         int buf_offset = ((offset % capacity) + capacity) % capacity;
         size_t buf_size = std::min(size, capacity);
         assert(buf_offset + buf_size <= capacity);
-        glBindBufferRange((GLenum)target, index, gl_reference, buf_offset, buf_size);
+        glBindBufferRange((GLenum)target, index, (GLuint)gl_reference, buf_offset, buf_size);
     }
 
     /**
@@ -122,7 +115,7 @@ public:
      */
     void unbind() const {glBindBuffer((GLenum)target, 0);}
 
-    GLuint handle() const noexcept { return gl_reference; }
+    GLuint handle() const noexcept { return (GLuint)gl_reference; }
 
     /**
      * @brief Get the size in bytes of buffer
@@ -141,7 +134,7 @@ private:
      */
     size_t capacity = 0;
 
-    GLuint gl_reference = -1;
+    util::non_copyable<GLuint> gl_reference{0};
 
     /**
      * @brief binding target of this buffer
@@ -158,7 +151,7 @@ template<typename T>
 void Buffer::copy_data(const std::vector<T>& source) {
     if(!source.empty()) {
         bool error = false;
-        GL_ERROR_CHECK(glNamedBufferData(gl_reference, sizeof(T) * source.size(), source.data(), (GLenum)usage), error);
+        GL_ERROR_CHECK(glNamedBufferData((GLuint)gl_reference, sizeof(T) * source.size(), source.data(), (GLenum)usage), error);
         if (!error) capacity = sizeof(T) * source.size();
     }
 }
@@ -172,7 +165,7 @@ void Buffer::copy_data(const std::vector<T>& source) {
  */
 template<typename T>//, typename>
 void Buffer::sub_data(const T& source, uint32_t offset) {
-    GL_CHECKED_CALL(glNamedBufferSubData(gl_reference, offset, sizeof(T), &source));
+    GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, sizeof(T), &source));
 }
 
 /**
@@ -187,7 +180,7 @@ template<typename T>
 void Buffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
     if(!source.empty()) {
         for(size_t i = 0; i < source.size(); i++) {
-            GL_CHECKED_CALL(glNamedBufferSubData(gl_reference, offset + i * stride, sizeof(T), &source[i]));
+            GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset + i * stride, sizeof(T), &source[i]));
         }
     }
 }

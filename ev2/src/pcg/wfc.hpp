@@ -19,7 +19,7 @@
 
 #include <assert.h>
 
-namespace pcg {
+namespace wfc {
 
 struct coord {
     int x = 0, y = 0;
@@ -69,9 +69,9 @@ private:
 namespace std {
 
 template<>
-struct hash<pcg::coord>
+struct hash<wfc::coord>
 {
-    size_t operator()(const pcg::coord& k) const {
+    size_t operator()(const wfc::coord& k) const {
         // from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
         using std::size_t;
         using std::hash;
@@ -88,9 +88,9 @@ struct hash<pcg::coord>
 };
 
 template<>
-struct hash<pcg::Value>
+struct hash<wfc::Value>
 {
-    size_t operator()(const pcg::Value& k) const {
+    size_t operator()(const wfc::Value& k) const {
         using std::hash;
 
         return hash<int>()(k.val);
@@ -99,14 +99,14 @@ struct hash<pcg::Value>
 
 } // namespace std
 
-namespace pcg {
+namespace wfc {
 
 class Pattern;
 
 class GraphNode {
 public:
     GraphNode(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
-        assert(node_id > 0);
+        assert(node_id != -1);
     }
 
     virtual ~GraphNode() = default;
@@ -358,11 +358,11 @@ public:
     void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
 
-        if (!m_is_directed && a->node_id < b->node_id)
-            std::swap(a, b);
-
         int ind_a = check_node_index(a);
         int ind_b = check_node_index(b);
+
+        if (!m_is_directed && ind_a < ind_b)
+            std::swap(a, b);
         
         assert(!(ind_a < 0 || ind_b < 0));
 
@@ -383,7 +383,6 @@ public:
      */
     float adjacent(T* a, T* b) const override {
         assert(a != nullptr && b != nullptr);
-        assert(a->node_id < m_n_nodes && b->node_id < m_n_nodes);
 
         int ind_a = get_node_index(a);
         int ind_b = get_node_index(b);
@@ -416,7 +415,6 @@ public:
      */
     std::vector<T*> adjacent_nodes(T* a) const override {
         assert(a != nullptr);
-        assert(a->node_id < m_n_nodes);
 
         std::vector<T*> nodes{};
 
@@ -441,7 +439,7 @@ public:
 
     const auto& get_nodes() const noexcept { return m_nodes; }
 
-    int get_max_node_id() const noexcept { return m_n_nodes; }
+    int get_max_n_nodes() const noexcept { return m_n_nodes; }
 
     /**
      * @brief Get the internal index for a node in the adjacency matrix

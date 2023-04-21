@@ -86,6 +86,38 @@ inline auto vmax(T0&& val1, T1&& val2, Ts&&... vs) noexcept {
         vmax(val1, std::forward<Ts>(vs)...);
 }
 
+/**
+ * @brief non copyable type
+ * 
+ * @tparam T 
+ */
+template<typename T>
+class non_copyable {
+public:
+    non_copyable() = default;
+    non_copyable(T v) : v{std::move(v)} {}
+
+    non_copyable(const non_copyable&) = delete; // non construction copyable
+    non_copyable& operator=(const non_copyable&) = delete; // non copyable
+
+    non_copyable(non_copyable&& o) : non_copyable() { swap(*this, o); }
+    non_copyable& operator=(non_copyable&& o) { swap(*this, o); }
+
+    non_copyable& operator=(const T& o) noexcept {v = o;} // assignment from underlying type
+
+    explicit operator T() const noexcept {return v;} // explicit conversion to underlying type
+
+private:
+    friend void swap(non_copyable<T>& first, non_copyable<T>& second) {
+        using std::swap;
+
+        swap(first.v, second.v);
+    }
+
+public:
+    T v{};
+};
+
 }
 
 #endif // EV2_UTIL_H

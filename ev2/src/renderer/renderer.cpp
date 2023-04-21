@@ -175,25 +175,26 @@ void Renderer::init() {
     for (unsigned int i = 0; i < 64; ++i)
     {
         glm::vec3 sample(
-            randomFloats(generator) * 2.0 - 1.0, 
-            randomFloats(generator) * 2.0 - 1.0, 
-            randomFloats(generator)
+            randomFloats(generator) * 2.0 - 1.0, // [-1, 1]
+            randomFloats(generator) * 2.0 - 1.0, // [-1, 1]
+            randomFloats(generator) // [0, 1]
         );
-        sample  = glm::normalize(sample);
+        sample  = glm::normalize(sample); // random direction
         sample *= randomFloats(generator);
         // bias samples towards the central pixel
-        float scale = (float)i / 32.0;
+        float scale = randomFloats(generator); // [0, 1]
         scale   = lerp(0.1f, 1.0f, scale * scale);
         sample *= scale;
         ssaoKernel.push_back(sample);
     }
+    // random xy values for noise texture
     std::vector<glm::vec3> ssaoNoise;
     for (unsigned int i = 0; i < 16; i++)
     {
         glm::vec3 noise(
-            randomFloats(generator) * 2.0 - 1.0,
-            randomFloats(generator) * 2.0 - 1.0,
-            0.0f); 
+            randomFloats(generator) * 2.0 - 1.0, // [-1, 1]
+            randomFloats(generator) * 2.0 - 1.0, // [-1, 1]
+            randomFloats(generator) * 2.0 - 1.0);
         ssaoNoise.push_back(noise);
     }
 
@@ -219,7 +220,7 @@ void Renderer::init() {
     one_p_black_tex->generate_mips();
 
     // set up FBO textures
-    shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     shadow_depth_tex->set_image2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
     // edge clamping is required for border color to be used
     shadow_depth_tex->set_texture_wrap_s(gl::TextureWrapMode::CLAMP_TO_EDGE);
@@ -230,23 +231,23 @@ void Renderer::init() {
         throw engine_exception{"Framebuffer is not complete"};
     
 
-    material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     material_tex->recreate_storage2D(1, gl::TextureInternalFormat::R8UI, width, height);
     g_buffer.attach(material_tex, gl::FBOAttachment::COLOR3, 3);
 
-    albedo_spec = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    albedo_spec = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     albedo_spec->recreate_storage2D(1, gl::TextureInternalFormat::RGBA8, width, height);
     g_buffer.attach(albedo_spec, gl::FBOAttachment::COLOR2, 2);
 
-    normals = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    normals = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     normals->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(normals, gl::FBOAttachment::COLOR1, 1);
 
-    position = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    position = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     position->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(position, gl::FBOAttachment::COLOR0, 0);
 
-    emissive = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    emissive = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     emissive->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(emissive, gl::FBOAttachment::COLOR4, 4);
 
@@ -266,16 +267,16 @@ void Renderer::init() {
         throw engine_exception{"Framebuffer is not complete"};
 
     // blur pass texture and FBOs
-    bloom_blur_swap_tex[0] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    bloom_blur_swap_tex[0] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     bloom_blur_swap_tex[0]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[0].attach(bloom_blur_swap_tex[0], gl::FBOAttachment::COLOR0, 0);
 
-    bloom_blur_swap_tex[1] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    bloom_blur_swap_tex[1] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     bloom_blur_swap_tex[1]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[1].attach(bloom_blur_swap_tex[1], gl::FBOAttachment::COLOR0, 0);
 
     // bloom threshold combine output HDR FBO
-    hdr_combined = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    hdr_combined = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     hdr_combined->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_thresh_combine.attach(hdr_combined, gl::FBOAttachment::COLOR0, 0);
 

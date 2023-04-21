@@ -91,6 +91,21 @@ void SceneEditor::editor(Node* scene) {
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Tools"))
+        {
+            // if (ImGui::MenuItem("New")) {}
+            for (auto& [name, tool] : m_editor_tools) {
+                if (ImGui::MenuItem(name.c_str()))  {tool->m_is_open = true;}
+            }
+            ImGui::EndMenu();
+        }
+
+        for (auto& [name, tool] : m_editor_tools) {
+                if (tool->m_is_open) {
+                    tool->show_editor_tool();
+                }
+            }
+
         ImGui::EndMainMenuBar();
     }
 }
@@ -111,17 +126,17 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
     ImGui::SameLine();
 
     // Right Side
-    if (selected_node != nullptr)
+    if (m_selected_node != nullptr)
     {
         ImGui::BeginGroup();
 
         ImVec2 child_size = ImVec2(300, -ImGui::GetFrameHeightWithSpacing());
         ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiWindowFlags_NoMove);
 
-        ImGui::Text("Node %s (%s)", selected_node->name.c_str(), selected_node->get_path().c_str());
+        ImGui::Text("Node %s (%s)", m_selected_node->name.c_str(), m_selected_node->get_path().c_str());
         ImGui::Separator();
 
-        show_node_editor_widget(selected_node);
+        show_node_editor_widget(m_selected_node);
 
         ImGui::EndChild();
         
@@ -149,8 +164,27 @@ void SceneEditor::show_node_editor_widget(Node* node) {
 
 void SceneEditor::add_custom_node_editor(std::shared_ptr<NodeEditor> editor) {
     assert(editor);
-    if (m_editor_types.find(editor->get_edited_type()) == m_editor_types.end())
+    if (m_editor_types.find(editor->get_edited_type()) == m_editor_types.end()) {
         m_editor_types.emplace(editor->get_edited_type(), editor);
+        editor->m_editor = this;
+    }
+}
+
+void SceneEditor::add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool) {
+    assert(editor_tool);
+    if (m_editor_tools.find(editor_tool->get_name()) == m_editor_tools.end()) {
+        m_editor_tools.emplace(editor_tool->get_name(), editor_tool);
+        editor_tool->m_editor = this;
+    }
+}
+
+std::shared_ptr<EditorTool> SceneEditor::get_editor_tool(std::string_view name) {
+    auto itr = m_editor_tools.find(name.data());
+    std::shared_ptr<EditorTool> tool{};
+    if (itr != m_editor_tools.end()) {
+        tool = itr->second;
+    }
+    return tool;
 }
 
 void SceneEditor::show_scene_tree_widget(int id, Node* node) {
@@ -166,7 +200,7 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     // Disable the default "open on single-click behavior" + set Selected flag according to our selection.
     // To alter selection we use IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow doesn't alter selection.
     ImGuiTreeNodeFlags node_flags = base_flags;
-    const bool is_selected = selected_node == node;
+    const bool is_selected = m_selected_node == node;
     if (is_selected)
         node_flags |= ImGuiTreeNodeFlags_Selected;
 
@@ -200,9 +234,14 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
         // Update selection state
         // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
         if (is_selected)
-            selected_node = nullptr;
+            m_selected_node = nullptr;
         else
-            selected_node = node;
+            m_selected_node = node;
+
+        for (auto& [name, tool] : m_editor_tools) {
+            tool->on_selected_node(m_selected_node);
+        }
+
         // if (ImGui::GetIO().KeyCtrl)
         //     selection_mask ^= (1 << node_clicked);          // CTRL+click to toggle
         // else //if (!(selection_mask & (1 << node_clicked))) // Depending on selection behavior you want, may want to preserve selection when clicking on item that is part of the selection

@@ -30,6 +30,12 @@ public:
     const std::size_t uuid_hash;
 };
 
+template<typename T>
+class ObjectT : public Object {
+public:
+    // using get_ref<T>();
+};
+
 class engine_exception : public std::exception {
 public:
     engine_exception(std::string description) noexcept;

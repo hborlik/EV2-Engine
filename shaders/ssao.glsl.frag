@@ -17,7 +17,7 @@ layout (std140, binding = 1) uniform Samples {
 };
 
 void main() {
-    const vec2 noiseScale = textureSize(gPosition, 0) * 0.25;
+    const vec2 noiseScale = textureSize(gPosition, 0) * (1 + 1.0 / 3.0);
     vec3 fragPos   = texture(gPosition, tex_coord).xyz;
     vec3 normal    = normalize((View * vec4(texture(gNormal, tex_coord).rgb, 0)).xyz);
 

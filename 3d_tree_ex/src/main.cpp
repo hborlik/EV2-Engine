@@ -22,6 +22,7 @@
 #include <physics.hpp>
 #include <scene/visual_nodes.hpp>
 #include <pcg/procedural_grid.hpp>
+#include <pcg/sc_wfc.hpp>
 #include <debug.h>
 #include <game.h>
 
@@ -92,9 +93,14 @@ public:
     void initialize() {
         set_current_scene(Node::create_node<Node>("scene0"));
 
-        scene_editor.add_custom_node_editor(std::make_shared<ev2::ProceduralGridEditor>());
+        // add scene editors
+        scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::ProceduralGridEditor>());
+        scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::SCWFCNodeEditor>());
 
-        get_current_scene()->create_child_node<ev2::ProceduralGrid>("procedural grid");
+        scene_editor.add_custom_editor_tool(std::make_shared<ev2::pcg::SCWFCEditor>());
+
+        get_current_scene()->create_child_node<ev2::pcg::ProceduralGrid>("procedural grid");
+        get_current_scene()->create_child_node<ev2::pcg::SCWFC>("SCWFC");
 
         game = std::make_unique<GameState>(this);
 
