@@ -101,10 +101,10 @@ void SceneEditor::editor(Node* scene) {
         }
 
         for (auto& [name, tool] : m_editor_tools) {
-                if (tool->m_is_open) {
-                    tool->show_editor_tool();
-                }
+            if (tool->m_is_open) {
+                tool->show_editor_tool();
             }
+        }
 
         ImGui::EndMainMenuBar();
     }
@@ -136,7 +136,7 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
         ImGui::Text("Node %s (%s)", m_selected_node->name.c_str(), m_selected_node->get_path().c_str());
         ImGui::Separator();
 
-        show_node_editor_widget(m_selected_node);
+        show_node_editor_widget(m_selected_node.get());
 
         ImGui::EndChild();
         
@@ -200,7 +200,7 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     // Disable the default "open on single-click behavior" + set Selected flag according to our selection.
     // To alter selection we use IsItemClicked() && !IsItemToggledOpen(), so clicking on an arrow doesn't alter selection.
     ImGuiTreeNodeFlags node_flags = base_flags;
-    const bool is_selected = m_selected_node == node;
+    const bool is_selected = m_selected_node.get() == node;
     if (is_selected)
         node_flags |= ImGuiTreeNodeFlags_Selected;
 
@@ -236,10 +236,10 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
         if (is_selected)
             m_selected_node = nullptr;
         else
-            m_selected_node = node;
+            m_selected_node = Ref<Node>{node};
 
         for (auto& [name, tool] : m_editor_tools) {
-            tool->on_selected_node(m_selected_node);
+            tool->on_selected_node(m_selected_node.get());
         }
 
         // if (ImGui::GetIO().KeyCtrl)

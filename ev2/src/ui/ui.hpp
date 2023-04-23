@@ -55,8 +55,8 @@ public:
     void show_scene_explorer(Node* scene, bool* p_open);
     void show_node_editor_widget(Node* node);
 
-    void set_selected_node(Node* node) noexcept {m_selected_node = node;}
-    Node* get_selected_node() const noexcept {return m_selected_node;}
+    void set_selected_node(Node* node) noexcept {m_selected_node = Ref<Node>{node};}
+    Node* get_selected_node() const noexcept {return Ref<Node>{m_selected_node}.get();}
 
     void add_custom_node_editor(std::shared_ptr<NodeEditor> editor);
 
@@ -68,7 +68,7 @@ private:
     void show_transform_editor(Node* node);
 
 private:
-    Node* m_selected_node;
+    Ref<Node> m_selected_node;
 
     bool m_scene_editor_open = false;
     bool m_show_settings = false;

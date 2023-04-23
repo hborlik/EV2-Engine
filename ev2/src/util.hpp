@@ -101,7 +101,7 @@ public:
     non_copyable& operator=(const non_copyable&) = delete; // non copyable
 
     non_copyable(non_copyable&& o) : non_copyable() { swap(*this, o); }
-    non_copyable& operator=(non_copyable&& o) { swap(*this, o); }
+    non_copyable& operator=(non_copyable&& o) { swap(*this, o); return *this; }
 
     non_copyable& operator=(const T& o) noexcept {v = o;} // assignment from underlying type
 

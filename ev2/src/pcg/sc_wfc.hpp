@@ -18,9 +18,9 @@
 
 namespace ev2::pcg {
 
-class renderer::Drawable;
+class SCWFCGraphNode;
 
-struct SCWFCObjectMetadata {
+struct SCWFCObjectMetadataDB {
     std::string name;
     std::string asset_path;
     std::unordered_map<std::string, float> properties;
@@ -33,10 +33,6 @@ struct SCWFCObjectMetadata {
         }
         return default_val;
     }
-};
-
-class SCWFCObjectDatabase {
-public:
 
     std::shared_ptr<renderer::Drawable> get_model_for_id(int id);
 
@@ -45,7 +41,8 @@ public:
     std::unordered_map<int, std::shared_ptr<renderer::Drawable>> m_meshes{};
 };
 
-std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& path);
+
+std::unique_ptr<SCWFCObjectMetadataDB> load_object_database(const std::string& path);
 
 class SCWFC : public Node {
 public:
@@ -60,7 +57,7 @@ public:
 
     void sc_spawn_points(int n);
 
-    void sc_propagate_from(Ref<Node> node);
+    void spawn_node(const glm::vec3& local_pos);
 
     void reset();
 
@@ -69,12 +66,12 @@ public:
     void on_child_removed(Ref<Node> child) override;
 
 private:
+    friend class SCWFCEditor;
     std::optional<glm::vec3> does_intersect_any(const Sphere& sph);
 
 private:
     struct Data;
     std::shared_ptr<Data> m_data{};
-    std::shared_ptr<SCWFCObjectDatabase> obj_db;
 };
 
 /**
@@ -93,6 +90,8 @@ public:
         return "SCWFCEditor";
     }
 
+    void load_obj_db();
+
     void on_selected_node(Node* node) override {
         if (node) {
             Ref<SCWFC> n = node->get_ref<SCWFC>();
@@ -100,8 +99,11 @@ public:
         }
     }
 
+    void sc_propagate_from(SCWFCGraphNode* node);
+
 private:
     Ref<SCWFC> m_scwfc_node{};
+    std::shared_ptr<SCWFCObjectMetadataDB> obj_db;
 };
 
 }

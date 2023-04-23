@@ -22,19 +22,17 @@
 namespace ev2 {
 
 class Object : public ReferenceCounted<Object> {
-public:
+protected:
     Object();
-    virtual ~Object() = default;
+public:
+    virtual ~Object();
 
     const std::string uuid;
     const std::size_t uuid_hash;
 };
 
 template<typename T>
-class ObjectT : public Object {
-public:
-    // using get_ref<T>();
-};
+class ObjectT : public Object {};
 
 class engine_exception : public std::exception {
 public:

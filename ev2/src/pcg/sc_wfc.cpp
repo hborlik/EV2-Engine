@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include <pcg/wfc.hpp>
+#include <pcg/distributions.hpp>
 #include <renderer/renderer.hpp>
 #include <ui/imgui.hpp>
 #include <resource.hpp>
@@ -46,11 +47,11 @@ private:
     SCWFC* m_scwfc = nullptr;
 };
 
-std::shared_ptr<renderer::Drawable> SCWFCObjectDatabase::get_model_for_id(int id) {
+std::shared_ptr<renderer::Drawable> SCWFCObjectMetadataDB::get_model_for_id(int id) {
     return m_meshes.at(id);
 }
 
-void SCWFCObjectDatabase::add_model(std::shared_ptr<renderer::Drawable> d, int id) {
+void SCWFCObjectMetadataDB::add_model(std::shared_ptr<renderer::Drawable> d, int id) {
     auto [_it, ins] = m_meshes.emplace(std::make_pair(id, d));
     if (!ins)
         throw std::runtime_error{"model already inserted for " + std::to_string(id)};
@@ -58,15 +59,15 @@ void SCWFCObjectDatabase::add_model(std::shared_ptr<renderer::Drawable> d, int i
 
 
 
-std::unique_ptr<SCWFCObjectDatabase> load_object_database(const std::string& path) {
+std::unique_ptr<SCWFCObjectMetadataDB> load_object_database(const std::string& path) {
     using json = nlohmann::json;
-    auto db = std::make_unique<SCWFCObjectDatabase>();
+    auto db = std::make_unique<SCWFCObjectMetadataDB>();
 
     std::string json_str = io::read_file(path);
 
     json j = json::parse(json_str);
     for (auto& entry : j) {
-        SCWFCObjectMetadata metadata;
+        SCWFCObjectMetadataDB metadata;
         entry.get_to(metadata);
     }
 
@@ -98,33 +99,24 @@ void SCWFC::sc_spawn_points(int n) {
 
 }
 
-void SCWFC::sc_propagate_from(Ref<Node> node) {
-    auto nnode = create_child_node<SCWFCGraphNode>(node->name + "+", this);
-    nnode->set_model(obj_db->get_model_for_id(-1));
-    nnode->set_position(node->get_position() + glm::vec3{1, 0, 1});
+void SCWFC::spawn_node(const glm::vec3& local_pos) {
+    auto nnode = create_child_node<SCWFCGraphNode>("SCWFCGraphNode", this);
+    nnode->set_position(local_pos);
 }
 
 void SCWFC::reset() {
+    // for (auto& c : get_children()) {
+    //     c->destroy();
+    // }
+    for (auto c : get_children())
+        c->destroy();
+
     m_data = std::make_shared<Data>();
 
-    auto nnode = create_child_node<SCWFCGraphNode>("SC seed node", this);
+    spawn_node({});
 }
 
 void SCWFC::on_init() {
-    auto cube0 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
-
-    auto cube1 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
-    cube1->materials[0]->diffuse = glm::vec3{1};
-
-    auto cube2 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
-    cube2->materials[0]->diffuse = glm::vec3{1, 0, 0};
-
-    obj_db = std::make_shared<SCWFCObjectDatabase>();
-
-    obj_db->add_model(cube0, 10);
-    obj_db->add_model(cube1, 11);
-    obj_db->add_model(cube2, -1);
-
     reset();
 }
 
@@ -167,14 +159,43 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::Text("Selected %s", m_scwfc_node->name.c_str());
     
         if (ImGui::Button("Spawn")) {
-            if (m_scwfc_node)
-                m_scwfc_node->sc_propagate_from(m_editor->get_selected_node()->get_ref<Node>());
+            sc_propagate_from(dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node()));
+        }
+        if (ImGui::Button("Reset")) {
+            m_scwfc_node->reset();
+        }
+        if (ImGui::Button("LoadDB")) {
+            load_obj_db();
         }
     } else {
         ImGui::Text("Please select a SCWFC node");
     }
 
     ImGui::End();
+}
+
+void SCWFCEditor::load_obj_db() {
+    auto cube0 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
+
+    auto cube1 = ResourceManager::get_singleton().get_model(fs::path("models") / "Wagon.obj", false);
+    // cube1->materials[0]->diffuse = glm::vec3{1};
+
+    auto cube2 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
+    cube2->materials[0]->diffuse = glm::vec3{1, 0, 0};
+
+    obj_db = std::make_shared<SCWFCObjectMetadataDB>();
+
+    obj_db->add_model(cube0, 10);
+    obj_db->add_model(cube1, 11);
+    obj_db->add_model(cube2, -1);
+}
+
+void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
+    if (node && m_scwfc_node && obj_db) {
+        auto nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>(node->name + "+", m_scwfc_node.get());
+        nnode->set_model(obj_db->get_model_for_id(-1));
+        nnode->set_position(node->get_position() + glm::vec3{1, 0, 1});
+    }
 }
 
 }

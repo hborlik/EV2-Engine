@@ -33,6 +33,12 @@ Object::Object() :
 
 }
 
+Object::~Object() {
+#ifndef NDEBUG
+    Engine::log_t<Object>("Object " + uuid + " deconstructed");
+#endif
+}
+
 engine_exception::engine_exception(std::string description) noexcept : description{std::move(description)} {
 
 }

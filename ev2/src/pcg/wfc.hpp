@@ -704,7 +704,7 @@ public:
      */
     void collapse(DGraphNode* node) {
         assert(node != nullptr);
-        assert(node->domain.size() >= 1); // TODO need to backtrack here, and not crash the program
+        assert(node->domain.size() >= 1); // TODO backtrack here
         static std::random_device rd;
         static std::mt19937 gen(rd());
         if (node->domain.size() == 1) {

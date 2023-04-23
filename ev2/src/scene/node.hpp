@@ -21,10 +21,9 @@ namespace ev2 {
 class SceneTree;
 
 class Node : public ObjectT<Node> {
-protected:
+public:
     Node() = default;
     explicit Node(const std::string& name) : name{name} {}
-public:
     virtual ~Node() = default;
 
     template<typename T, typename... Args>
@@ -107,7 +106,7 @@ public:
 
     size_t get_n_children() const noexcept {return children.size();}
 
-    auto& get_children() {return children;}
+    std::vector<Ref<Node>> get_children() {return {children.begin(), children.end()};}
     const auto& get_children() const {return children;}
 
     Ref<Node> get_parent() const {
