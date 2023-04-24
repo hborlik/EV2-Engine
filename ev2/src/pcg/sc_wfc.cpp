@@ -32,6 +32,8 @@ public:
 
     const Sphere& get_bounding_sphere() const noexcept {return m_bounding_sphere;}
 
+    void set_radius(float r) noexcept {m_bounding_sphere.radius = r;}
+
 private:
     SCWFC* m_scwfc = nullptr;
     Sphere m_bounding_sphere{};
@@ -99,7 +101,10 @@ void SCWFC::on_init() {
 }
 
 void SCWFC::on_child_removed(Ref<Node> child) {
-
+    if (auto n = child.ref_cast<SCWFCGraphNode>()) {
+        // remove node from graph
+        m_data->graph.remove_node(static_cast<wfc::DGraphNode*>(n.get()));
+    }
 }
 
 void SCWFC::on_child_added(Ref<Node> child, int index) {
@@ -179,7 +184,7 @@ void SCWFCEditor::show_editor_tool() {
             wfc_solve(steps);
         }
         if (m_internal && m_internal->solver.next_node == nullptr) {
-            if (ImGui::Button("Select current node as solver start")) {
+            if (ImGui::Button("Set current node as solver start")) {
                 m_internal->solver.next_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
             }
         }
@@ -228,6 +233,8 @@ void SCWFCEditor::on_selected_node(Node* node) {
 }
 
 void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
+    const float radius = 2.f;
+    const float n_radius = 5.f;
     if (m_scwfc_node && obj_db) {
         // pick a random spawn location
         const glm::vec2 pos = uniform_disk(uniform2d());
@@ -235,7 +242,7 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
 
         // if spawning on an existing node
         if (node) {
-            Sphere sph({}, 1);
+            Sphere sph({}, radius);
             sph.center = node->get_position() + offset;
             auto o_offset = m_scwfc_node->does_intersect_any(sph);
             if (o_offset) offset = *o_offset;
@@ -243,6 +250,7 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
         }
 
         auto nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SCWFCGraphNode", m_scwfc_node.get());
+        nnode->set_radius(radius);
         nnode->set_model(obj_db->get_model_for_id(-1));
         nnode->set_position(offset);
 
@@ -254,7 +262,7 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
         nnode->domain = dest;
 
         // attach new node to all nearby neighbors
-        m_scwfc_node->update_all_adjacencies(nnode, 5.f);
+        m_scwfc_node->update_all_adjacencies(nnode, n_radius);
 
         m_editor->set_selected_node(nnode.get());
     }
@@ -264,13 +272,20 @@ void SCWFCEditor::wfc_solve(int steps) {
     if (m_scwfc_node && m_internal) {
         m_internal->solver.graph = &m_scwfc_node->m_data->graph;
         int cnt = 0;
+
         auto c_callback = [this](wfc::DGraphNode* node) -> void {
             auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
             assert(s_node);
-            s_node->set_model(
-                obj_db->get_model_for_id(node->domain[0]->cell_value.val)
-            );
+            if (node->domain.size() == 0) {
+                s_node->destroy();
+            } else {
+                auto& aabb = obj_db->get_model_for_id(node->domain[0]->cell_value.val)->bounding_box;
+                s_node->set_model(
+                    obj_db->get_model_for_id(node->domain[0]->cell_value.val)
+                );
+            }
         };
+        
         while(m_internal->solver.can_continue() && cnt++ < steps) {
             m_internal->solver.step_wfc(c_callback);
         }

@@ -155,6 +155,13 @@ public:
     virtual void remove_edge(T* a, T* b) = 0;
 
     /**
+     * @brief Remove a node from the graph
+     * 
+     * @param a 
+     */
+    virtual void remove_node(T* a) = 0;
+
+    /**
      * @brief check if nodes are adjacent, returns 0.f if not
      *
      * @param a
@@ -209,8 +216,8 @@ public:
     void add_edge(T* a, T* b, float v) override {
         assert(a != nullptr && b != nullptr);
         assert(m_is_directed || a != b);
-        internal_node* a_i = add_node(a);
-        internal_node* b_i = add_node(b);
+        internal_node* a_i = add_i_node(a);
+        internal_node* b_i = add_i_node(b);
 
         // enforce populating only the upper triangular matrix
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
@@ -240,38 +247,35 @@ public:
     void remove_edge(T* a, T* b) override {
         assert(a != nullptr && b != nullptr);
         assert(m_is_directed || a != b);
-        internal_node* a_i = get_node(a);
-        internal_node* b_i = get_node(b);
+        internal_node* a_i = get_i_node(a);
+        internal_node* b_i = get_i_node(b);
 
         if (!(a_i && b_i))
             return;
 
-        // enforce populating only the upper triangular matrix
-        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
-            std::swap(a_i, b_i);
-            std::swap(a, b);
+        remove_i_edge(a_i, b_i);
+    }
+
+    void remove_node(T* a) override {
+        assert(a != nullptr);
+        internal_node* a_i = get_i_node(a);
+
+        if (!a_i) // not in graph
+            return;
+
+        for (auto& n : a_i->adjacent_nodes) {
+            internal_node* b_i = get_i_node(n);
+            assert(b_i);
+            remove_i_edge(a_i, b_i);
+            if (m_is_directed)
+                remove_i_edge(b_i, a_i);
         }
-
-        coord c{ a_i->mat_coord, b_i->mat_coord };
-
-        if (sparse_adjacency_map.find(c) == sparse_adjacency_map.end())
-            return; // not added
-
-        // erase element from adjacency
-        auto& vec = a_i->adjacent_nodes;
-        vec.erase(std::remove(vec.begin(), vec.end(), b), vec.end());
-        if (!m_is_directed) {
-            auto& vecb = b_i->adjacent_nodes;
-            vecb.erase(std::remove(vecb.begin(), vecb.end(), a), vecb.end());
-        }
-
-        sparse_adjacency_map.erase(c);
     }
 
     float adjacent(T* a, T* b) const override {
         assert(a != nullptr && b != nullptr);
-        const internal_node* a_i = get_node(a);
-        const internal_node* b_i = get_node(b);
+        const internal_node* a_i = get_i_node(a);
+        const internal_node* b_i = get_i_node(b);
 
         if (a_i == nullptr || b_i == nullptr)
             return 0.f;
@@ -293,7 +297,7 @@ public:
     std::vector<T*> adjacent_nodes(T* a) const override {
         assert(a != nullptr);
         std::vector<T*> output{};
-        const internal_node* a_i = get_node(a);
+        const internal_node* a_i = get_i_node(a);
 
         if (a_i == nullptr)
             return output;
@@ -313,7 +317,7 @@ public:
     }
 
 private:
-    internal_node* add_node(T* node) {
+    internal_node* add_i_node(T* node) {
         internal_node* i_node = nullptr;
         if (node) {
             auto itr = node_map.find(node->node_id);
@@ -330,7 +334,7 @@ private:
         return i_node;
     }
 
-    const internal_node* get_node(T* node) const {
+    const internal_node* get_i_node(T* node) const {
         const internal_node* i_node = nullptr;
         if (node) {
             auto itr = node_map.find(node->node_id);
@@ -340,8 +344,31 @@ private:
         return i_node;
     }
 
-    internal_node* get_node(T* node) {
-        return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_node(node));
+    internal_node* get_i_node(T* node) {
+        return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_i_node(node));
+    }
+
+    void remove_i_edge(internal_node* a_i, internal_node* b_i) {
+        // enforce populating only the upper triangular matrix
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
+            std::swap(a_i, b_i);
+        }
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        auto sam_itr = sparse_adjacency_map.find(c);
+        if (sam_itr == sparse_adjacency_map.end())
+            return; // not added
+
+        // erase element from adjacency
+        auto& vec = a_i->adjacent_nodes;
+        vec.erase(std::remove(vec.begin(), vec.end(), b_i->node), vec.end());
+        if (!m_is_directed) {
+            auto& vecb = b_i->adjacent_nodes;
+            vecb.erase(std::remove(vecb.begin(), vecb.end(), a_i->node), vecb.end());
+        }
+
+        sparse_adjacency_map.erase(sam_itr);
     }
 
     int get_next_mat_coord() noexcept { return next_mat_coord++; }
@@ -419,6 +446,10 @@ public:
     }
 
     void remove_edge(T* a, T* b) override {
+        throw std::runtime_error("Not implemented");
+    }
+
+    void remove_node(T* a) override {
         throw std::runtime_error("Not implemented");
     }
 
@@ -714,7 +745,7 @@ public:
             DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
 
-            if (n->domain.size() <= 1) // skip solved nodes
+            if (n->domain.size() <= 1 && !f) // skip solved nodes
                 continue;
 
             if (observe(n) || f) { // only update neighbors if the domain changed
