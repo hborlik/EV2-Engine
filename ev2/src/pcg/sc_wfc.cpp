@@ -112,12 +112,14 @@ void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode>& n, float radius) {
     Sphere s = n->get_bounding_sphere();
     s.radius = radius;
     for (auto& c : get_children()) {
-        auto graph_node = c.ref_cast<SCWFCGraphNode>();
-        if (graph_node && c != n) {
-            if (intersect(graph_node->get_bounding_sphere(), s)) {
-                m_data->graph.add_edge((wfc::DGraphNode*)n.get(), (wfc::DGraphNode*)c.get(), 1);
+        auto c_wfc_node = c.ref_cast<SCWFCGraphNode>();
+        if (c_wfc_node && c_wfc_node != n) {
+            auto* n_graph_node = static_cast<wfc::DGraphNode*>(n.get());
+            auto* c_graph_node = static_cast<wfc::DGraphNode*>(c_wfc_node.get());
+            if (intersect(c_wfc_node->get_bounding_sphere(), s)) {
+                m_data->graph.add_edge(n_graph_node, c_graph_node, 1);
             } else {
-                m_data->graph.remove_edge((wfc::DGraphNode*)n.get(), (wfc::DGraphNode*)c.get());
+                m_data->graph.remove_edge(n_graph_node, c_graph_node);
             }
         }
     }
@@ -176,7 +178,7 @@ void SCWFCEditor::show_editor_tool() {
         if (ImGui::Button("Solve")) {
             wfc_solve(steps);
         }
-        if (m_internal->solver.next_node == nullptr) {
+        if (m_internal && m_internal->solver.next_node == nullptr) {
             if (ImGui::Button("Select current node as solver start")) {
                 m_internal->solver.next_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
             }
@@ -212,6 +214,7 @@ void SCWFCEditor::load_obj_db() {
     wfc::Pattern PA{wfc::Value{10}, {wfc::Value{11}, wfc::Value{11}}};
     wfc::Pattern PB{wfc::Value{11}, {wfc::Value{10}}};
 
+    m_internal = std::make_shared<SCWFCEditor::Data>();
     m_internal->patterns = {PA, PB};
 }
 
@@ -220,17 +223,17 @@ void SCWFCEditor::on_selected_node(Node* node) {
         Ref<SCWFC> n = node->get_ref<SCWFC>();
         if (n) {
             m_scwfc_node = n;
-            m_internal = std::make_shared<SCWFCEditor::Data>();
-            m_internal->solver.graph = &m_scwfc_node->m_data->graph;
         }
     }
 }
 
 void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
     if (m_scwfc_node && obj_db) {
-
+        // pick a random spawn location
         const glm::vec2 pos = uniform_disk(uniform2d());
         glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
+
+        // if spawning on an existing node
         if (node) {
             Sphere sph({}, 1);
             sph.center = node->get_position() + offset;
@@ -241,24 +244,25 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
 
         auto nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SCWFCGraphNode", m_scwfc_node.get());
         nnode->set_model(obj_db->get_model_for_id(-1));
+        nnode->set_position(offset);
 
-
+        // populate domain of new node 
         std::vector<const wfc::Pattern*> dest(m_internal->patterns.size());
         std::transform(m_internal->patterns.begin(), m_internal->patterns.end(), dest.begin(),
             [](auto &elem){ return &elem; }
         );
         nnode->domain = dest;
 
-        m_editor->set_selected_node(nnode.get());
-
-        nnode->set_position(offset);
-
+        // attach new node to all nearby neighbors
         m_scwfc_node->update_all_adjacencies(nnode, 5.f);
+
+        m_editor->set_selected_node(nnode.get());
     }
 }
 
 void SCWFCEditor::wfc_solve(int steps) {
-    if (m_scwfc_node) {
+    if (m_scwfc_node && m_internal) {
+        m_internal->solver.graph = &m_scwfc_node->m_data->graph;
         int cnt = 0;
         auto c_callback = [this](wfc::DGraphNode* node) -> void {
             auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);

@@ -713,6 +713,10 @@ public:
         while (!propagation_stack.empty()) {
             DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
+
+            if (n->domain.size() <= 1) // skip solved nodes
+                continue;
+
             if (observe(n) || f) { // only update neighbors if the domain changed
                 f = false;
                 for (auto& neighbor_n : graph->adjacent_nodes(n)) {
@@ -721,8 +725,9 @@ public:
                         propagation_stack.push(neighbor);
                 }
             }
+            
             if (float en = n->entropy(); 
-                n != node && n->domain.size() > 1 && 
+                n != node && 
                 (!min_e || en < entropy)) {
                 
                 min_e = n;
@@ -758,7 +763,10 @@ public:
      */
     void collapse(DGraphNode* node) {
         assert(node != nullptr);
-        assert(node->domain.size() >= 1); // TODO backtrack here
+        
+        if (node->domain.size() == 0)
+            return;
+
         static std::random_device rd;
         static std::mt19937 gen(rd());
         if (node->domain.size() == 1) {
