@@ -59,6 +59,31 @@ void sparse_test_add() {
     adjacent_abc(&s);
 }
 
+void sparse_test_remove() {
+    std::cout << __FUNCTION__ << std::endl;
+    SparseGraph<GraphNode> s{};
+
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+
+    s.add_edge(n_a.get(), n_b.get(), 1.1f);
+    s.add_edge(n_b.get(), n_c.get(), 1.2f);
+
+    s.remove_edge(n_a.get(), n_b.get());
+
+    assert(s.adjacent(a, b) == 0.f);
+    assert(s.adjacent(b, a) == 0.f);
+    assert(s.adjacent(b, c) == 1.2f);
+    assert(s.adjacent(c, b) == 1.2f);
+    assert(s.adjacent(a, c) == 0.f);
+    assert(s.adjacent(c, a) == 0.f);
+}
+
 void dense_test_add() {
     std::cout << __FUNCTION__ << std::endl;
     DenseGraph<GraphNode> s{4};
@@ -492,6 +517,7 @@ void wfc_solver_grid0() {
 int main() {
     sparse_test_empty();
     sparse_test_add();
+    sparse_test_remove();
     sparse_directed_add();
 
     dense_test_empty();

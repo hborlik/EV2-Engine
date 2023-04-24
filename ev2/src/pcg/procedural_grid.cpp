@@ -65,7 +65,7 @@ void ProceduralGrid::on_init() {
     auto cube2 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
     cube2->materials[0]->diffuse = glm::vec3{1, 0, 0};
 
-    obj_db = std::make_shared<SCWFCObjectDatabase>();
+    obj_db = std::make_shared<SCWFCObjectMetadataDB>();
 
     obj_db->add_model(cube0, 10);
     obj_db->add_model(cube1, 11);

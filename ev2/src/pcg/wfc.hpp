@@ -8,6 +8,7 @@
 #define WFC_H
 
 #include <vector>
+#include <functional>
 #include <random>
 #include <list>
 #include <queue>
@@ -146,6 +147,14 @@ public:
     virtual void add_edge(T* a, T* b, float v) = 0;
 
     /**
+     * @brief add edge
+     *
+     * @param a
+     * @param b
+     */
+    virtual void remove_edge(T* a, T* b) = 0;
+
+    /**
      * @brief check if nodes are adjacent, returns 0.f if not
      *
      * @param a
@@ -214,18 +223,49 @@ public:
         if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
             return; // already added
 
+        if (!m_is_directed && c.x == c.y)
+            return; // no self loops (diagonals)
+        
         // build adjacency information
         a_i->adjacent_nodes.push_back(b);
         if (!m_is_directed)
             b_i->adjacent_nodes.push_back(a);
 
-        if (!m_is_directed && c.x == c.y)
-            return; // no self loops (diagonals)
-
         auto& sam = sparse_adjacency_map[c];
         sam.i_nodeA = a_i;
         sam.i_nodeB = b_i;
         sam.w = v;
+    }
+
+    void remove_edge(T* a, T* b) override {
+        assert(a != nullptr && b != nullptr);
+        assert(m_is_directed || a != b);
+        internal_node* a_i = get_node(a);
+        internal_node* b_i = get_node(b);
+
+        if (!(a_i && b_i))
+            return;
+
+        // enforce populating only the upper triangular matrix
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
+            std::swap(a_i, b_i);
+            std::swap(a, b);
+        }
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        if (sparse_adjacency_map.find(c) == sparse_adjacency_map.end())
+            return; // not added
+
+        // erase element from adjacency
+        auto& vec = a_i->adjacent_nodes;
+        vec.erase(std::remove(vec.begin(), vec.end(), b), vec.end());
+        if (!m_is_directed) {
+            auto& vecb = b_i->adjacent_nodes;
+            vecb.erase(std::remove(vecb.begin(), vecb.end(), a), vecb.end());
+        }
+
+        sparse_adjacency_map.erase(c);
     }
 
     float adjacent(T* a, T* b) const override {
@@ -300,6 +340,10 @@ private:
         return i_node;
     }
 
+    internal_node* get_node(T* node) {
+        return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_node(node));
+    }
+
     int get_next_mat_coord() noexcept { return next_mat_coord++; }
 
     friend std::ostream& operator<< (std::ostream& out, const SparseGraph<T>& graph) {
@@ -372,6 +416,10 @@ public:
             return; // no self loops (diagonals)
 
         m_adjacency_matrix[index] = v;
+    }
+
+    void remove_edge(T* a, T* b) override {
+        throw std::runtime_error("Not implemented");
     }
 
     /**
@@ -636,12 +684,15 @@ public:
 class WFCSolver
 {
 public:
-    WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {
-        assert(graph != nullptr);
-    }
+    WFCSolver() = default;
+    WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {}
 
-    void step_wfc() {
+    void step_wfc(const std::function<void(DGraphNode*)> &collapse_callback = {}) {
         collapse(next_node);
+
+        if (collapse_callback)
+            collapse_callback(next_node);
+        
         next_node = propagate(next_node);
     }
 
@@ -670,7 +721,10 @@ public:
                         propagation_stack.push(neighbor);
                 }
             }
-            if (float en = n->entropy(); n != node && n->domain.size() > 1 && (!min_e || en < entropy)) {
+            if (float en = n->entropy(); 
+                n != node && n->domain.size() > 1 && 
+                (!min_e || en < entropy)) {
+                
                 min_e = n;
                 entropy = en;
             }

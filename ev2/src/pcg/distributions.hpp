@@ -13,7 +13,11 @@
 
 #include <glm/glm.hpp>
 
-namespace pcg {
+namespace ev2::pcg {
+
+glm::vec2 uniform2d() {
+    return {(float)std::rand() / RAND_MAX, (float)std::rand() / RAND_MAX};
+}
 
 glm::vec2 uniform_disk(const glm::vec2& uv) {
     float r = std::sqrt(uv.x);

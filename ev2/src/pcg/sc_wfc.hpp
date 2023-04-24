@@ -48,28 +48,20 @@ class SCWFC : public Node {
 public:
     explicit SCWFC(std::string name);
 
-    /**
-     * @brief solve WFC domains steps times 
-     * 
-     * @param steps steps to run the solver
-     */
-    void wfc_solve(int steps);
-
-    void sc_spawn_points(int n);
-
-    void spawn_node(const glm::vec3& local_pos);
-
     void reset();
 
     void on_init() override;
 
     void on_child_removed(Ref<Node> child) override;
 
-private:
-    friend class SCWFCEditor;
+    void on_child_added(Ref<Node> child, int index) override;
+
+    void update_all_adjacencies(Ref<class SCWFCGraphNode>& n, float radius);
+
     std::optional<glm::vec3> does_intersect_any(const Sphere& sph);
 
 private:
+    friend class SCWFCEditor;
     struct Data;
     std::shared_ptr<Data> m_data{};
 };
@@ -92,18 +84,17 @@ public:
 
     void load_obj_db();
 
-    void on_selected_node(Node* node) override {
-        if (node) {
-            Ref<SCWFC> n = node->get_ref<SCWFC>();
-            if (n) m_scwfc_node = n;
-        }
-    }
+    void on_selected_node(Node* node) override;
 
     void sc_propagate_from(SCWFCGraphNode* node);
 
+    void wfc_solve(int steps);
+
 private:
+    struct Data;
+    std::shared_ptr<Data> m_internal{};
     Ref<SCWFC> m_scwfc_node{};
-    std::shared_ptr<SCWFCObjectMetadataDB> obj_db;
+    std::shared_ptr<SCWFCObjectMetadataDB> obj_db{};
 };
 
 }
