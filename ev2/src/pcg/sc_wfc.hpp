@@ -58,7 +58,18 @@ public:
 
     void update_all_adjacencies(Ref<class SCWFCGraphNode>& n, float radius);
 
-    std::optional<glm::vec3> does_intersect_any(const Sphere& sph);
+    glm::vec3 sphere_repulsion(const Sphere& sph) const;
+
+    /**
+     * @brief Check if a node intersects any of its adjacent nodes in the scene.
+     *  Note that this does not check for intersections among all children, only those nodes
+     *  added by update_all_adjacencies()
+     * 
+     * @param n 
+     * @return true 
+     * @return false 
+     */
+    bool intersects_any_solved_neighbor(const Ref<class SCWFCGraphNode>& n);
 
 private:
     friend class SCWFCEditor;
@@ -86,7 +97,7 @@ public:
 
     void on_selected_node(Node* node) override;
 
-    void sc_propagate_from(SCWFCGraphNode* node);
+    void sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
 
     void wfc_solve(int steps);
 

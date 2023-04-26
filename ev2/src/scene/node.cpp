@@ -30,6 +30,9 @@ void Node::remove_child(Ref<Node> node) {
 void Node::destroy() {
     if (m_is_destroyed)
         return;
+
+    increment(); // ensure the node is not deconstructed while we are removing it from the scene
+
     // fast remove and destroy all children
     for (auto& c : children) {
         c->remove_from_parent(this); // prevent child from calling remove_child and invalidating children list
@@ -38,7 +41,7 @@ void Node::destroy() {
     children = {};
 
     if (parent)
-        parent->remove_child(this->get_ref().ref_cast<Node>());
+        parent->remove_child(this->get_ref().ref_cast<Node>()); // has the potential to call deconstructor without increment() above
 
     if (scene_tree)
         node_propagate_exit_tree();
@@ -49,6 +52,8 @@ void Node::destroy() {
     on_destroy();
 
     m_is_destroyed = true;
+
+    decrement(); // possibly deconstruct
 }
 
 void Node::node_propagate_update(float dt) {

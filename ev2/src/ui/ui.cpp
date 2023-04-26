@@ -234,13 +234,9 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
         // Update selection state
         // (process outside of tree loop to avoid visual inconsistencies during the clicking frame)
         if (is_selected)
-            m_selected_node = nullptr;
+            select_node({nullptr});
         else
-            m_selected_node = Ref<Node>{node};
-
-        for (auto& [name, tool] : m_editor_tools) {
-            tool->on_selected_node(m_selected_node.get());
-        }
+            select_node(Ref<Node>{node});
 
         // if (ImGui::GetIO().KeyCtrl)
         //     selection_mask ^= (1 << node_clicked);          // CTRL+click to toggle
@@ -280,6 +276,16 @@ void SceneEditor::show_transform_editor(Node* node) {
         node->set_scale(v);
     }
 
+}
+
+void SceneEditor::select_node(const Ref<Node>& n) {
+    m_selected_node = n;
+
+    if (m_selected_node) {
+        for (auto& [name, tool] : m_editor_tools) {
+            tool->on_selected_node(m_selected_node.get());
+        }
+    }
 }
 
 

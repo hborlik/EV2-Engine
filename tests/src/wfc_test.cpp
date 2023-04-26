@@ -52,6 +52,134 @@ void adjacent_abc(Graph<GraphNode>* s) {
     assert(s->adjacent(c, a) == 0.f);
 }
 
+void add_remove_abc(Graph<GraphNode>* s) {
+    assert(s->is_directed() == false);
+
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+
+    s->add_edge(n_a.get(), n_b.get(), 1.1f);
+    s->remove_edge(n_a.get(), n_b.get());
+
+    s->add_edge(n_b.get(), n_c.get(), 1.2f);
+
+    assert(s->adjacent(a, b) == 0.f);
+    assert(s->adjacent(b, a) == 0.f);
+
+    assert(s->adjacent(b, c) == 1.2f);
+    assert(s->adjacent(c, b) == 1.2f);
+
+    assert(s->adjacent(a, c) == 0.f);
+    assert(s->adjacent(c, a) == 0.f);
+
+    assert(s->adjacent_nodes(a).size() == 0);
+    assert(s->adjacent_nodes(b) == std::vector{c});
+}
+
+void add_remove_abcd(SparseGraph<GraphNode>* s) {
+    assert(s->is_directed() == false);
+
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 4);
+
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
+
+    s->add_edge(a, b, 1.1f);
+    s->add_edge(b, c, 1.2f);
+
+    s->add_edge(d, a, 1.5f);
+    s->add_edge(d, b, 1.5f);
+    s->add_edge(d, c, 1.5f);
+
+    s->remove_node(d);
+
+    auto ajd_set = [s](GraphNode* n) -> std::set<GraphNode*> {
+        auto adj = s->adjacent_nodes(n);
+        auto adj_s = std::set<GraphNode*>{adj.begin(), adj.end()};
+        return adj_s;
+    };
+
+    assert(ajd_set(a) == std::set{b});
+    assert((ajd_set(b) == std::set{a, c}));
+    assert((ajd_set(c) == std::set{b}));
+    assert(ajd_set(d) == std::set<GraphNode*>{});
+
+    assert(s->adjacent(d, a) == 0.f);
+    assert(s->adjacent(a, d) == 0.f);
+
+    std::cout << *s << std::endl;
+}
+
+void add_remove_abcd_2(SparseGraph<GraphNode>* s) {
+    assert(s->is_directed() == false);
+
+    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
+    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
+    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+    unique_ptr<GraphNode> n_d = make_unique<GraphNode>("D", 4);
+
+    GraphNode *a = n_a.get();
+    GraphNode *b = n_b.get();
+    GraphNode *c = n_c.get();
+    GraphNode *d = n_d.get();
+
+    s->add_edge(a, b, 1.f);
+    s->add_edge(a, c, 1.f);
+    s->add_edge(a, d, 1.f);
+
+    s->add_edge(b, c, 1.f);
+    s->add_edge(b, d, 1.f);
+
+    s->add_edge(c, d, 1.f);
+
+    // std::cout << *s << std::endl;
+
+    s->remove_node(a);
+
+    std::cout << *s << std::endl;
+
+    auto ajd_set = [s](GraphNode* n) -> std::set<GraphNode*> {
+        auto adj = s->adjacent_nodes(n);
+        auto adj_s = std::set<GraphNode*>{adj.begin(), adj.end()};
+        return adj_s;
+    };
+
+    assert(ajd_set(a) == std::set<GraphNode*>{});
+    assert((ajd_set(b) == std::set{d, c}));
+    assert((ajd_set(c) == std::set{d, b}));
+    assert((ajd_set(d) == std::set{c, b}));
+
+    assert(s->adjacent(a, b) == 0.f);
+    assert(s->adjacent(b, a) == 0.f);
+
+    assert(s->adjacent(a, c) == 0.f);
+    assert(s->adjacent(c, a) == 0.f);
+
+    assert(s->adjacent(a, d) == 0.f);
+    assert(s->adjacent(d, a) == 0.f);
+
+    assert(s->adjacent(b, c) == 1.f);
+    assert(s->adjacent(c, b) == 1.f);
+
+    assert(s->adjacent(b, d) == 1.f);
+    assert(s->adjacent(d, b) == 1.f);
+
+    assert(s->adjacent(c, d) == 1.f);
+    assert(s->adjacent(d, c) == 1.f);
+
+    std::cout << *s << std::endl;
+}
+
 void sparse_test_add() {
     std::cout << __FUNCTION__ << std::endl;
     SparseGraph<GraphNode> s{};
@@ -63,25 +191,21 @@ void sparse_test_remove() {
     std::cout << __FUNCTION__ << std::endl;
     SparseGraph<GraphNode> s{};
 
-    unique_ptr<GraphNode> n_a = make_unique<GraphNode>("A", 1);
-    unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
-    unique_ptr<GraphNode> n_c = make_unique<GraphNode>("C", 3);
+    add_remove_abc(&s);
+}
 
-    GraphNode *a = n_a.get();
-    GraphNode *b = n_b.get();
-    GraphNode *c = n_c.get();
+void sparse_test_remove1() {
+    std::cout << __FUNCTION__ << std::endl;
+    SparseGraph<GraphNode> s{};
 
-    s.add_edge(n_a.get(), n_b.get(), 1.1f);
-    s.add_edge(n_b.get(), n_c.get(), 1.2f);
+    add_remove_abcd(&s);
+}
 
-    s.remove_edge(n_a.get(), n_b.get());
+void sparse_test_remove2() {
+    std::cout << __FUNCTION__ << std::endl;
+    SparseGraph<GraphNode> s{};
 
-    assert(s.adjacent(a, b) == 0.f);
-    assert(s.adjacent(b, a) == 0.f);
-    assert(s.adjacent(b, c) == 1.2f);
-    assert(s.adjacent(c, b) == 1.2f);
-    assert(s.adjacent(a, c) == 0.f);
-    assert(s.adjacent(c, a) == 0.f);
+    add_remove_abcd_2(&s);
 }
 
 void dense_test_add() {
@@ -518,6 +642,9 @@ int main() {
     sparse_test_empty();
     sparse_test_add();
     sparse_test_remove();
+    sparse_test_remove1();
+    sparse_test_remove2();
+
     sparse_directed_add();
 
     dense_test_empty();

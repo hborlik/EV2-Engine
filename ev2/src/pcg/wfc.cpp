@@ -50,6 +50,7 @@ float DGraphNode::entropy() const {
 }
 
 void DGraphNode::set_value(const Pattern* p) noexcept {
+    assert(p);
     value = p->cell_value;
     domain = {p};
 }

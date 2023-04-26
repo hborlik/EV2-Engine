@@ -176,7 +176,7 @@ public:
      * @param a
      * @return std::vector<Node*>
      */
-    virtual std::vector<T*> adjacent_nodes(T* a) const = 0;
+    virtual std::vector<T*> adjacent_nodes(const T* a) const = 0;
 
     virtual bool is_directed() const noexcept = 0;
 
@@ -253,7 +253,18 @@ public:
         if (!(a_i && b_i))
             return;
 
-        remove_i_edge(a_i, b_i);
+        // no distinction between directed and undirected graphs here 
+        remove_i_edge_sam(a_i, b_i);
+
+        // erase element from adjacency lists
+        auto& vec = a_i->adjacent_nodes;
+        vec.erase(std::remove(vec.begin(), vec.end(), b_i->node), vec.end());
+
+        // if this is not a directed graph, erase reverse edge as well
+        if (!m_is_directed) {
+            auto& vecb = b_i->adjacent_nodes;
+            vecb.erase(std::remove(vecb.begin(), vecb.end(), a_i->node), vecb.end());
+        }
     }
 
     void remove_node(T* a) override {
@@ -266,10 +277,21 @@ public:
         for (auto& n : a_i->adjacent_nodes) {
             internal_node* b_i = get_i_node(n);
             assert(b_i);
-            remove_i_edge(a_i, b_i);
-            if (m_is_directed)
-                remove_i_edge(b_i, a_i);
+
+            bool remove = remove_i_edge_sam(a_i, b_i);
+            if (m_is_directed) // if directed, remove reverse edge
+                remove &= remove_i_edge_sam(b_i, a_i);
+            
+            assert(remove);
+
+            // remove a from b, since we are removing node, this always happens
+            auto& vecb = b_i->adjacent_nodes;
+            vecb.erase(std::remove(vecb.begin(), vecb.end(), a_i->node), vecb.end());
         }
+
+        a_i->adjacent_nodes = {};
+
+        remove_i_node(a_i);
     }
 
     float adjacent(T* a, T* b) const override {
@@ -294,7 +316,7 @@ public:
         return 0.f;
     }
 
-    std::vector<T*> adjacent_nodes(T* a) const override {
+    std::vector<T*> adjacent_nodes(const T* a) const override {
         assert(a != nullptr);
         std::vector<T*> output{};
         const internal_node* a_i = get_i_node(a);
@@ -334,7 +356,11 @@ private:
         return i_node;
     }
 
-    const internal_node* get_i_node(T* node) const {
+    void remove_i_node(internal_node* node) {
+        node_map.erase(node->node->node_id);
+    }
+
+    const internal_node* get_i_node(const T* node) const {
         const internal_node* i_node = nullptr;
         if (node) {
             auto itr = node_map.find(node->node_id);
@@ -344,11 +370,11 @@ private:
         return i_node;
     }
 
-    internal_node* get_i_node(T* node) {
+    internal_node* get_i_node(const T* node) {
         return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_i_node(node));
     }
 
-    void remove_i_edge(internal_node* a_i, internal_node* b_i) {
+    bool remove_i_edge_sam(internal_node* a_i, internal_node* b_i) {
         // enforce populating only the upper triangular matrix
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
             std::swap(a_i, b_i);
@@ -357,18 +383,12 @@ private:
         coord c{ a_i->mat_coord, b_i->mat_coord };
 
         auto sam_itr = sparse_adjacency_map.find(c);
-        if (sam_itr == sparse_adjacency_map.end())
-            return; // not added
 
-        // erase element from adjacency
-        auto& vec = a_i->adjacent_nodes;
-        vec.erase(std::remove(vec.begin(), vec.end(), b_i->node), vec.end());
-        if (!m_is_directed) {
-            auto& vecb = b_i->adjacent_nodes;
-            vecb.erase(std::remove(vecb.begin(), vecb.end(), a_i->node), vecb.end());
+        if (sam_itr != sparse_adjacency_map.end()) {
+            sparse_adjacency_map.erase(sam_itr);
+            return true;
         }
-
-        sparse_adjacency_map.erase(sam_itr);
+        return false;
     }
 
     int get_next_mat_coord() noexcept { return next_mat_coord++; }
@@ -492,7 +512,7 @@ public:
      * @param a
      * @return std::vector<Node*>
      */
-    std::vector<T*> adjacent_nodes(T* a) const override {
+    std::vector<T*> adjacent_nodes(const T* a) const override {
         assert(a != nullptr);
 
         std::vector<T*> nodes{};
@@ -718,13 +738,11 @@ public:
     WFCSolver() = default;
     WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {}
 
-    void step_wfc(const std::function<void(DGraphNode*)> &collapse_callback = {}) {
+    DGraphNode* step_wfc() {
+        DGraphNode* solved_node = next_node;
         collapse(next_node);
-
-        if (collapse_callback)
-            collapse_callback(next_node);
-        
         next_node = propagate(next_node);
+        return solved_node;
     }
 
     bool can_continue() noexcept {return next_node != nullptr;}
@@ -752,7 +770,7 @@ public:
                 f = false;
                 for (auto& neighbor_n : graph->adjacent_nodes(n)) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
-                    // if (neighbor->domain.size() == 1)
+                    // if (neighbor->domain.size() > 1)
                         propagation_stack.push(neighbor);
                 }
             }
@@ -810,7 +828,7 @@ public:
                 weights.push_back(p->weight);
             }
             std::discrete_distribution<int> dist(weights.begin(), weights.end());
-            node->set_value(node->domain[dist(gen)]);
+            node->set_value(node->domain.at(dist(gen)));
         }
     }
 

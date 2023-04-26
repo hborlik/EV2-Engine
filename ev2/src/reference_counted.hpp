@@ -147,7 +147,7 @@ struct Ref {
         return _ref != nullptr;
     }
 
-    template<class B> Ref<B> ref_cast() {
+    template<class B> Ref<B> ref_cast() const {
         B *obj = dynamic_cast<B*>(_ref);
         return Ref<B>{obj};
     }

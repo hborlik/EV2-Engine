@@ -130,21 +130,34 @@ void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode>& n, float radius) {
     }
 }
 
-std::optional<glm::vec3> SCWFC::does_intersect_any(const Sphere& sph) {
+glm::vec3 SCWFC::sphere_repulsion(const Sphere& sph) const {
     glm::vec3 net{};
-    bool single = false;
     for (auto& c : get_children()) {
         auto graph_node = c.ref_cast<SCWFCGraphNode>();
         if (graph_node) {
             const Sphere& bounds = graph_node->get_bounding_sphere();
             if (intersect(bounds, sph)) {
                 glm::vec3 c2c = bounds.center - sph.center;
-                net += -glm::normalize(c2c) * (sph.radius + bounds.radius);
-                single = true;
+                float r2 = glm::dot(c2c, c2c);
+                net += -glm::normalize(c2c) * (bounds.radius) / r2;
             }
         }
     }
-    return single ? std::optional<glm::vec3>{net} : std::optional<glm::vec3>{};
+    return net;
+}
+
+bool SCWFC::intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n) {
+    // for every node that has been added as an adjacent one
+    for (auto& node : m_data->graph.adjacent_nodes(n.get())) {
+        auto sc_node = dynamic_cast<SCWFCGraphNode*>(node);
+        if (sc_node && sc_node->domain.size() == 1) { // is it solved and non empty
+            const Sphere& bounds = sc_node->get_bounding_sphere();
+            if (intersect(bounds, n->get_bounding_sphere())) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 
@@ -170,8 +183,14 @@ void SCWFCEditor::show_editor_tool() {
         if (ImGui::Button("LoadDB")) {
             load_obj_db();
         }
+        static int sc_steps = 1;
+        static int sc_brf = 1;
+        static float sc_mass = 1;
+        ImGui::InputInt("N Nodes", &sc_steps);
+        ImGui::InputInt("Branching", &sc_brf);
+        ImGui::SliderFloat("Mass", &sc_mass, 0.01f, 1.f);
         if (ImGui::Button("Spawn")) {
-            sc_propagate_from(dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node()));
+            sc_propagate_from(dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node()), sc_steps, sc_brf, sc_mass);
         }
         if (ImGui::Button("Reset")) {
             m_scwfc_node->reset();
@@ -232,38 +251,47 @@ void SCWFCEditor::on_selected_node(Node* node) {
     }
 }
 
-void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node) {
+void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass) {
+    if (n <= 0)
+        return;
     const float radius = 2.f;
-    const float n_radius = 5.f;
+    const float n_radius = 8.f;
     if (m_scwfc_node && obj_db) {
-        // pick a random spawn location
-        const glm::vec2 pos = uniform_disk(uniform2d());
-        glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
+        Ref<SCWFCGraphNode> nnode{};
+        for (int i = 0; i < n; ++i) {
+            // pick a random spawn location
+            const glm::vec2 pos = uniform_disk(uniform2d());
+            glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
 
-        // if spawning on an existing node
-        if (node) {
-            Sphere sph({}, radius);
-            sph.center = node->get_position() + offset;
-            auto o_offset = m_scwfc_node->does_intersect_any(sph);
-            if (o_offset) offset = *o_offset;
-            offset += node->get_position();
+            // if spawning on an existing node
+            if (node) {
+                Sphere sph({}, n_radius);
+                sph.center = node->get_position() + offset;
+                
+                offset += mass * m_scwfc_node->sphere_repulsion(sph);
+                offset += node->get_position();
+
+                offset.y = 0;
+            }
+
+            nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SGN " + std::to_string(m_scwfc_node->get_n_children()), m_scwfc_node.get());
+            nnode->set_radius(radius);
+            nnode->set_model(obj_db->get_model_for_id(-1));
+            nnode->set_position(offset);
+
+            // populate domain of new node 
+            std::vector<const wfc::Pattern*> dest(m_internal->patterns.size());
+            std::transform(m_internal->patterns.begin(), m_internal->patterns.end(), dest.begin(),
+                [](auto &elem){ return &elem; }
+            );
+            nnode->domain = dest;
+
+            // attach new node to all nearby neighbors
+            m_scwfc_node->update_all_adjacencies(nnode, n_radius);
+
+            if (i % brf == 0)
+                node = nnode.get();
         }
-
-        auto nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SCWFCGraphNode", m_scwfc_node.get());
-        nnode->set_radius(radius);
-        nnode->set_model(obj_db->get_model_for_id(-1));
-        nnode->set_position(offset);
-
-        // populate domain of new node 
-        std::vector<const wfc::Pattern*> dest(m_internal->patterns.size());
-        std::transform(m_internal->patterns.begin(), m_internal->patterns.end(), dest.begin(),
-            [](auto &elem){ return &elem; }
-        );
-        nnode->domain = dest;
-
-        // attach new node to all nearby neighbors
-        m_scwfc_node->update_all_adjacencies(nnode, n_radius);
-
         m_editor->set_selected_node(nnode.get());
     }
 }
@@ -276,18 +304,24 @@ void SCWFCEditor::wfc_solve(int steps) {
         auto c_callback = [this](wfc::DGraphNode* node) -> void {
             auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
             assert(s_node);
-            if (node->domain.size() == 0) {
+
+            if (m_scwfc_node->intersects_any_solved_neighbor(Ref{ s_node }) ||
+                node->domain.size() == 0) {
+
                 s_node->destroy();
             } else {
-                auto& aabb = obj_db->get_model_for_id(node->domain[0]->cell_value.val)->bounding_box;
-                s_node->set_model(
-                    obj_db->get_model_for_id(node->domain[0]->cell_value.val)
-                );
+                auto model = obj_db->get_model_for_id(node->domain[0]->cell_value.val);
+                auto& aabb = model->bounding_box;
+                const glm::vec3 scale = glm::vec3{ 2 * s_node->get_bounding_sphere().radius } / glm::length(aabb.diagonal()); // scale uniformly
+
+                s_node->set_model(model);
+                s_node->set_scale(scale);
             }
         };
         
         while(m_internal->solver.can_continue() && cnt++ < steps) {
-            m_internal->solver.step_wfc(c_callback);
+            auto solved_node = m_internal->solver.step_wfc();
+            c_callback(solved_node);
         }
     }
 }

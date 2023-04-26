@@ -91,16 +91,16 @@ public:
     }
 
     void initialize() {
-        set_current_scene(Node::create_node<Node>("scene0"));
+        set_current_scene(Node::create_node<Node>("root"));
 
         // add scene editors
         scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::ProceduralGridEditor>());
         scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::SCWFCNodeEditor>());
-
         scene_editor.add_custom_editor_tool(std::make_shared<ev2::pcg::SCWFCEditor>());
 
-        get_current_scene()->create_child_node<ev2::pcg::ProceduralGrid>("procedural grid");
-        get_current_scene()->create_child_node<ev2::pcg::SCWFC>("SCWFC");
+        get_current_scene()->create_child_node<ev2::pcg::ProceduralGrid>("WFC Grid");
+        auto scwfc = get_current_scene()->create_child_node<ev2::pcg::SCWFC>("SCWFC");
+        scwfc->set_position({0, 0.8f, 0});
 
         game = std::make_unique<GameState>(this);
 

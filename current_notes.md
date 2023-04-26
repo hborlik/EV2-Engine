@@ -13,6 +13,11 @@ Goal April 24
 1. Placing WFC Nodes, unsolved nodes represented by a cube
 2. Visuals with 2 or 3 models
 
+Goal May 1
+1. Solving entire grid
+2. More models, more patterns
+3. 
+
 May 1 
 1. Abstract
 
