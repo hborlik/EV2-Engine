@@ -20,7 +20,7 @@ namespace ev2::pcg {
 
 class SCWFCGraphNode;
 
-struct SCWFCObjectMetadataDB {
+struct ObjectData {
     std::string name;
     std::string asset_path;
     std::unordered_map<std::string, float> properties;
@@ -33,11 +33,16 @@ struct SCWFCObjectMetadataDB {
         }
         return default_val;
     }
+};
 
+class SCWFCObjectMetadataDB {
+public:
+    SCWFCObjectMetadataDB() = default;
+    
     std::shared_ptr<renderer::Drawable> get_model_for_id(int id);
-
     void add_model(std::shared_ptr<renderer::Drawable> d, int id);
 
+private:
     std::unordered_map<int, std::shared_ptr<renderer::Drawable>> m_meshes{};
 };
 

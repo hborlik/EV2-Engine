@@ -77,11 +77,11 @@ void from_json(const nlohmann::json& j, OBB& p) {
 
 namespace ev2::pcg {
 
-void to_json(nlohmann::json& j, const SCWFCObjectMetadataDB& p) {
+void to_json(nlohmann::json& j, const ObjectData& p) {
     j = nlohmann::json{{"name", p.name}, {"asset_path", p.asset_path}, {"properties", p.properties}, {"propagation_patterns", p.propagation_patterns}};
 }
 
-void from_json(const nlohmann::json& j, SCWFCObjectMetadataDB& p) {
+void from_json(const nlohmann::json& j, ObjectData& p) {
     j.at("name").get_to(p.name);
     j.at("asset_path").get_to(p.asset_path);
     j.at("properties").get_to(p.properties);

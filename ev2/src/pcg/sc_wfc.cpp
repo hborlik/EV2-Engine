@@ -61,16 +61,16 @@ void SCWFCObjectMetadataDB::add_model(std::shared_ptr<renderer::Drawable> d, int
 
 std::unique_ptr<SCWFCObjectMetadataDB> load_object_database(const std::string& path) {
     using json = nlohmann::json;
-    auto db = std::make_unique<SCWFCObjectMetadataDB>();
 
     std::string json_str = io::read_file(path);
 
     json j = json::parse(json_str);
     for (auto& entry : j) {
-        SCWFCObjectMetadataDB metadata;
+        ObjectData metadata;
         entry.get_to(metadata);
     }
 
+    auto db = std::make_unique<SCWFCObjectMetadataDB>();
     return db;
 }
 
@@ -276,6 +276,7 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
 
             nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SGN " + std::to_string(m_scwfc_node->get_n_children()), m_scwfc_node.get());
             nnode->set_radius(radius);
+            nnode->set_scale(glm::vec3{radius});
             nnode->set_model(obj_db->get_model_for_id(-1));
             nnode->set_position(offset);
 

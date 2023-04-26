@@ -14,9 +14,9 @@ Goal April 24
 2. Visuals with 2 or 3 models
 
 Goal May 1
-1. Solving entire grid
+1. Solving entire grid (done)
 2. More models, more patterns
-3. 
+3. Better placement
 
 May 1 
 1. Abstract
