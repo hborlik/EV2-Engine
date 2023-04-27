@@ -1,3 +1,4 @@
+#include <memory>
 #include <resource.hpp>
 
 #include <map>
@@ -628,6 +629,41 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
 
 namespace ev2 {
 
+std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable() {
+    std::vector<renderer::Primitive> ev_prim(draw_objects.size());
+    size_t i = 0;
+    // convert the loaded object to the model format
+    for (auto& dObj : draw_objects) {
+        int mat_id = dObj.material_id;
+        if (mat_id == -1)
+            mat_id = 0;
+        // auto& m = loaded_model->materials[mat_id];
+
+        ev_prim[i++] = renderer::Primitive {
+            dObj.start * 3,
+            dObj.numTriangles * 3,
+            mat_id
+        };
+    }
+    // get materials information
+    std::vector<Ref<renderer::Material>> ev_mat(materials.size());
+    i = 0;
+    for (auto& mat : materials) {
+        ev_mat[i++] = mat.create_renderer_material();
+    }
+
+    return std::make_unique<renderer::Drawable>(
+        renderer::VertexBuffer::vbInitArrayVertexData(buffer),
+        std::move(ev_prim),
+        std::move(ev_mat),
+        AABB{bmin, bmax},
+        Sphere{},
+        renderer::FrustumCull::AABB,
+        gl::CullMode::BACK,
+        gl::FrontFacing::CCW
+    );
+}
+
 Ref<renderer::Material> MaterialData::create_renderer_material() const {
     auto mat = renderer::Renderer::get_singleton().create_material();
     mat->name           = name;
@@ -666,7 +702,7 @@ void ResourceManager::pre_render() {
 
 }
 
-std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesystem::path& filename, bool cache) {
+std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesystem::path& filename, bool cache, bool load_materials) {
     auto itr = model_lookup.find(filename.generic_string());
     // check that the cached pointer is still good if it has been deleted
     if (itr != model_lookup.end() && cache && !itr->second.expired()) {
@@ -676,38 +712,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesy
     base_dir.remove_filename();
     std::shared_ptr<Model> loaded_model = loadObj(filename.filename().generic_string(), (asset_path / base_dir).generic_string(), this);
     if (loaded_model) {
-        std::vector<renderer::Primitive> ev_prim(loaded_model->draw_objects.size());
-        size_t i = 0;
-        // convert the loaded object to the model format
-        for (auto& dObj : loaded_model->draw_objects) {
-            int mat_id = dObj.material_id;
-            if (mat_id == -1)
-                mat_id = 0;
-            // auto& m = loaded_model->materials[mat_id];
-
-            ev_prim[i++] = renderer::Primitive {
-                dObj.start * 3,
-                dObj.numTriangles * 3,
-                mat_id
-            };
-        }
-        // get materials information
-        std::vector<Ref<renderer::Material>> ev_mat(loaded_model->materials.size());
-        i = 0;
-        for (auto& mat : loaded_model->materials) {
-            ev_mat[i++] = mat.create_renderer_material();
-        }
-
-        std::shared_ptr<renderer::Drawable> drawable = std::make_shared<renderer::Drawable>(
-            renderer::VertexBuffer::vbInitArrayVertexData(loaded_model->buffer),
-            std::move(ev_prim),
-            std::move(ev_mat),
-            AABB{loaded_model->bmin, loaded_model->bmax},
-            Sphere{},
-            renderer::FrustumCull::AABB,
-            gl::CullMode::BACK,
-            gl::FrontFacing::CCW
-        );
+        auto drawable = std::shared_ptr{loaded_model->create_renderer_drawable()};
         if (cache)
             model_lookup.insert(std::make_pair(filename.generic_string(), drawable));
         return drawable;

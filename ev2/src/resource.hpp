@@ -7,10 +7,12 @@
 #ifndef EV2_RESOURCE_H
 #define EV2_RESOURCE_H
 
+#include "reference_counted.hpp"
 #include <filesystem>
 
 #include <glm/glm.hpp>
 
+#include <memory>
 #include <renderer/mesh.hpp>
 #include <renderer/renderer.hpp>
 #include <renderer/texture.hpp>
@@ -75,9 +77,11 @@ public:
                                    bmax{bmax}
                                    {}
 
+    std::unique_ptr<renderer::Drawable> create_renderer_drawable();
+
     std::string             name;
     std::vector<DrawObject> draw_objects;
-    std::vector<MaterialData>   materials;
+    std::vector<MaterialData>materials;
     std::vector<float>      buffer;
 
     glm::vec3 bmin, bmax;
@@ -101,7 +105,7 @@ public:
      * @param filename 
      * @return renderer::MID 
      */
-    std::shared_ptr<renderer::Drawable> get_model(const std::filesystem::path& filename, bool cache = true);
+    std::shared_ptr<renderer::Drawable> get_model(const std::filesystem::path& filename, bool cache = true, bool load_materials = true);
 
     std::shared_ptr<renderer::Drawable> create_model(std::shared_ptr<Model> model);
 
