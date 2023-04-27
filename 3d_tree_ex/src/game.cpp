@@ -221,7 +221,7 @@ void GameState::spawn_tree(const glm::vec3& position, float rotation, const std:
     tree->leaf_scale = adjusted_leaf_scale;
 
     glm::vec3 pos = position;
-    pos.y = ev2::renderer::Renderer::get_singleton().get_terrain().height_query(position.x, position.z);
+    pos.y = app->get_terrain().height_query(position.x, position.z);
 
     ev2::Ref<ev2::RigidBody> tree_hit_sphere = app->get_current_scene()->create_child_node<ev2::RigidBody>(unique_hit_tag.c_str());
     tree_hit_sphere->add_shape(ev2::make_referenced<ev2::CapsuleShape>(.5 * params.find("thickness")->second/2, 5.0), glm::vec3{0, 2.5, 0});

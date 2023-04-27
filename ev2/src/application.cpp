@@ -1,5 +1,7 @@
+#include "renderer/terrain_renderer.hpp"
 #include <application.hpp>
 
+#include <memory>
 #include <window.hpp>
 #include <renderer/renderer.hpp>
 #include <physics.hpp>
@@ -8,6 +10,10 @@
 #include <ui/imgui_impl_opengl3.hpp>
 
 namespace ev2 {
+
+Application::Application() : m_terrain_renderer(std::make_unique<renderer::TerrainRenderer>()){
+    renderer::Renderer::get_singleton().add_pass(m_terrain_renderer.get());
+}
 
 void Application::process(float dt) {
     on_process(dt);

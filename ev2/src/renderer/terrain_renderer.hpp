@@ -7,6 +7,7 @@
 #ifndef EV2_RENDERER_TERRAIN_H
 #define EV2_RENDERER_TERRAIN_H
 
+#include "renderer.hpp"
 #include <memory>
 
 #include <renderer/render_state.hpp>
@@ -18,15 +19,15 @@ namespace ev2::renderer {
 
 struct OpenGLManager;
 
-class TerrainRenderer {
+class TerrainRenderer : public RenderPass {
 public:
     TerrainRenderer();
 
     ~TerrainRenderer();
 
-    void init(const RenderState& state, const ShaderPreprocessor& pre);
+    void init(const RenderState& state, const ShaderPreprocessor& pre) override;
 
-    void render(const RenderState& state);
+    void render(const RenderState& state) override;
 
     bool load_textures();
 

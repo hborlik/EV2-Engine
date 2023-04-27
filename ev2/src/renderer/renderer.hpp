@@ -21,7 +21,6 @@
 #include <renderer/material.hpp>
 #include <renderer/debug_renderer.hpp>
 #include <renderer/render_state.hpp>
-#include <renderer/terrain_renderer.hpp>
 
 #include <geometry.hpp>
 
@@ -181,11 +180,6 @@ struct Drawable {
 };
 
 struct ModelInstance {
-    glm::mat4   transform = glm::identity<glm::mat4>();
-
-    void set_material_override(Ref<Material> material);
-
-    void set_drawable(std::shared_ptr<Drawable> drawable);
 
     ModelInstance() = default;
 
@@ -194,10 +188,17 @@ struct ModelInstance {
             glDeleteVertexArrays(1, &gl_vao);
     }
 
+    void set_material_override(Ref<Material> material);
+
+    void set_drawable(std::shared_ptr<Drawable> drawable);
+
+public:
+    glm::mat4   transform = glm::identity<glm::mat4>();
+
 private:
     friend class Renderer;
 
-    Ref<Material>               material_override;
+    Ref<Material>               material_override{};
 
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
@@ -207,19 +208,9 @@ private:
 struct InstancedDrawable {
 
     InstancedDrawable() = default;
-    InstancedDrawable(InstancedDrawable &&o) noexcept {
-        *this = std::move(o);
-    }
+    InstancedDrawable(InstancedDrawable &&o) = default;
 
-    InstancedDrawable& operator=(InstancedDrawable &&o) noexcept {
-        instance_world_transform = std::move(o.instance_world_transform);
-        instance_transform_buffer = std::move(o.instance_transform_buffer);
-        std::swap(n_instances, o.n_instances);
-        std::swap(id, o.id);
-        std::swap(drawable, o.drawable);
-        std::swap(gl_vao, o.gl_vao);
-        return *this;
-    }
+    InstancedDrawable& operator=(InstancedDrawable &&o) = default;
 
     ~InstancedDrawable() {
         if (gl_vao != 0)
@@ -239,6 +230,14 @@ private:
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
     GLuint                      gl_vao = 0;
+};
+
+class RenderPass {
+public:
+    virtual ~RenderPass() = default;
+
+    virtual void init(const RenderState& state, const ShaderPreprocessor& pre) = 0;
+    virtual void render(const RenderState& state) = 0;
 };
 
 class Renderer : public Singleton<Renderer> {
@@ -300,8 +299,6 @@ public:
 
     // ======================
 
-    TerrainRenderer& get_terrain() {return *m_terrain.get();}
-
     float get_ssao_radius() const {return ssao_radius;}
     float get_ssao_bias() const {return ssao_bias;}
     int get_ssao_kernel_samples() const {return ssao_kernel_samples;}
@@ -310,10 +307,21 @@ public:
     void set_ssao_bias(float bias) {ssao_bias = bias; uniforms_dirty = true;}
     void set_ssao_kernel_samples(int samples) {ssao_kernel_samples = abs(samples); uniforms_dirty = true;}
 
+    void add_pass(RenderPass* pass) {
+        // additional effect initialization
+        Camera default_camera{};
+        RenderState terrain_target_state{
+            &g_buffer, // right now only gbuffer passes are supported
+            &default_camera
+        };
+        pass->init(terrain_target_state, m_preprocessor);
+        m_passes.push_back(pass);
+    }
+
 private:
     friend Material;
 
-    void draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, const Buffer* instance_buffer = nullptr, int32_t n_instances = -1);
+    void draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
     void update_material(mat_slot_t material_slot, const MaterialData& material);
 
@@ -477,7 +485,9 @@ private:
 
     int32_t default_material_slot = 0;
 
-    std::unique_ptr<TerrainRenderer> m_terrain;
+    std::vector<RenderPass*> m_passes{};
+
+    ShaderPreprocessor m_preprocessor{};
 };
 
 }

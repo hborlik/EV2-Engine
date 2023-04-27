@@ -69,7 +69,7 @@ void InstancedGeometry::on_init() {
 }
 
 void InstancedGeometry::on_destroy() {
-    
+    ev2::renderer::Renderer::get_singleton().destroy_instanced_drawable(instance);
 }
 
 void InstancedGeometry::pre_render() {

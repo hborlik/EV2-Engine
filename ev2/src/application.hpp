@@ -7,15 +7,19 @@
 #ifndef EV2_APPLICATION_H
 #define EV2_APPLICATION_H
 
+#include <memory>
 #include <string>
 
 #include <input.hpp>
 #include <ui/ui.hpp>
 
+#include "renderer/terrain_renderer.hpp"
+
 namespace ev2 {
 
 class Application {
 public:
+    Application();
     virtual ~Application() {}
 
     void process(float dt);
@@ -48,6 +52,10 @@ public:
         current_camera = camera;
     }
 
+    renderer::TerrainRenderer &get_terrain() {
+        return *m_terrain_renderer.get();
+    }
+
 protected:
     bool show_debug = false;
     SceneEditor scene_editor{};
@@ -59,6 +67,8 @@ private:
     SceneTree scene_tree{};
     Ref<Node> current_scene = nullptr;
     Ref<CameraNode> current_camera = nullptr;
+
+    std::unique_ptr<renderer::TerrainRenderer> m_terrain_renderer{};
 };
 
 }

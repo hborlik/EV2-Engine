@@ -815,29 +815,31 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
             mat.sheen               = glm::clamp(m.sheen, 0.f, 1.f);
             mat.sheenTint           = 0.5f;
 
-            if (!m.ambient_texname.empty())
-                mat.ambient_tex            = rm->get_image((base_dir / m.ambient_texname).generic_string(), true);
-            
-            if (!m.diffuse_texname.empty())
-                mat.diffuse_tex            = rm->get_image((base_dir / m.diffuse_texname).generic_string(), true);
-            
-            if (!m.specular_texname.empty())
-                mat.specular_tex           = rm->get_image((base_dir / m.specular_texname).generic_string(), true);
-            
-            if (!m.specular_highlight_texname.empty())
-                mat.specular_highlight_tex = rm->get_image((base_dir / m.specular_highlight_texname).generic_string(), true);
-            
-            if (!m.bump_texname.empty())
-                mat.bump_tex               = rm->get_image((base_dir / m.bump_texname).generic_string(), true);
-            
-            if (!m.displacement_texname.empty())
-                mat.displacement_tex       = rm->get_image((base_dir / m.displacement_texname).generic_string(), true);
-            
-            if (!m.alpha_texname.empty())
-                mat.alpha_tex              = rm->get_image((base_dir / m.alpha_texname).generic_string(), true);
-            
-            if (!m.reflection_texname.empty())
-                mat.reflection_tex         = rm->get_image((base_dir / m.reflection_texname).generic_string(), true);
+            if (rm) {
+                if (!m.ambient_texname.empty())
+                    mat.ambient_tex            = rm->get_image((base_dir / m.ambient_texname).generic_string(), true);
+                
+                if (!m.diffuse_texname.empty())
+                    mat.diffuse_tex            = rm->get_image((base_dir / m.diffuse_texname).generic_string(), true);
+                
+                if (!m.specular_texname.empty())
+                    mat.specular_tex           = rm->get_image((base_dir / m.specular_texname).generic_string(), true);
+                
+                if (!m.specular_highlight_texname.empty())
+                    mat.specular_highlight_tex = rm->get_image((base_dir / m.specular_highlight_texname).generic_string(), true);
+                
+                if (!m.bump_texname.empty())
+                    mat.bump_tex               = rm->get_image((base_dir / m.bump_texname).generic_string(), true);
+                
+                if (!m.displacement_texname.empty())
+                    mat.displacement_tex       = rm->get_image((base_dir / m.displacement_texname).generic_string(), true);
+                
+                if (!m.alpha_texname.empty())
+                    mat.alpha_tex              = rm->get_image((base_dir / m.alpha_texname).generic_string(), true);
+                
+                if (!m.reflection_texname.empty())
+                    mat.reflection_tex         = rm->get_image((base_dir / m.reflection_texname).generic_string(), true);
+            }
 
 
             ev_mat[i++] = mat;

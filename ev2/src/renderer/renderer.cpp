@@ -6,6 +6,7 @@
 
 #include <renderer/ev_gl.hpp>
 #include <resource.hpp>
+#include "../engine.hpp"
 
 namespace ev2::renderer {
 
@@ -48,8 +49,8 @@ void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
-void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, const Buffer* instance_buffer, int32_t n_instances) {
-    if (instance_buffer != nullptr && n_instances == 0) {
+void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
+    if (n_instances == 0) {
         return; // nothing to do
     }
     
@@ -108,14 +109,14 @@ void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, G
         if (indexed) {
             // Buffer* el_buf = dr->vertex_buffer.get_buffer(dr->vertex_buffer.get_indexed()).get();
             // el_buf->bind();
-            if (instance_buffer || n_instances > 0) {
+            if (n_instances > 0) {
                 glDrawElementsInstanced(GL_TRIANGLES, m.num_elements, GL_UNSIGNED_INT, (void*)0, n_instances);
             } else {
                 glDrawElements(GL_TRIANGLES, m.num_elements, GL_UNSIGNED_INT, (void*)0);
             }
             // el_buf->unbind();
         } else {
-            if (instance_buffer || n_instances > 0) {
+            if (n_instances > 0) {
                 glDrawArraysInstanced(GL_TRIANGLES, m.start_index, m.num_elements, n_instances);
             } else {
                 glDrawArrays(GL_TRIANGLES, m.start_index, m.num_elements);
@@ -142,7 +143,8 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     lighting_materials{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     ssao_kernel_buffer{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     width{width}, 
-    height{height} {
+    height{height},
+    m_preprocessor{"shaders"} {
 
     // material id queue
     for (mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {
@@ -287,11 +289,8 @@ void Renderer::init() {
 
     // set up programs
 
-    ShaderPreprocessor prep{"shaders"};
-
-
-    geometry_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry.glsl.vert", prep);
-    geometry_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
+    geometry_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry.glsl.vert", m_preprocessor);
+    geometry_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor);
     geometry_program.program.link();
     geometry_program.init();
 
@@ -299,16 +298,16 @@ void Renderer::init() {
     gp_mv_location = geometry_program.program.getUniformInfo("MV").Location;
     gp_g_location = geometry_program.program.getUniformInfo("G").Location;
 
-    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", prep);
-    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", prep);
+    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", m_preprocessor);
+    geometry_program_instanced.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor);
     geometry_program_instanced.program.link();
     geometry_program_instanced.init();
 
     gpi_m_location = geometry_program_instanced.program.getUniformInfo("M").Location;
 
     // Initialize the GLSL programs
-    depth_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", prep);
-    depth_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", prep);
+    depth_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", m_preprocessor);
+    depth_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", m_preprocessor);
     depth_program.program.link();
     depth_program.init();
 
@@ -316,8 +315,8 @@ void Renderer::init() {
     sdp_lpv_location = depth_program.program.getUniformInfo("LPV").Location;
 
 
-    directional_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    directional_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "directional.glsl.frag", prep);
+    directional_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
+    directional_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "directional.glsl.frag", m_preprocessor);
     directional_lighting_program.program.link();
     directional_lighting_program.init();
 
@@ -333,8 +332,8 @@ void Renderer::init() {
     lp_lamb_location = directional_lighting_program.program.getUniformInfo("lightAmbient").Location;
 
 
-    point_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", prep);
-    point_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", prep);
+    point_lighting_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", m_preprocessor);
+    point_lighting_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", m_preprocessor);
     point_lighting_program.program.link();
     point_lighting_program.init();
 
@@ -348,8 +347,8 @@ void Renderer::init() {
     point_light_data_buffer = std::make_unique<Buffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
 
 
-    ssao_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    ssao_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", prep);
+    ssao_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
+    ssao_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", m_preprocessor);
     ssao_program.program.link();
     ssao_program.init();
 
@@ -363,8 +362,8 @@ void Renderer::init() {
     load_ssao_uniforms();
 
 
-    sky_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sky.glsl.vert", prep);
-    sky_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "sky.glsl.frag", prep);
+    sky_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sky.glsl.vert", m_preprocessor);
+    sky_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "sky.glsl.frag", m_preprocessor);
     sky_program.program.link();
     sky_program.init();
     sky_time_loc        = sky_program.program.getUniformInfo("time").Location;
@@ -373,23 +372,23 @@ void Renderer::init() {
     sky_sun_position_loc= sky_program.program.getUniformInfo("sun_position").Location;
     sky_output_mul_loc  = sky_program.program.getUniformInfo("output_mul").Location;
 
-    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", prep);
+    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
+    post_fx_bloom_combine_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", m_preprocessor);
     post_fx_bloom_combine_program.program.link();
     post_fx_bloom_combine_program.init();
     post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.program.getUniformInfo("hdrBuffer").Location;
     post_fx_bc_emist_loc = post_fx_bloom_combine_program.program.getUniformInfo("emissiveBuffer").Location;
     post_fx_bc_thresh_loc = post_fx_bloom_combine_program.program.getUniformInfo("bloom_threshold").Location;
 
-    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", prep);
+    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
+    post_fx_bloom_blur.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", m_preprocessor);
     post_fx_bloom_blur.program.link();
     post_fx_bloom_blur.init();
     post_fx_bb_hor_loc = post_fx_bloom_blur.program.getUniformInfo("horizontal").Location;
     post_fx_bb_bloom_in_loc = post_fx_bloom_blur.program.getUniformInfo("bloom_blur_in").Location;
 
-    post_fx_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", prep);
-    post_fx_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", prep);
+    post_fx_program.program.loadShader(gl::GLSLShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
+    post_fx_program.program.loadShader(gl::GLSLShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", m_preprocessor);
     post_fx_program.program.link();
     post_fx_program.init();
     post_fx_gamma_loc           = post_fx_program.program.getUniformInfo("gamma").Location;
@@ -465,21 +464,23 @@ void Renderer::init() {
     }
 
     // light geometry
-    point_light_drawable = ResourceManager::get_singleton().get_model( std::filesystem::path("models") / "cube.obj", false);
-    point_light_drawable->front_facing = gl::FrontFacing::CW; // render back facing only
-    glm::vec3 scaling = glm::vec3{2} / (point_light_drawable->bounding_box.pMax - point_light_drawable->bounding_box.pMin);
+    point_light_drawable =
+        load_model(std::filesystem::path("models") / "cube.obj",
+                   Engine::get_singleton().asset_path, nullptr)
+            ->create_renderer_drawable(false);
+
+    // render back facing only
+    point_light_drawable->front_facing =
+        gl::FrontFacing::CW;
+    
+    const glm::vec3 scaling =
+        glm::vec3{2} / (point_light_drawable->bounding_box.pMax -
+                        point_light_drawable->bounding_box.pMin);
+
     point_light_geom_base_scale = scaling.x;
 
     point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.program.getAttributeMap());
 
-    // additional effect initialization
-    Camera default_camera{};
-    RenderState terrain_target_state{
-        &g_buffer,
-        &default_camera
-    };
-    m_terrain = std::make_unique<TerrainRenderer>();
-    m_terrain->init(terrain_target_state, prep);
 }
 
 void Renderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
@@ -833,7 +834,7 @@ void Renderer::render(const Camera &camera) {
         if (m.drawable) {
             ev2::gl::glUniform(m.instance_world_transform, gpi_m_location);
 
-            draw(m.drawable.get(), geometry_program_instanced, true, m.gl_vao, -1, m.instance_transform_buffer.get(), m.n_instances);
+            draw(m.drawable.get(), geometry_program_instanced, true, m.gl_vao, -1, m.n_instances);
         }
     }
     geometry_program_instanced.program.unbind();
@@ -844,7 +845,9 @@ void Renderer::render(const Camera &camera) {
         &camera
     };
 
-    m_terrain->render(current_state);
+    for (auto& pass : m_passes) {
+        pass->render(current_state);
+    }
 
     g_buffer.unbind();
 
@@ -1044,7 +1047,7 @@ void Renderer::render(const Camera &camera) {
     // bind the point light data buffer to SSBO
     point_light_data_buffer->bind(plp_ssbo_light_data_location);
 
-    draw(point_light_drawable.get(), point_lighting_program, false, point_light_gl_vao, -1, nullptr, point_lights.size());
+    draw(point_light_drawable.get(), point_lighting_program, false, point_light_gl_vao, -1, point_lights.size());
 
     point_light_data_buffer->unbind();
 
