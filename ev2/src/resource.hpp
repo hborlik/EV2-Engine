@@ -77,7 +77,7 @@ public:
                                    bmax{bmax}
                                    {}
 
-    std::unique_ptr<renderer::Drawable> create_renderer_drawable();
+    std::unique_ptr<renderer::Drawable> create_renderer_drawable(bool load_materials = true);
 
     std::string             name;
     std::vector<DrawObject> draw_objects;
@@ -107,8 +107,6 @@ public:
      */
     std::shared_ptr<renderer::Drawable> get_model(const std::filesystem::path& filename, bool cache = true, bool load_materials = true);
 
-    std::shared_ptr<renderer::Drawable> create_model(std::shared_ptr<Model> model);
-
     std::shared_ptr<ImageResource> get_image(const std::filesystem::path& filename, bool ignore_asset_path = false);
 
     // Ref<GLTFScene> loadGLTF(const std::filesystem::path& filename, bool normalize = false);
@@ -127,9 +125,13 @@ private:
     std::unordered_map<std::string, std::shared_ptr<ImageResource>> images;
 };
 
-std::unique_ptr<Model> loadObj(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm = nullptr);
+std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm = nullptr);
 
 std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& filename);
+
+std::unique_ptr<Image> load_image(const std::string& path);
+
+std::unique_ptr<Image> load_image_16(const std::string& path);
 
 }
 

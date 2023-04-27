@@ -629,7 +629,7 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
 
 namespace ev2 {
 
-std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable() {
+std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_materials) {
     std::vector<renderer::Primitive> ev_prim(draw_objects.size());
     size_t i = 0;
     // convert the loaded object to the model format
@@ -646,11 +646,11 @@ std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable() {
         };
     }
     // get materials information
-    std::vector<Ref<renderer::Material>> ev_mat(materials.size());
-    i = 0;
-    for (auto& mat : materials) {
-        ev_mat[i++] = mat.create_renderer_material();
-    }
+    std::vector<Ref<renderer::Material>> ev_mat;
+    if (load_materials)
+        for (auto& mat : materials) {
+            ev_mat.push_back(mat.create_renderer_material());
+        }
 
     return std::make_unique<renderer::Drawable>(
         renderer::VertexBuffer::vbInitArrayVertexData(buffer),
@@ -710,7 +710,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesy
     }
     auto base_dir = filename;
     base_dir.remove_filename();
-    std::shared_ptr<Model> loaded_model = loadObj(filename.filename().generic_string(), (asset_path / base_dir).generic_string(), this);
+    std::shared_ptr<Model> loaded_model = load_model(filename.filename().generic_string(), (asset_path / base_dir).generic_string(), this);
     if (loaded_model) {
         auto drawable = std::shared_ptr{loaded_model->create_renderer_drawable()};
         if (cache)
@@ -790,7 +790,7 @@ Ref<renderer::Material> ResourceManager::get_material(const std::string& name) {
     return mat;
 }
 
-std::unique_ptr<Model> loadObj(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm) {
+std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm) {
     glm::vec3 bmin, bmax;
     std::vector<tinyobj::material_t> materials;
     std::vector<float> buffer;
@@ -888,6 +888,56 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
     }
     
     return out;
+}
+
+std::unique_ptr<Image> load_image(const std::string& path) {
+    int w, h, ncomps;
+    stbi_set_flip_vertically_on_load(false);
+    uint8_t* data = stbi_load(path.c_str(), &w, &h, &ncomps, 0);
+
+    if (data) {
+        if (ncomps > 4) {
+            std::cerr << "Failed to load texture " + path << "invalid ncomps " << ncomps << std::endl;
+            stbi_image_free(data);
+            throw std::runtime_error{"Failed to load texture " + path};
+        }
+        std::unique_ptr<Image> image = std::make_unique<Image>();
+
+        // allow image to keep the memory (will free)
+        image->set_image(w, h, ncomps, 1, data);
+
+        // std::cout << "Loaded texture " << path << std::endl;
+        // stbi_image_free(data);
+        return image;
+    } else {
+        std::cerr << "Failed to load texture " << path << std::endl;
+        throw std::runtime_error{"Failed to load texture " + path};
+    }
+}
+
+std::unique_ptr<Image> load_image_16(const std::string& path) {
+    int w, h, ncomps;
+    stbi_set_flip_vertically_on_load(false);
+    uint16_t* data = stbi_load_16(path.c_str(), &w, &h, &ncomps, 0);
+
+    if (data) {
+        if (ncomps > 4) {
+            std::cerr << "Failed to load texture " << path << "invalid ncomps " << ncomps << std::endl;
+            stbi_image_free(data);
+            throw std::runtime_error{"Failed to load texture " + path};
+        }
+        std::unique_ptr<Image> image = std::make_unique<Image>();
+
+        // allow image to keep the memory (will free)
+        image->set_image(w, h, ncomps, 2, (uint8_t*)data);
+
+        // std::cout << "Loaded texture " << path << std::endl;
+        // stbi_image_free(data);
+        return image;
+    } else {
+        std::cerr << "Failed to load texture " << path << std::endl;
+        throw std::runtime_error{"Failed to load texture " + path};
+    }
 }
 
 } // namespace ev2
