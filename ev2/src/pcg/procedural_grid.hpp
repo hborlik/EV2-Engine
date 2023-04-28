@@ -14,7 +14,7 @@
 
 namespace ev2::pcg {
 
-class SCWFCObjectMetadataDB;
+class ObjectMetadataDB;
 
 class ProceduralGrid : public Node {
 public:
@@ -30,7 +30,7 @@ private:
 private:
     struct Data;
     std::shared_ptr<Data> m_data{};
-    std::shared_ptr<SCWFCObjectMetadataDB> obj_db;
+    std::shared_ptr<ObjectMetadataDB> obj_db;
 };
 
 class ProceduralGridEditor : public NodeEditorT<ProceduralGrid> {

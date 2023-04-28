@@ -6,6 +6,7 @@ build/*
 !*.gitkeep
 
 testapp/asset/models/*
+.cache/*
 
 ev2_tests/imgui.ini
 

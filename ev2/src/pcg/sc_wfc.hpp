@@ -12,42 +12,15 @@
 #include <functional>
 #include <optional>
 
-#include <scene/node.hpp>
-#include <ui/ui.hpp>
-#include <geometry.hpp>
+#include "scene/node.hpp"
+#include "scene/visual_nodes.hpp"
+#include "geometry.hpp"
+
+#include "wfc.hpp"
 
 namespace ev2::pcg {
 
 class SCWFCGraphNode;
-
-struct ObjectData {
-    std::string name;
-    std::string asset_path;
-    std::unordered_map<std::string, float> properties;
-    std::vector<OBB> propagation_patterns;
-
-    float try_get_property(const std::string& p_name, float default_val = 0.f) {
-        auto itr = properties.find(p_name);
-        if(itr != properties.end()) {
-            return itr->second;
-        }
-        return default_val;
-    }
-};
-
-class SCWFCObjectMetadataDB {
-public:
-    SCWFCObjectMetadataDB() = default;
-    
-    std::shared_ptr<renderer::Drawable> get_model_for_id(int id);
-    void add_model(std::shared_ptr<renderer::Drawable> d, int id);
-
-private:
-    std::unordered_map<int, std::shared_ptr<renderer::Drawable>> m_meshes{};
-};
-
-
-std::unique_ptr<SCWFCObjectMetadataDB> load_object_database(const std::string& path);
 
 class SCWFC : public Node {
 public:
@@ -61,7 +34,7 @@ public:
 
     void on_child_added(Ref<Node> child, int index) override;
 
-    void update_all_adjacencies(Ref<class SCWFCGraphNode>& n, float radius);
+    void update_all_adjacencies(Ref<SCWFCGraphNode>& n, float radius);
 
     glm::vec3 sphere_repulsion(const Sphere& sph) const;
 
@@ -74,7 +47,9 @@ public:
      * @return true 
      * @return false 
      */
-    bool intersects_any_solved_neighbor(const Ref<class SCWFCGraphNode>& n);
+    bool intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n);
+
+    wfc::SparseGraph<wfc::DGraphNode>* get_graph();
 
 private:
     friend class SCWFCEditor;
@@ -82,36 +57,39 @@ private:
     std::shared_ptr<Data> m_data{};
 };
 
-/**
- * @brief Defines the custom editor behavior for SCWFC nodes in scene
- * 
- */
-class SCWFCNodeEditor : public NodeEditorT<SCWFC> {
+class SCWFCGraphNode : public VisualInstance, public wfc::DGraphNode {
 public:
-    void show_editor(Node* node) override;
-};
+    explicit SCWFCGraphNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, wfc::DGraphNode{name, (int)uuid_hash}, m_scwfc{scwfc} {}
 
-class SCWFCEditor : public EditorTool {
-public:
-    void show_editor_tool() override;
-    std::string get_name() const override {
-        return "SCWFCEditor";
+    void on_init() override {
+        VisualInstance::on_init();
+
+        m_bounding_sphere = Sphere{get_world_position(), 1.f};
     }
 
-    void load_obj_db();
+    void on_transform_changed(Ref<ev2::Node> origin) override {
+        VisualInstance::on_transform_changed(origin);
 
-    void on_selected_node(Node* node) override;
+        m_bounding_sphere.center = get_world_position();
+    }
 
-    void sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
+    const Sphere& get_bounding_sphere() const noexcept {return m_bounding_sphere;}
 
-    void wfc_solve(int steps);
+    void set_radius(float r) noexcept {m_bounding_sphere.radius = r;}
 
 private:
-    struct Data;
-    std::shared_ptr<Data> m_internal{};
-    Ref<SCWFC> m_scwfc_node{};
-    std::shared_ptr<SCWFCObjectMetadataDB> obj_db{};
+    SCWFC* m_scwfc = nullptr;
+    Sphere m_bounding_sphere{};
 };
+
+class SCWFCAttractorNode : public VisualInstance {
+public:
+    explicit SCWFCAttractorNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, m_scwfc{scwfc} {}
+
+private:
+    SCWFC* m_scwfc = nullptr;
+};
+
 
 }
 

@@ -712,14 +712,16 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
  * @brief Pattern is a valid configuration of cell values in the generated output
  *
  */
-class Pattern
-{
-public:
-    explicit Pattern(const Value& v) noexcept: cell_value{ v } {}
+class Pattern {
+  public:
+    Pattern() = default;
+    explicit Pattern(const Value &v) noexcept : cell_value{v} {}
 
-    Pattern(const Value& v, std::initializer_list<Value> l, float weight = 1.f) noexcept: required_values{ l }, cell_value{ v }, weight{weight} {}
+    Pattern(const Value &v, std::initializer_list<Value> l,
+            float weight = 1.f) noexcept
+        : required_values{l}, cell_value{v}, weight{weight} {}
 
-    bool valid(const std::vector<DGraphNode*>& neighborhood) const;
+    bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
     std::vector<Value> required_values{};
     Value cell_value{};

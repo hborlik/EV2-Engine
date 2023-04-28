@@ -21,10 +21,13 @@ Goal May 1
 May 1 
 1. Abstract
 
-3. Break input image into tiles
-4. Interpret tiles as values that can appear in a given neighborhood 
-5. Build adjacency matrix (neighborhoods and values)
-   1. associated weight for how often they appear in the input image
+April 27 adding additional objects (this should only take a day, go browse)
+
+May 18 Implementation done!!!!! check workflowy
+
+Done by June 3!!!!!!!
+
+
 Jan 17 thoughts: Volume based WFC for objects and their neighboring objects (classes of object). For interior or exterior scenes. Eg garbage cans and nearby garbage on the ground. WFC allows for probabilistic/constrain driven modeling. Placement rules can drive orientation. Contributions would be WFC that can expand to accommodate objects with more positions that need to be evaluated.
 
 Notes about good papers:

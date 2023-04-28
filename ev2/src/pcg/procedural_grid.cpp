@@ -2,11 +2,12 @@
 
 #include <filesystem>
 
-#include <resource.hpp>
-#include <pcg/grid.hpp>
-#include <pcg/sc_wfc.hpp>
-#include <pcg/wfc.hpp>
-#include <ui/imgui.hpp>
+#include "resource.hpp"
+#include "pcg/grid.hpp"
+#include "pcg/sc_wfc.hpp"
+#include "pcg/object_database.hpp"
+#include "pcg/wfc.hpp"
+#include "ui/imgui.hpp"
 
 namespace fs = std::filesystem;
 
@@ -65,7 +66,7 @@ void ProceduralGrid::on_init() {
     auto cube2 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
     cube2->materials[0]->diffuse = glm::vec3{1, 0, 0};
 
-    obj_db = std::make_shared<SCWFCObjectMetadataDB>();
+    obj_db = std::make_shared<ObjectMetadataDB>();
 
     obj_db->add_model(cube0, 10);
     obj_db->add_model(cube1, 11);

@@ -23,6 +23,7 @@
 #include <scene/visual_nodes.hpp>
 #include <pcg/procedural_grid.hpp>
 #include <pcg/sc_wfc.hpp>
+#include "pcg/sc_wfc_editor.hpp"
 #include <debug.h>
 #include <game.h>
 

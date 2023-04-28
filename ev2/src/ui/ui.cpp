@@ -111,9 +111,9 @@ void SceneEditor::editor(Node* scene) {
 }
 
 void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
-    ImGui::SetNextWindowSize(ImVec2(500, 450), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
-    if (!ImGui::Begin("Scene Window", p_open, ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize)) {
+    ImGui::SetNextWindowSize(ImVec2(550, 450), ImGuiCond_FirstUseEver);
+    // ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
+    if (!ImGui::Begin("Scene Tree", p_open, ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::End();
         return;
     }
@@ -130,10 +130,11 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
     {
         ImGui::BeginGroup();
 
-        ImVec2 child_size = ImVec2(300, -ImGui::GetFrameHeightWithSpacing());
-        ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, ImGuiWindowFlags_NoMove);
+        ImVec2 child_size = ImVec2(0, -ImGui::GetFrameHeightWithSpacing());
+        ImGui::BeginChild(ImGui::GetID("cfg_infos"), child_size, false, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize );
 
-        ImGui::Text("Node %s (%s)", m_selected_node->name.c_str(), m_selected_node->get_path().c_str());
+        ImGui::Text("Node: %s", m_selected_node->name.c_str());
+        ImGui::Text("Path: %s", m_selected_node->get_path().c_str());
         ImGui::Separator();
 
         show_node_editor_widget(m_selected_node.get());
@@ -149,16 +150,27 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
 void SceneEditor::show_node_editor_widget(Node* node) {
     if (!node)
         return;
-    ImGui::Text("Node type %s", util::name_demangle(typeid(*node).name()).c_str());
-    std::string uuid_text = "UUID: " + node->uuid;
-    ImGui::Text("%s", uuid_text.c_str());
-    // ImGui::
-    ImGui::Separator();
-    ImGui::Text("Transform");
-    show_transform_editor(node);
-    if (auto itr = m_editor_types.find(typeid(*node)); itr != m_editor_types.end()) {
-        ImGui::Separator();
-        itr->second->show_editor(node);
+    if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+    {
+        if (ImGui::BeginTabItem("Node Properties"))
+        {
+            ImGui::Text("Transform");
+            show_transform_editor(node);
+            // custom editors for type
+            if (auto itr = m_editor_types.find(typeid(*node)); itr != m_editor_types.end()) {
+                ImGui::Separator();
+                itr->second->show_editor(node);
+            }
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Details"))
+        {
+            ImGui::Text("Node type: %s", util::name_demangle(typeid(*node).name()).c_str());
+            std::string uuid_text = node->uuid;
+            ImGui::TextWrapped("UUID: %s", uuid_text.c_str());
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
     }
 }
 

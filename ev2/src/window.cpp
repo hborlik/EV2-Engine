@@ -351,23 +351,6 @@ public:
         return !glfwWindowShouldClose(window_ptr);
     }
 
-    int run() {
-        lastTime = glfwGetTime();
-        while(!glfwWindowShouldClose(window_ptr)) {
-            double deltaTime = getDelta();
-            // render
-            // renderer->render(deltaTime);
-            lastTime = glfwGetTime();
-
-            // display frame
-            glfwSwapBuffers(window_ptr);
-            // update inputs
-            glfwPollEvents();
-        }
-
-        return 0;
-    }
-
     double getDelta() {
         return glfwGetTime() - lastTime;
     }
