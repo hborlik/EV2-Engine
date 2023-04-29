@@ -9,7 +9,9 @@
  #ifndef EV2_PCG_SCWFC_EDITOR_HPP
  #define EV2_PCG_SCWFC_EDITOR_HPP
 
+#include "pcg/wfc.hpp"
 #include "ui/ui.hpp"
+#include "ui/file_dialog.hpp"
 #include "object_database.hpp"
 #include "sc_wfc.hpp"
 
@@ -38,7 +40,9 @@ public:
 
     void on_selected_node(Node* node) override;
 
-    void load_obj_db();
+    void load_default_obj_db();
+
+    void load_obj_db(std::string_view path);
 
     void save_obj_db(std::string_view path);
 
@@ -57,7 +61,9 @@ private:
 
 private:
     void db_editor_show_pattern_editor_widget();
-    void show_pattern_property_editor_popup(PatternProperties& prop);
+    bool show_pattern_edit_pattern_popup(PatternProperties& prop);
+    bool show_object_data_editor_popup(ObjectData& prop);
+    bool show_class_select_popup(std::string_view popup_name, int& item_current_idx, wfc::Value& selection_out, bool close_on_pick);
 
     void show_db_editor_window(bool* p_open);
 
@@ -67,6 +73,7 @@ private:
     std::shared_ptr<ObjectMetadataDB> obj_db{};
 
     bool m_db_editor_open = false;
+    ui::FileDialogWindow m_file_dialog{};
 };
 
 }

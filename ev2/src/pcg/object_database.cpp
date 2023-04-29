@@ -1,7 +1,10 @@
 #include "object_database.hpp"
 
+#include <vector>
+
 #include "io/serializers.hpp"
 #include "pcg/wfc.hpp"
+#include "engine.hpp"
 
 namespace ev2::pcg {
 
@@ -32,12 +35,15 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
 
     auto db = std::make_unique<ObjectMetadataDB>();
 
-    std::string json_str = io::read_file(path);
-    json j = json::parse(json_str);
-
-    j.at("m_obj_data").get_to(db->m_obj_data);
-    j.at("m_object_classes").get_to(db->m_object_classes);
-    j.at("patterns").get_to(db->patterns);
+    try {
+        std::string json_str = io::read_file(path);
+        json j = json::parse(json_str);
+        j.at("m_obj_data").get_to(db->m_obj_data);
+        j.at("m_object_classes").get_to(db->m_object_classes);
+        j.at("patterns").get_to(db->patterns);
+    } catch (const json::type_error& error) {
+        Engine::log("Failed to load " + std::string{path.data()} + ": " + error.what());
+    }
 
     return db;
 }
@@ -55,8 +61,11 @@ void ObjectMetadataDB::write_database(std::string_view path) {
     }
 
     ostr << j.dump() << std::endl;
+    ostr.close();
+}
 
-
+std::vector<std::pair<int, std::string>> ObjectMetadataDB::get_classes() const {
+    return {m_object_classes.begin(), m_object_classes.end()};
 }
 
 } // namespace ev2::pcg

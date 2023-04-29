@@ -9,6 +9,7 @@
 #ifndef EV2_PCG_OBJECT_DATABASE_HPP
 #define EV2_PCG_OBJECT_DATABASE_HPP
 
+#include <cstddef>
 #include <string>
 #include <memory>
 #include <unordered_map>
@@ -23,7 +24,7 @@ namespace ev2::pcg {
 struct ObjectData {
     std::string name{};
     std::string asset_path{};
-    int object_class{};
+    wfc::Value object_class{};
     std::unordered_map<std::string, float> properties{};
     std::vector<OBB> propagation_patterns{};
 
@@ -58,12 +59,14 @@ public:
     
     void write_database(std::string_view path);
 
+    std::vector<std::pair<int, std::string>> get_classes() const;
+
 public:
-    std::vector<wfc::Pattern> patterns{};
+    std::list<wfc::Pattern> patterns{};
 
 private:
     std::unordered_map<int, std::shared_ptr<renderer::Drawable>> m_meshes{};
-    std::vector<ObjectData> m_obj_data{};
+    std::list<ObjectData> m_obj_data{};
     std::unordered_map<int, std::string> m_object_classes{};
 };
 

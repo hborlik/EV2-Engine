@@ -11,6 +11,7 @@
 
 #include <string>
 #include <filesystem>
+#include <string_view>
 
 namespace ev2::ui {
 
@@ -24,7 +25,7 @@ public:
 
 public:
 
-    bool show_file_dialog(bool* p_open, std::string* select_path);
+    bool show_file_dialog_modal(std::string_view name, std::string* select_path);
 
 private:
     std::filesystem::path current_path;
