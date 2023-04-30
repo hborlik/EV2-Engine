@@ -715,16 +715,16 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
 class Pattern {
   public:
     Pattern() = default;
-    explicit Pattern(const Value &v) noexcept : cell_value{v} {}
+    explicit Pattern(const Value &pattern_class) noexcept : pattern_class{pattern_class} {}
 
-    Pattern(const Value &v, std::initializer_list<Value> l,
+    Pattern(const Value &pattern_class, std::initializer_list<Value> l,
             float weight = 1.f) noexcept
-        : required_values{l}, cell_value{v}, weight{weight} {}
+        : required_classes{l}, pattern_class{pattern_class}, weight{weight} {}
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
-    std::vector<Value> required_values{};
-    Value cell_value{};
+    std::vector<Value> required_classes{};
+    Value pattern_class{};
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 

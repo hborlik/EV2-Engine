@@ -14,6 +14,8 @@
 #include "ui/file_dialog.hpp"
 #include "object_database.hpp"
 #include "sc_wfc.hpp"
+#include <string>
+#include <string_view>
 
 namespace ev2::pcg {
 
@@ -52,17 +54,24 @@ public:
 
 private:
     struct PatternProperties {
-        wfc::Pattern* pattern;
-        std::string name;
-        float weight;
+        wfc::Value pattern_class{-1};
+        float weight = 0.f;
+    };
+
+    struct ObjectClassProperties {
+        std::string name{};
     };
 
     struct Data;
 
 private:
     void db_editor_show_pattern_editor_widget();
-    bool show_pattern_edit_pattern_popup(PatternProperties& prop);
-    bool show_object_data_editor_popup(ObjectData& prop);
+    void db_editor_show_object_class_editor_widget();
+
+    bool show_dbe_edit_object_class_popup(std::string_view name, ObjectClassProperties& prop);
+    bool show_dbe_edit_pattern_popup(std::string_view name, PatternProperties& prop);
+    bool show_dbe_edit_object_data_popup(std::string_view name, ObjectData& prop);
+
     bool show_class_select_popup(std::string_view popup_name, int& item_current_idx, wfc::Value& selection_out, bool close_on_pick);
 
     void show_db_editor_window(bool* p_open);

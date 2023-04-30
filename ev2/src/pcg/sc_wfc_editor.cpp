@@ -5,7 +5,9 @@
 #include <filesystem>
 
 #include "distributions.hpp"
-#include "../ui/imgui.hpp"
+#include "pcg/sc_wfc.hpp"
+#include "ui/imgui.hpp"
+#include "ui/imgui_stdlib.h"
 #include "../resource.hpp"
 #include "pcg/object_database.hpp"
 #include "pcg/wfc.hpp"
@@ -81,7 +83,7 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::EndDisabled();
 
         auto selected_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
-        ImGui::BeginDisabled(selected_node != nullptr);
+        ImGui::BeginDisabled(selected_node == nullptr);
         if (ImGui::Button("Set node as solver start")) {
             m_internal->solver.next_node = dynamic_cast<wfc::DGraphNode*>(selected_node);
         }
@@ -96,57 +98,81 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
     if (!obj_db)
         return;
     
+    static PatternProperties new_prop{};
+    if(ImGui::Button("New Pattern")) {
+        ImGui::OpenPopup("New Pattern");
+        new_prop = {}; // reset to default
+    }
+    if (show_dbe_edit_pattern_popup("New Pattern", new_prop)) {
+        obj_db->patterns.push_back(wfc::Pattern{
+            new_prop.pattern_class,
+            {},
+            new_prop.weight
+        });
+    }
+
+
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
     if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
     {
         auto p_itr = obj_db->patterns.begin();
         while (p_itr != obj_db->patterns.end()) {
             auto& p = *p_itr;
-            const std::string pattern_name = obj_db->object_class_name(p.cell_value.val);
+            const std::string pattern_name = obj_db->object_class_name(p.pattern_class.val);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
 
             ImGui::TableNextRow();
+
             ImGui::TableSetColumnIndex(0);
             ImGui::AlignTextToFramePadding();
+
+            if (ImGui::IsPopupOpen("Add Requirement")) ImGui::SetNextItemOpen(true);
             bool node_open = ImGui::TreeNode("Pattern", "Pattern \"%s\"", pattern_name.c_str());
-            
+
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-FLT_MIN);
             static PatternProperties prop{};
             if (ImGui::Button("Edit")) {
                 ImGui::OpenPopup("Edit Pattern");
                 prop = {
-                    .pattern = &p,
-                    .name = pattern_name,
+                    .pattern_class = p.pattern_class,
                     .weight = p.weight
                 };
             }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Edit Pattern \"%s\"", pattern_name.c_str());
+            }
+            if (show_dbe_edit_pattern_popup("Edit Pattern", prop)) { // true if saved
+                p.pattern_class = prop.pattern_class;
+                p.weight = std::max(prop.weight, 0.f);
+            }
+
             ImGui::SameLine();
             static int item_current_idx = -1;
             if (ImGui::Button("+")) {
                 ImGui::OpenPopup("Add Requirement");
                 item_current_idx = -1;
             }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Add Adjacency Requirement to \"%s\"", pattern_name.c_str());
+            }
             wfc::Value s_out{};
             if (show_class_select_popup("Add Requirement", item_current_idx, s_out, false)) {
-                p.required_values.push_back(s_out);
+                p.required_classes.push_back(s_out);
             }
 
             ImGui::SameLine();
             if (ImGui::Button("Delete")) {
                 obj_db->patterns.erase(p_itr++);
             }
-
-            if (show_pattern_edit_pattern_popup(prop)) { // true if saved
-                obj_db->set_object_class_name(prop.name, p.cell_value.val);
-                p.weight = std::max(prop.weight, 0.f);
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Delete Pattern \"%s\"", pattern_name.c_str());
             }
 
-
             if (node_open) {
-                for (std::size_t rv_i = 0; rv_i < p.required_values.size(); rv_i++) {
-                    const std::string req_pattern_name = obj_db->object_class_name(p.required_values[rv_i].val);
+                for (std::size_t rv_i = 0; rv_i < p.required_classes.size(); rv_i++) {
+                    const std::string req_pattern_name = obj_db->object_class_name(p.required_classes[rv_i].val);
 
                     ImGui::PushID(rv_i);
                     // ImGui::SetNextItemWidth(-FLT_MIN);
@@ -160,15 +186,15 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     if (ImGui::BeginPopupContextItem()) {
                         ImGui::Text("\"%s\"!", req_pattern_name.c_str());
                         if (ImGui::Button("Remove Requirement")) {
-                            auto &vec = p.required_values;
-                            vec.erase(p.required_values.begin() + rv_i);
+                            auto &vec = p.required_classes;
+                            vec.erase(p.required_classes.begin() + rv_i);
                             ImGui::CloseCurrentPopup();
                         }
                         ImGui::EndPopup();
                     }
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", obj_db->object_class_name(p.required_values[rv_i].val).c_str());
+                    ImGui::Text("%s", obj_db->object_class_name(p.required_classes[rv_i].val).c_str());
                     ImGui::NextColumn();
 
                     ImGui::PopID();
@@ -185,20 +211,185 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
     ImGui::PopStyleVar();
 }
 
-bool SCWFCEditor::show_pattern_edit_pattern_popup(SCWFCEditor::PatternProperties& prop) {
-    bool saved = false;
-    if (prop.pattern == nullptr)
-        return saved;
+void SCWFCEditor::db_editor_show_object_class_editor_widget() {
+    if (!obj_db)
+        return;
     
-    if (ImGui::BeginPopupModal("Edit Pattern", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    static ObjectClassProperties new_obj_class{};
+    if(ImGui::Button("New Object Class")) {
+        ImGui::OpenPopup("New Object Class");
+        new_obj_class = {}; // reset to default
+    }
+    if (show_dbe_edit_object_class_popup("New Object Class", new_obj_class)) {
+        int new_id = obj_db->object_class_create_id();
+        obj_db->set_object_class_name(new_obj_class.name, new_id);
+    }
+
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+    if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
+    {
+        for (auto& [object_class_id, object_class_name] : obj_db->get_classes()) {
+            // need to push id to differentiate between different selections
+            ImGui::PushID(object_class_id);
+
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::AlignTextToFramePadding();
+
+            // if (ImGui::IsPopupOpen("Add Requirement")) ImGui::SetNextItemOpen(true);
+            bool node_open = ImGui::TreeNode("Object Class", "Object Class \"%s\" (%d)", object_class_name.c_str(), object_class_id);
+
+            ImGui::TableSetColumnIndex(1);
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            static ObjectClassProperties obj_class{};
+            if (ImGui::Button("Edit")) {
+                ImGui::OpenPopup("Edit Object Class");
+                obj_class = {
+                    .name = object_class_name
+                };
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Edit Object Class \"%s\"", object_class_name.c_str());
+            }
+            if (show_dbe_edit_object_class_popup("Edit Object Class", obj_class)) {
+                obj_db->set_object_class_name(obj_class.name, object_class_id);
+            }
+
+            ImGui::SameLine();
+            static ObjectData obj_data_temp{};
+            if (ImGui::Button("Add Object Data")) {
+                ImGui::OpenPopup("Add Object Data");
+                obj_data_temp = {};
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Add Object Data to class \"%s\"", object_class_name.c_str());
+            }
+            if (show_dbe_edit_object_data_popup("Add Object Data", obj_data_temp)) {
+                obj_db->objs_add(obj_data_temp, object_class_id);
+            }
+
+
+            // ImGui::SameLine();
+            // if (ImGui::Button("Delete")) {
+            //     obj_db->patterns.erase(p_itr++);
+            // }
+            // if (ImGui::IsItemHovered()) {
+            //     ImGui::SetTooltip("Delete Object Class \"%s\"", object_class_name.c_str());
+            // }
+
+            if (node_open) {
+                // get all ObjectData's for the current class id 'object_class_id'
+                for (auto [itr, range_end] = obj_db->objs_for_id(object_class_id); itr != range_end; ) {
+                    auto& [id, obj_data] = *itr;
+                    const std::string obj_data_name = obj_data.name;
+
+                    ImGui::PushID(&obj_data);
+                    // ImGui::SetNextItemWidth(-FLT_MIN);
+
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::AlignTextToFramePadding();
+                    
+                    bool remove = false;
+                    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+                    ImGui::TreeNodeEx("object data", flags, "Object \"%s\"", obj_data_name.c_str());
+                    if (ImGui::BeginPopupContextItem()) {
+                        ImGui::Text("\"%s\"", obj_data_name.c_str());
+                        static ObjectData obj_data_temp_edit{};
+                        if (ImGui::Button("Edit")) {
+                            ImGui::OpenPopup("Edit Object Data");
+                            obj_data_temp_edit = obj_data;
+                        }
+                        if (show_dbe_edit_object_data_popup("Edit Object Data", obj_data_temp_edit)) {
+                            obj_data = obj_data_temp_edit;
+                        }
+                        if (ImGui::Button("Remove")) {
+                            remove = true;
+                            // auto &vec = p.required_classes;
+                            // vec.erase(p.required_classes.begin() + rv_i);
+                            ImGui::CloseCurrentPopup();
+                        }
+                        ImGui::EndPopup();
+                    }
+
+                    if (auto rm = itr++; remove) {
+                        obj_db->objs_erase(rm);
+                    }
+
+                    // static ObjectData obj_data_temp{};
+                    // if (open_edit_popup) {
+                    //     ImGui::OpenPopup("Edit Object Data");
+                    //     obj_data_temp = {};
+                    // }
+                    // if (show_dbe_edit_object_data_popup("Edit Object Data", obj_data_temp)) {
+                    //     obj_db->objs_add(obj_data_temp, object_class_id);
+                    // }
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%s", obj_data.asset_path.c_str());
+                    ImGui::NextColumn();
+
+                    ImGui::PopID();
+                }
+                ImGui::TreePop();
+            }
+
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+
+    ImGui::PopStyleVar();
+}
+
+bool SCWFCEditor::show_dbe_edit_object_class_popup(std::string_view name, ObjectClassProperties& prop) {
+    bool saved = false;
+    
+    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("Edit Object Class Properties");
+        ImGui::Separator();
+
+        ImGui::InputText("Class Name", &prop.name);
+        
+        ImGui::BeginDisabled(prop.name.empty());
+        if (ImGui::Button("Done")) {
+            saved = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndDisabled();
+        if (ImGui::Button("Cancel")) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+    return saved;
+}
+
+bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name, PatternProperties& prop) {
+    bool saved = false;
+    
+    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text("Edit Pattern Properties");
         ImGui::Separator();
 
-        char buf[64];
-        sprintf(buf, "%s", prop.name.c_str());
-        if (ImGui::InputText("Object Class Name", buf, IM_ARRAYSIZE(buf))) {
-            prop.name = buf;
+        static int item_current_idx = -1;
+        ImGui::Text("Class \"%s\" (%d)", obj_db->object_class_name(prop.pattern_class.val).c_str(), prop.pattern_class.val);
+        ImGui::SameLine();
+        if (ImGui::Button("Select Class")) {
+            ImGui::OpenPopup("Select Pattern Class");
+            item_current_idx = -1;
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Select Pattern Class");
+        }
+        wfc::Value s_out{};
+        if (show_class_select_popup("Select Pattern Class", item_current_idx, s_out, true)) {
+            prop.pattern_class = s_out;
         }
 
         ImGui::InputFloat("Weight", &prop.weight);
@@ -211,11 +402,14 @@ bool SCWFCEditor::show_pattern_edit_pattern_popup(SCWFCEditor::PatternProperties
         // ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
         // ImGui::PopStyleVar();
 
+        ImGui::BeginDisabled(prop.pattern_class.val < 0);
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             saved = true;
             ImGui::CloseCurrentPopup();
         }
+        ImGui::EndDisabled();
         ImGui::SetItemDefaultFocus();
+        
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
@@ -225,23 +419,29 @@ bool SCWFCEditor::show_pattern_edit_pattern_popup(SCWFCEditor::PatternProperties
     return saved;
 }
 
-bool SCWFCEditor::show_object_data_editor_popup(ObjectData& prop) {
+bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectData& prop) {
     bool saved = false;
     
-    if (ImGui::BeginPopupModal("Edit Object", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        ImGui::Text("Edit Object Properties");
+        ImGui::Text("%s", name.data());
+        if (!prop.name.empty()) {
+            ImGui::SameLine();
+            ImGui::TextWrapped("%s", prop.name.data());
+        }
         ImGui::Separator();
 
-        char buf[64];
-        sprintf(buf, "%s", prop.name.c_str());
-        if (ImGui::InputText("Object Class Name", buf, IM_ARRAYSIZE(buf))) {
-            prop.name = buf;
-        }
+        ImGui::InputText("Object Name", &prop.name);
 
-        ImGui::InputFloat("Weight", &prop.weight);
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Relative weight of this class for random selection during WFC node collapse step\n");
+        ImGui::TextWrapped("Asset Path %s", prop.asset_path.c_str());
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(-FLT_MAX);
+        if (ImGui::Button("Select Path")) {
+            ImGui::OpenPopup("Select Asset Path");
+        }
+        std::string spath{};
+        if (m_file_dialog.show_file_dialog_modal("Select Asset Path", &spath)) {
+            prop.asset_path = spath;
         }
 
         // static bool dont_ask_me_next_time = false;
@@ -268,8 +468,10 @@ bool SCWFCEditor::show_class_select_popup(
     int& item_current_idx,
     wfc::Value& selection_out,
     bool close_on_pick) {
+
+    bool selected = false;
     
-    if (ImGui::BeginPopupContextItem(popup_name.data(), ImGuiPopupFlags_MouseButtonRight)) {
+    if (ImGui::BeginPopupContextItem(popup_name.data(), ImGuiPopupFlags_MouseButtonLeft)) {
         ImGui::TextWrapped("Select Object Class");
         ImGui::Separator();
 
@@ -285,11 +487,11 @@ bool SCWFCEditor::show_class_select_popup(
         if (ImGui::BeginListBox("##listbox requirements",
                                 ImVec2{0, child_height})) {
             for (auto& [id, class_name] : class_names) {
+
                 const bool is_selected = (item_current_idx == idx);
                 if (ImGui::Selectable(class_name.c_str(), is_selected)) {
                     item_current_idx = idx;
                 }
-
                 // Set the initial focus when opening the combo (scrolling +
                 // keyboard navigation focus)
                 if (is_selected)
@@ -304,11 +506,14 @@ bool SCWFCEditor::show_class_select_popup(
             if (item_current_idx >= 0 && item_current_idx < class_names.size()) {
                 selection_out = wfc::Value{class_names[item_current_idx].first};
                 if (close_on_pick) ImGui::CloseCurrentPopup();
+                selected = true;
             }
         }
 
         ImGui::EndPopup();
     }
+
+    return selected;
 }
 
 void SCWFCEditor::show_db_editor_window(bool* p_open) {
@@ -329,7 +534,7 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
         if (ImGui::BeginMenu("File")) {
 
             if (ImGui::MenuItem("Load DB"))
-                menu_action = None;
+                menu_action = LoadDB;
 
             if (ImGui::MenuItem("Load Default DB"))
                 menu_action = LoadDefaultDB;
@@ -369,14 +574,13 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
         save_obj_db(spath);
     }
     
-
-    if (ImGui::TreeNode("Patterns")) {
-        db_editor_show_pattern_editor_widget();
+    if (ImGui::TreeNode("Object Classes")) {
+        db_editor_show_object_class_editor_widget();
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Objects")) {
-        
+    if (ImGui::TreeNode("Patterns")) {
+        db_editor_show_pattern_editor_widget();
         ImGui::TreePop();
     }
 
@@ -485,7 +689,7 @@ void SCWFCEditor::wfc_solve(int steps) {
 
                 s_node->destroy();
             } else {
-                auto model = obj_db->get_model_for_id(node->domain[0]->cell_value.val);
+                auto model = obj_db->get_model_for_id(node->domain[0]->pattern_class.val);
                 auto& aabb = model->bounding_box;
                 const glm::vec3 scale = glm::vec3{ 2 * s_node->get_bounding_sphere().radius } / glm::length(aabb.diagonal()); // scale uniformly
 

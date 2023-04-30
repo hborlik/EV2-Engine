@@ -51,7 +51,7 @@ float DGraphNode::entropy() const {
 
 void DGraphNode::set_value(const Pattern* p) noexcept {
     assert(p);
-    value = p->cell_value;
+    value = p->pattern_class;
     domain = {p};
 }
 
@@ -60,7 +60,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
      * map required values one-to-one (perfect matching) with available neighbors
      * if all requirements are satisfied, return true
      * */
-    if (required_values.size() == 0)
+    if (required_classes.size() == 0)
         return true;
 
     if (neighborhood.size() == 0)
@@ -74,7 +74,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     std::vector<ValueAndNode> required{};       // required values and associated node in flow graph
 
     // extra two capacity for source and sink
-    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_values.size() + 2, true };
+    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_classes.size() + 2, true };
 
     /* construct flow graph */
 
@@ -86,7 +86,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
-    for (auto& rv : required_values) {
+    for (auto& rv : required_classes) {
         auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv.val), ++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
@@ -104,7 +104,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
         for (const auto& val : node->domain) {
             neigh_values.emplace_back(ValueAndNode{
-                .v = val->cell_value,
+                .v = val->pattern_class,
                 .p = domain_node.get()
                 });
         }
@@ -147,7 +147,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     float flow = ford_fulkerson(dg, source.get(), sink.get(), &dg);
 
     // check that all requirements are met
-    if (flow != required_values.size())
+    if (flow != required_classes.size())
         return false;
 
     return true;

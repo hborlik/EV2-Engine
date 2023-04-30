@@ -73,7 +73,7 @@ private:
             std::stringstream dstr;
             dstr << "[";
             for (const auto& v : n->domain)
-                dstr << v->cell_value.val << ",";
+                dstr << v->pattern_class.val << ",";
             dstr << "]";
             return dstr.str();
         };

@@ -25,7 +25,7 @@ public:
 
 public:
 
-    bool show_file_dialog_modal(std::string_view name, std::string* select_path);
+    bool show_file_dialog_modal(std::string_view name, std::string* select_path, bool relative_path = true);
 
 private:
     std::filesystem::path current_path;

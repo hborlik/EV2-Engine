@@ -19,7 +19,7 @@ enum class FileDialogColumnID {
     Modified
 };
 
-bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string* select_path) {
+bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string* select_path, bool relative_path) {
     using fs::path;
 
     bool did_select = false;
@@ -282,12 +282,13 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
     }
     ImGui::SameLine();
     if (ImGui::Button("Choose")) {
+        path output_path{};
         if (type == FileDialogType::SelectFolder) {
             if (dialog_current_dir == "") {
                 fileDialogError = "Error: You must select a directory!";
             }
             else {
-                *select_path = path{current_path} / path{dialog_current_dir};
+                output_path = path{current_path} / path{dialog_current_dir};
                 file_select_idx = 0;
                 dir_select_idx = 0;
                 dialog_current_file = "";
@@ -299,7 +300,7 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
                 fileDialogError = "Error: You must select a file!";
             }
             else {
-                *select_path = path{current_path} / path{dialog_current_file};
+                output_path = current_path / path{dialog_current_file};
                 file_select_idx = 0;
                 dir_select_idx = 0;
                 dialog_current_file = "";
@@ -307,6 +308,9 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
                 did_select = true;
             }
         }
+        if (relative_path)
+            output_path = std::filesystem::relative(output_path);
+        *select_path = output_path;
     }
 
     if (!fileDialogError.empty()) {

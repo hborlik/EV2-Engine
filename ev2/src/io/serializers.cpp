@@ -65,7 +65,6 @@ void to_json(nlohmann::json& j, const ObjectData& p) {
     j = nlohmann::json{
         { "name", p.name },
         { "asset_path", p.asset_path },
-        { "object_class", p.object_class },
         { "properties", p.properties },
         { "propagation_patterns", p.propagation_patterns }
     };
@@ -74,7 +73,6 @@ void to_json(nlohmann::json& j, const ObjectData& p) {
 void from_json(const nlohmann::json& j, ObjectData& p) {
     j.at("name").get_to(p.name);
     j.at("asset_path").get_to(p.asset_path);
-    j.at("object_class").get_to(p.object_class);
     j.at("properties").get_to(p.properties);
     j.at("propagation_patterns").get_to(p.propagation_patterns);
 }
