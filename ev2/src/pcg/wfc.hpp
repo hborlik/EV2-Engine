@@ -734,8 +734,10 @@ class Pattern {
  *      2. propagate the changes applied to that node
  * 
  */
-class WFCSolver
-{
+class WFCSolver {
+public:
+    using entropy_callback_t = std::function<float(const DGraphNode*, const DGraphNode*)>;
+
 public:
     WFCSolver() = default;
     WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {}
@@ -777,7 +779,7 @@ public:
                 }
             }
             
-            if (float en = n->entropy(); 
+            if (float en = entropy_func ? entropy_func(node, n) : n->entropy(); 
                 n != node && 
                 (!min_e || en < entropy)) {
                 
@@ -836,6 +838,7 @@ public:
 
     Graph<DGraphNode>* graph = nullptr;
     DGraphNode* next_node = nullptr;
+    entropy_callback_t entropy_func{};
 };
 
 } // namespace pcg

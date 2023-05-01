@@ -28,6 +28,11 @@ struct ObjectData {
     std::string asset_path{};
     std::unordered_map<std::string, float> properties{};
     std::vector<OBB> propagation_patterns{};
+    float extent = 1.f;
+
+    bool is_valid() const noexcept {
+        return extent > 0.f && !name.empty() && !asset_path.empty();
+    }
 
     float try_get_property(const std::string& p_name, float default_val = 0.f) {
         auto itr = properties.find(p_name);
@@ -44,9 +49,6 @@ public:
 
 public:
     ObjectMetadataDB() = default;
-    
-    std::shared_ptr<renderer::Drawable> get_model_for_id(int id);
-    void add_model(std::shared_ptr<renderer::Drawable> d, int id);
 
     /**
      * @brief 
@@ -88,8 +90,8 @@ public:
         return m_obj_data.equal_range(id);
     }
 
-    void objs_erase(ObjectDataMap::iterator iterator) {
-        m_obj_data.erase(iterator);
+    ObjectDataMap::iterator objs_erase(ObjectDataMap::iterator iterator) {
+        return m_obj_data.erase(iterator);
     }
 
     void objs_add(const ObjectData& obj, int id) {
@@ -108,7 +110,6 @@ public:
     std::list<wfc::Pattern> patterns{};
 
 private:
-    std::unordered_map<int, std::shared_ptr<renderer::Drawable>> m_meshes{};
     std::unordered_multimap<int, ObjectData> m_obj_data{};
     std::unordered_map<int, std::string> m_object_classes{};
     int max_id = 0;

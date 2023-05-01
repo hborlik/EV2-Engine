@@ -33,7 +33,8 @@ void to_json(nlohmann::json& j, const OBB& p) {
         barr[i * 3 + 1] = { p.basis[i][1] };
         barr[i * 3 + 2] = { p.basis[i][2] };
     }
-    j = nlohmann::json{ { "basis", barr },
+    j = nlohmann::json{ 
+        { "basis", barr },
         { "position", { p.position.x, p.position.y, p.position.z } },
         { "half_extents", { p.half_extents.x, p.half_extents.y, p.half_extents.z } } };
 }
@@ -58,23 +59,3 @@ void from_json(const nlohmann::json& j, OBB& p) {
 }
 
 } // namespace ev2
-
-namespace ev2::pcg {
-
-void to_json(nlohmann::json& j, const ObjectData& p) {
-    j = nlohmann::json{
-        { "name", p.name },
-        { "asset_path", p.asset_path },
-        { "properties", p.properties },
-        { "propagation_patterns", p.propagation_patterns }
-    };
-}
-
-void from_json(const nlohmann::json& j, ObjectData& p) {
-    j.at("name").get_to(p.name);
-    j.at("asset_path").get_to(p.asset_path);
-    j.at("properties").get_to(p.properties);
-    j.at("propagation_patterns").get_to(p.propagation_patterns);
-}
-
-} // namespace pcg

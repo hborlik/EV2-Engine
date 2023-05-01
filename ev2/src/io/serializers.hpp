@@ -38,9 +38,7 @@ void from_json(const nlohmann::json& j, OBB& p);
 
 namespace ev2::pcg {
 
-void to_json(nlohmann::json& j, const ObjectData& p);
-
-void from_json(const nlohmann::json& j, ObjectData& p);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ObjectData, name, asset_path, properties, propagation_patterns, extent)
 
 } // namespace pcg
 

@@ -11,16 +11,6 @@
 
 namespace ev2::pcg {
 
-std::shared_ptr<renderer::Drawable> ObjectMetadataDB::get_model_for_id(int id) {
-    return m_meshes.at(id);
-}
-
-void ObjectMetadataDB::add_model(std::shared_ptr<renderer::Drawable> d, int id) {
-    auto [_it, ins] = m_meshes.emplace(std::make_pair(id, d));
-    if (!ins)
-        throw std::runtime_error{"model already inserted for " + std::to_string(id)};
-}
-
 void ObjectMetadataDB::set_object_class_name(std::string_view name, int id) {
     max_id = std::max(max_id, id);
     m_object_classes.insert_or_assign(id, name.data());
@@ -75,7 +65,7 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
         }
 
         db->check_max_id();
-    } catch (const json::type_error& error) {
+    } catch (const json::exception& error) {
         Engine::log("Failed to load " + std::string{path.data()} + ": " + error.what());
     }
 

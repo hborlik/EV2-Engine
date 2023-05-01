@@ -73,7 +73,7 @@ glm::vec3 SCWFC::sphere_repulsion(const Sphere& sph) const {
             if (intersect(bounds, sph)) {
                 glm::vec3 c2c = bounds.center - sph.center;
                 float r2 = glm::dot(c2c, c2c);
-                net += -glm::normalize(c2c) * (bounds.radius) / r2;
+                net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / r2;
             }
         }
     }

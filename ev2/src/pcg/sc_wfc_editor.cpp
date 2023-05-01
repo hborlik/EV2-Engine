@@ -25,10 +25,16 @@ void SCWFCNodeEditor::show_editor(Node* node) {
 
 struct SCWFCEditor::Data {
     wfc::WFCSolver solver;
+    std::shared_ptr<renderer::Drawable> unsolved_drawable;
 };
 
-SCWFCEditor::SCWFCEditor()
-    : m_internal{std::make_shared<SCWFCEditor::Data>()} {}
+SCWFCEditor::SCWFCEditor():
+    m_internal{std::make_shared<SCWFCEditor::Data>()},
+    obj_db{std::make_shared<ObjectMetadataDB>()} {
+
+    m_internal->unsolved_drawable = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
+    m_internal->unsolved_drawable->materials[0]->diffuse = glm::vec3{1, 0, 0};
+}
 
 void SCWFCEditor::show_editor_tool() {
 
@@ -281,7 +287,10 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
 
             if (node_open) {
                 // get all ObjectData's for the current class id 'object_class_id'
-                for (auto [itr, range_end] = obj_db->objs_for_id(object_class_id); itr != range_end; ) {
+                for (auto [itr, range_end] =
+                         obj_db->objs_for_id(object_class_id);
+                     itr != range_end;) {
+                    
                     auto& [id, obj_data] = *itr;
                     const std::string obj_data_name = obj_data.name;
 
@@ -291,10 +300,14 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
                     ImGui::TableNextRow();
                     ImGui::TableSetColumnIndex(0);
                     ImGui::AlignTextToFramePadding();
-                    
+
                     bool remove = false;
-                    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
-                    ImGui::TreeNodeEx("object data", flags, "Object \"%s\"", obj_data_name.c_str());
+                    ImGuiTreeNodeFlags flags =
+                        ImGuiTreeNodeFlags_Leaf |
+                        ImGuiTreeNodeFlags_NoTreePushOnOpen |
+                        ImGuiTreeNodeFlags_Bullet;
+                    ImGui::TreeNodeEx("object data", flags, "Object \"%s\"",
+                                      obj_data_name.c_str());
                     if (ImGui::BeginPopupContextItem()) {
                         ImGui::Text("\"%s\"", obj_data_name.c_str());
                         static ObjectData obj_data_temp_edit{};
@@ -302,14 +315,13 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
                             ImGui::OpenPopup("Edit Object Data");
                             obj_data_temp_edit = obj_data;
                         }
-                        if (show_dbe_edit_object_data_popup("Edit Object Data", obj_data_temp_edit)) {
+                        if (show_dbe_edit_object_data_popup(
+                                "Edit Object Data", obj_data_temp_edit)) {
                             obj_data = obj_data_temp_edit;
                         }
                         if (ImGui::Button("Remove")) {
-                            remove = true;
-                            // auto &vec = p.required_classes;
-                            // vec.erase(p.required_classes.begin() + rv_i);
                             ImGui::CloseCurrentPopup();
+                            remove = true;
                         }
                         ImGui::EndPopup();
                     }
@@ -344,16 +356,17 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
     ImGui::PopStyleVar();
 }
 
-bool SCWFCEditor::show_dbe_edit_object_class_popup(std::string_view name, ObjectClassProperties& prop) {
+bool SCWFCEditor::show_dbe_edit_object_class_popup(
+    std::string_view name, ObjectClassProperties& prop) {
     bool saved = false;
-    
-    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
-    {
+
+    if (ImGui::BeginPopupModal(name.data(), NULL,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Edit Object Class Properties");
         ImGui::Separator();
 
         ImGui::InputText("Class Name", &prop.name);
-        
+
         ImGui::BeginDisabled(prop.name.empty());
         if (ImGui::Button("Done")) {
             saved = true;
@@ -369,16 +382,19 @@ bool SCWFCEditor::show_dbe_edit_object_class_popup(std::string_view name, Object
     return saved;
 }
 
-bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name, PatternProperties& prop) {
+bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
+                                              PatternProperties& prop) {
     bool saved = false;
-    
-    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
-    {
+
+    if (ImGui::BeginPopupModal(name.data(), NULL,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Edit Pattern Properties");
         ImGui::Separator();
 
         static int item_current_idx = -1;
-        ImGui::Text("Class \"%s\" (%d)", obj_db->object_class_name(prop.pattern_class.val).c_str(), prop.pattern_class.val);
+        ImGui::Text("Class \"%s\" (%d)",
+                    obj_db->object_class_name(prop.pattern_class.val).c_str(),
+                    prop.pattern_class.val);
         ImGui::SameLine();
         if (ImGui::Button("Select Class")) {
             ImGui::OpenPopup("Select Pattern Class");
@@ -388,13 +404,16 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name, PatternProp
             ImGui::SetTooltip("Select Pattern Class");
         }
         wfc::Value s_out{};
-        if (show_class_select_popup("Select Pattern Class", item_current_idx, s_out, true)) {
+        if (show_class_select_popup("Select Pattern Class", item_current_idx,
+                                    s_out, true)) {
             prop.pattern_class = s_out;
         }
 
         ImGui::InputFloat("Weight", &prop.weight);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Relative weight of this class for random selection during WFC node collapse step\n");
+            ImGui::SetTooltip(
+                "Relative weight of this class for random selection during WFC "
+                "node collapse step\n");
         }
 
         // static bool dont_ask_me_next_time = false;
@@ -409,7 +428,7 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name, PatternProp
         }
         ImGui::EndDisabled();
         ImGui::SetItemDefaultFocus();
-        
+
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
@@ -421,9 +440,9 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name, PatternProp
 
 bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectData& prop) {
     bool saved = false;
-    
-    if (ImGui::BeginPopupModal(name.data(), NULL, ImGuiWindowFlags_AlwaysAutoResize))
-    {
+
+    if (ImGui::BeginPopupModal(name.data(), NULL,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("%s", name.data());
         if (!prop.name.empty()) {
             ImGui::SameLine();
@@ -444,16 +463,19 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
             prop.asset_path = spath;
         }
 
-        // static bool dont_ask_me_next_time = false;
-        // ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
-        // ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
-        // ImGui::PopStyleVar();
+        ImGui::InputFloat("Scale", &prop.extent);
 
+        // if (!prop.is_valid()) ImGui::PushStyleColor(ImGuiCol_Button,
+        // (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
+        ImGui::BeginDisabled(!prop.is_valid());
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             saved = true;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SetItemDefaultFocus();
+        ImGui::EndDisabled();
+        // if (!prop.is_valid()) ImGui::PopStyleColor();
+
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
@@ -479,9 +501,6 @@ bool SCWFCEditor::show_class_select_popup(
         float child_height =
             ImGui::GetTextLineHeightWithSpacing() *
             (std::min<float>(class_names.size(), 5) + .25f);
-
-        ImVec2 child_size =
-            ImVec2(ImGui::GetFontSize() * 20, child_height);
 
         int idx = 0;
         if (ImGui::BeginListBox("##listbox requirements",
@@ -588,19 +607,6 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
 }
 
 void SCWFCEditor::load_default_obj_db() {
-    auto cube0 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
-
-    auto cube1 = ResourceManager::get_singleton().get_model(fs::path("models") / "Wagon.obj", false);
-    // cube1->materials[0]->diffuse = glm::vec3{1};
-
-    auto cube2 = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
-    cube2->materials[0]->diffuse = glm::vec3{1, 0, 0};
-
-    obj_db = std::make_shared<ObjectMetadataDB>();
-
-    obj_db->add_model(cube0, 10);
-    obj_db->add_model(cube1, 11);
-    obj_db->add_model(cube2, -1); // required to represent unsolved domain
 
     wfc::Pattern PA{wfc::Value{10}, {wfc::Value{11}, wfc::Value{11}}};
     wfc::Pattern PB{wfc::Value{11}, {wfc::Value{10}}};
@@ -630,78 +636,110 @@ void SCWFCEditor::on_selected_node(Node* node) {
 }
 
 void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass) {
+    if (m_scwfc_node && obj_db)
+        return;
+
     if (n <= 0)
         return;
+    
     const float radius = 2.f;
     const float n_radius = 8.f;
-    if (m_scwfc_node && obj_db) {
-        Ref<SCWFCGraphNode> nnode{};
-        for (int i = 0; i < n; ++i) {
-            // pick a random spawn location
-            const glm::vec2 pos = uniform_disk(uniform2d());
-            glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
+    Ref<SCWFCGraphNode> nnode{};
+    for (int i = 0; i < n; ++i) {
+        // pick a random spawn location
+        const glm::vec2 pos = uniform_disk(uniform2d());
+        glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
 
-            // if spawning on an existing node
-            if (node) {
-                Sphere sph({}, n_radius);
-                sph.center = node->get_position() + offset;
-                
-                offset += mass * m_scwfc_node->sphere_repulsion(sph);
-                offset += node->get_position();
+        // if spawning on an existing node
+        if (node) {
+            Sphere sph({}, n_radius);
+            sph.center = node->get_position() + offset;
+            
+            offset += mass * m_scwfc_node->sphere_repulsion(sph);
+            offset += node->get_position();
 
-                offset.y = 0;
-            }
-
-            nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SGN " + std::to_string(m_scwfc_node->get_n_children()), m_scwfc_node.get());
-            nnode->set_radius(radius);
-            nnode->set_scale(glm::vec3{radius});
-            nnode->set_model(obj_db->get_model_for_id(-1));
-            nnode->set_position(offset);
-
-            // populate domain of new node 
-            std::vector<const wfc::Pattern*> dest(obj_db->patterns.size());
-            std::transform(obj_db->patterns.begin(), obj_db->patterns.end(), dest.begin(),
-                [](auto &elem){ return &elem; }
-            );
-            nnode->domain = dest;
-
-            // attach new node to all nearby neighbors
-            m_scwfc_node->update_all_adjacencies(nnode, n_radius);
-
-            if (i % brf == 0)
-                node = nnode.get();
+            offset.y = 0;
         }
-        m_editor->set_selected_node(nnode.get());
+
+        nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SGN " + std::to_string(m_scwfc_node->get_n_children()), m_scwfc_node.get());
+        nnode->set_radius(radius);
+        nnode->set_scale(glm::vec3{radius});
+        nnode->set_model(m_internal->unsolved_drawable);
+        nnode->set_position(offset);
+
+        // populate domain of new node 
+        std::vector<const wfc::Pattern*> dest(obj_db->patterns.size());
+        std::transform(obj_db->patterns.begin(), obj_db->patterns.end(), dest.begin(),
+            [](auto &elem){ return &elem; }
+        );
+        nnode->domain = dest;
+
+        // attach new node to all nearby neighbors
+        m_scwfc_node->update_all_adjacencies(nnode, n_radius);
+
+        if (i % brf == 0)
+            node = nnode.get();
     }
+    m_editor->set_selected_node(nnode.get());
 }
 
 void SCWFCEditor::wfc_solve(int steps) {
-    if (m_scwfc_node && m_internal) {
-        m_internal->solver.graph = m_scwfc_node->get_graph();
-        int cnt = 0;
+    if (!(m_scwfc_node || m_internal)) {
+        return;
+    }
 
-        auto c_callback = [this](wfc::DGraphNode* node) -> void {
-            auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
-            assert(s_node);
+    m_internal->solver.graph = m_scwfc_node->get_graph();
+    int cnt = 0;
 
-            if (m_scwfc_node->intersects_any_solved_neighbor(Ref{ s_node }) ||
-                node->domain.size() == 0) {
+    auto c_callback = [this](wfc::DGraphNode* node) -> void {
+        auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
+        assert(s_node);
 
-                s_node->destroy();
-            } else {
-                auto model = obj_db->get_model_for_id(node->domain[0]->pattern_class.val);
-                auto& aabb = model->bounding_box;
-                const glm::vec3 scale = glm::vec3{ 2 * s_node->get_bounding_sphere().radius } / glm::length(aabb.diagonal()); // scale uniformly
-
-                s_node->set_model(model);
-                s_node->set_scale(scale);
+        if (m_scwfc_node->intersects_any_solved_neighbor(Ref{ s_node }) ||
+            node->domain.size() == 0) {
+            
+            // remove nodes with 0 valid objects in their domain from the scene
+            s_node->destroy();
+        } else {
+            const int class_id = node->domain[0]->pattern_class.val;
+            auto model = m_internal->unsolved_drawable;
+            float extent{2 * s_node->get_bounding_sphere()
+                                    .radius};  // default to the same size
+            // obj_db will return all ObjestData's for a class id, but will
+            // only use the first if it exists here.
+            if (auto [itr, end] = obj_db->objs_for_id(class_id);
+                itr != end) {
+                auto& [id, obj_data] = *itr;
+                auto m = ResourceManager::get_singleton()
+                                .get_model_relative_path(obj_data.asset_path);
+                if (m) {
+                    model = m;
+                    extent = obj_data.extent;
+                }
             }
-        };
-        
-        while(m_internal->solver.can_continue() && cnt++ < steps) {
-            auto solved_node = m_internal->solver.step_wfc();
-            c_callback(solved_node);
+
+            // rescale the object so that it fits withing the extent
+            const auto& aabb = model->bounding_box;
+            const glm::vec3 scale = glm::vec3{ extent } / glm::length(aabb.diagonal()); // scale uniformly
+
+            s_node->set_model(model);
+            s_node->set_scale(scale);
         }
+    };
+    wfc::WFCSolver::entropy_callback_t entropy_func =
+        [](auto* prop_node, auto* on_node) -> float {
+        auto* prop_node_scene =
+            dynamic_cast<const SCWFCGraphNode*>(prop_node);
+        auto* on_node_scene = dynamic_cast<const SCWFCGraphNode*>(on_node);
+        return on_node->entropy() -
+                1 / glm::length(prop_node_scene->get_position() -
+                                on_node_scene->get_position());
+    };
+
+    m_internal->solver.entropy_func = entropy_func;
+    while (m_internal->solver.can_continue() && cnt++ < steps) {
+        auto solved_node = m_internal->solver.step_wfc();
+        c_callback(solved_node);
     }
 }
 

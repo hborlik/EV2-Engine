@@ -703,14 +703,19 @@ void ResourceManager::pre_render() {
 }
 
 std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesystem::path& filename, bool cache, bool load_materials) {
+    const auto full_path = asset_path / filename;
+    return get_model_relative_path(full_path, cache, load_materials);
+}
+
+std::shared_ptr<renderer::Drawable> ResourceManager::get_model_relative_path(const std::filesystem::path& filename, bool cache, bool load_materials) {
     auto itr = model_lookup.find(filename.generic_string());
     // check that the cached pointer is still good if it has been deleted
     if (itr != model_lookup.end() && cache && !itr->second.expired()) {
         return itr->second.lock();
     }
-    auto base_dir = filename;
-    base_dir.remove_filename();
-    std::shared_ptr<Model> loaded_model = load_model(filename.filename().generic_string(), (asset_path / base_dir).generic_string(), this);
+    std::shared_ptr<Model> loaded_model = load_model(
+        filename.filename().generic_string(),
+        filename.parent_path().generic_string(), this);
     if (loaded_model) {
         auto drawable = std::shared_ptr{loaded_model->create_renderer_drawable()};
         if (cache)

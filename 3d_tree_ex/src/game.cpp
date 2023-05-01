@@ -118,38 +118,38 @@ GameState::GameState(Application* app) : app{app} {
     auto& material = ground_plane->get_collider(0)->getMaterial();
     material.setBounciness(0.01f);
 
-    auto hid = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "rungholt" / "house.obj");
-    auto building0 = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "house" / "house.obj");
-    for (auto& m : building0->materials) {
-        m->roughness = 0.26f;
-        m->clearcoat = 0.03f;
-        m->clearcoatGloss = 1.0f;
-        m->sheen = 0.77f;
-    }
+    // auto hid = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "rungholt" / "house.obj");
+    // auto building0 = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "house" / "house.obj");
+    // for (auto& m : building0->materials) {
+    //     m->roughness = 0.26f;
+    //     m->clearcoat = 0.03f;
+    //     m->clearcoatGloss = 1.0f;
+    //     m->sheen = 0.77f;
+    // }
 
     auto sphere = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "sphere.obj");
-    auto wagon = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "Wagon.obj");
+    // auto wagon = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "Wagon.obj");
 
     marker = app->get_current_scene()->create_child_node<ev2::VisualInstance>("marker");
     marker->set_model(ground);
     marker->set_scale(glm::vec3{0.2, 0.2, 0.2});
     marker->set_position(glm::vec3{0, 3, 0});
 
-    auto h_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("house");
-    h_node->set_model(hid);
-    h_node->set_position(glm::vec3{30, 0, 0});
-    h_node->rotate({0.1, 0.5, 0});
-    h_node->set_scale(glm::vec3{0.1, 0.1, 0.1});
+    // auto h_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("house");
+    // h_node->set_model(hid);
+    // h_node->set_position(glm::vec3{30, 0, 0});
+    // h_node->rotate({0.1, 0.5, 0});
+    // h_node->set_scale(glm::vec3{0.1, 0.1, 0.1});
 
-    auto lh_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("building");
-    lh_node->set_position(glm::vec3{30, 0, -10});
-    lh_node->set_model(building0);
+    // auto lh_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("building");
+    // lh_node->set_position(glm::vec3{30, 0, -10});
+    // lh_node->set_model(building0);
 
-    auto w_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("Wagon");
-    w_node->set_position(glm::vec3{0, 0.43, -20});
-    w_node->rotate(glm::vec3{0, 0.2, -0.3});
-    w_node->set_scale(glm::vec3{0.2});
-    w_node->set_model(wagon);
+    // auto w_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("Wagon");
+    // w_node->set_position(glm::vec3{0, 0.43, -20});
+    // w_node->rotate(glm::vec3{0, 0.2, -0.3});
+    // w_node->set_scale(glm::vec3{0.2});
+    // w_node->set_model(wagon);
 
     auto flies = app->get_current_scene()->create_child_node<FireFlies>(this, "flies", 100);
 

@@ -1,1 +1,77 @@
-{"object_classes":{"Spheres":11,"Wagons":10},"object_data":{"Spheres":[{"asset_path":"asset/models/sphere.obj","name":"sphere","propagation_patterns":[],"properties":{}}],"Wagons":[{"asset_path":"asset/models/Wagon.obj","name":"wagon","propagation_patterns":[],"properties":{}}]},"patterns":[{"pattern_class":{"val":10},"required_classes":[{"val":11},{"val":11}],"weight":1.0},{"pattern_class":{"val":11},"required_classes":[{"val":10}],"weight":1.0}]}
+{
+    "object_classes": {
+        "House": 12,
+        "Spheres": 11,
+        "Wagons": 10
+    },
+    "object_data": {
+        "House": [
+            {
+                "asset_path": "asset/models/house/house.obj",
+                "extent": 5.0,
+                "name": "House1",
+                "propagation_patterns": [],
+                "properties": {}
+            }
+        ],
+        "Spheres": [
+            {
+                "asset_path": "asset/models/sphere.obj",
+                "extent": 1.0,
+                "name": "sphere",
+                "propagation_patterns": [],
+                "properties": {}
+            }
+        ],
+        "Wagons": [
+            {
+                "asset_path": "asset/models/Wagon.obj",
+                "extent": 1.0,
+                "name": "wagon",
+                "propagation_patterns": [],
+                "properties": {}
+            }
+        ]
+    },
+    "patterns": [
+        {
+            "pattern_class": {
+                "val": 10
+            },
+            "required_classes": [
+                {
+                    "val": 11
+                },
+                {
+                    "val": 12
+                }
+            ],
+            "weight": 1.0
+        },
+        {
+            "pattern_class": {
+                "val": 11
+            },
+            "required_classes": [
+                {
+                    "val": 10
+                }
+            ],
+            "weight": 1.0
+        },
+        {
+            "pattern_class": {
+                "val": 12
+            },
+            "required_classes": [
+                {
+                    "val": 10
+                },
+                {
+                    "val": 10
+                }
+            ],
+            "weight": 0.5
+        }
+    ]
+}

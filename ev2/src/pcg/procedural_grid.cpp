@@ -44,15 +44,15 @@ void ProceduralGrid::generate(int n) {
 
     
 
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j) {
-            wfc::DGraphNode* d_node = m_data->grid.at(i, j);
-            if (d_node->domain.size() >= 1) {
-                auto nnode = create_child_node<VisualInstance>("pcg visual [" + std::to_string(i) + ", " + std::to_string(j) + "]");
-                nnode->set_model(d_node->domain.size() == 1 ? obj_db->get_model_for_id(d_node->domain[0]->pattern_class.val) : obj_db->get_model_for_id(-1));
-                nnode->set_position(glm::vec3{i * m_grid_spacing, 0, j * m_grid_spacing});
-            }
-        }
+    // for (int i = 0; i < n; ++i)
+    //     for (int j = 0; j < n; ++j) {
+    //         wfc::DGraphNode* d_node = m_data->grid.at(i, j);
+    //         if (d_node->domain.size() >= 1) {
+    //             auto nnode = create_child_node<VisualInstance>("pcg visual [" + std::to_string(i) + ", " + std::to_string(j) + "]");
+    //             nnode->set_model(d_node->domain.size() == 1 ? obj_db->get_model_for_id(d_node->domain[0]->pattern_class.val) : obj_db->get_model_for_id(-1));
+    //             nnode->set_position(glm::vec3{i * m_grid_spacing, 0, j * m_grid_spacing});
+    //         }
+    //     }
 }
 
 void ProceduralGrid::on_init() {
@@ -68,9 +68,9 @@ void ProceduralGrid::on_init() {
 
     obj_db = std::make_shared<ObjectMetadataDB>();
 
-    obj_db->add_model(cube0, 10);
-    obj_db->add_model(cube1, 11);
-    obj_db->add_model(cube2, -1);
+    // obj_db->add_model(cube0, 10);
+    // obj_db->add_model(cube1, 11);
+    // obj_db->add_model(cube2, -1);
 }
 
 void ProceduralGridEditor::show_editor(Node* node) {
