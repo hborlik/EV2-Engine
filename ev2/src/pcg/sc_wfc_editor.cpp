@@ -636,7 +636,7 @@ void SCWFCEditor::on_selected_node(Node* node) {
 }
 
 void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass) {
-    if (m_scwfc_node && obj_db)
+    if (!(m_scwfc_node || obj_db))
         return;
 
     if (n <= 0)
