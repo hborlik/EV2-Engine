@@ -11,54 +11,95 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 namespace ev2 {
 
 struct Transform {
-    /**
-     * @brief apply euler roataions
-     * 
-     * @param xyz 
-     */
-    void rotate(const glm::vec3& xyz) {
-        rotation = glm::rotate(glm::rotate(glm::rotate(rotation, xyz.x, {1, 0, 0}), xyz.y, {0, 1, 0}), xyz.z, {0, 0, 1});
-    }
-
-    glm::mat4 get_transform() const noexcept {
-        glm::mat4 tr = transform_cache;
-        if (!transform_cache_valid) {
-            tr = glm::mat4_cast(rotation) * glm::scale(glm::identity<glm::mat4>(), scale);
-            tr[3] = glm::vec4{position, 1.0f};
-
-            transform_cache = tr;
-            transform_cache_valid = true;
-        }
-        return tr;
-    }
+    glm::mat4 get_transform() const noexcept { return m_transform; }
 
     glm::mat4 get_linear_transform() const noexcept {
-        glm::mat4 tr = glm::mat4_cast(rotation);
-        tr[3] = glm::vec4{position, 1.0f};
+        update_prs();
+        glm::mat4 tr = glm::mat4_cast(m_prs.rotation);
+        tr[3] = glm::vec4{m_prs.position, 1.0f};
         return tr;
     }
 
-    inline glm::vec3 get_position() const noexcept {return position;}
-    inline glm::quat get_rotation() const noexcept {return rotation;}
-    inline glm::vec3 get_scale() const noexcept {return scale;}
+    inline glm::vec3 get_position() const noexcept {
+        update_prs();
+        return m_prs.position;
+    }
 
-    inline void set_position(glm::vec3 pos) noexcept {position = pos;transform_cache_valid = false;}
-    inline void set_rotation(glm::quat rot) noexcept {rotation = rot;transform_cache_valid = false;}
-    inline void set_scale(glm::vec3 s) noexcept { scale = s;transform_cache_valid = false;}
+    inline glm::quat get_rotation() const noexcept {
+        update_prs();
+        return m_prs.rotation;
+    }
 
-private:
-    glm::vec3 position{};
-    glm::quat rotation = glm::identity<glm::quat>();
-    glm::vec3 scale{1, 1, 1};
+    inline glm::vec3 get_scale() const noexcept {
+        update_prs();
+        return m_prs.scale;
+    }
 
-    mutable glm::mat4   transform_cache;
-    mutable bool        transform_cache_valid = false;
+    inline void set_position(glm::vec3 pos) noexcept {
+        update_prs();
+        m_prs.position = pos;
+        update_transform_from_prs();
+    }
+
+    inline void set_rotation(glm::quat rot) noexcept {
+        update_prs();
+        m_prs.rotation = rot;
+        update_transform_from_prs();
+    }
+
+    /**
+     * @brief apply euler rotations
+     *
+     * @param xyz in radians
+     */
+    void rotate(const glm::vec3& xyz) {
+        update_prs();
+        m_prs.rotation = glm::rotate(
+            glm::rotate(glm::rotate(m_prs.rotation, xyz.x, {1, 0, 0}), xyz.y,
+                        {0, 1, 0}),
+            xyz.z, {0, 0, 1});
+        update_transform_from_prs();
+    }
+
+    inline void set_scale(glm::vec3 s) noexcept {
+        update_prs();
+        m_prs.scale = s;
+        update_transform_from_prs();
+    }
+
+   private:
+    struct PRS {
+        glm::vec3 position{};
+        glm::quat rotation = glm::identity<glm::quat>();
+        glm::vec3 scale{1, 1, 1};
+    };
+
+    inline void update_prs() const noexcept {
+        if (prs_cache_valid) return;
+        glm::vec3 skew;
+        glm::vec4 perspective;
+        glm::decompose(m_transform, m_prs.scale, m_prs.rotation, m_prs.position,
+                       skew, perspective);
+        prs_cache_valid = true;
+    }
+
+    void update_transform_from_prs() noexcept {
+        m_transform = glm::mat4_cast(m_prs.rotation) *
+                      glm::scale(glm::identity<glm::mat4>(), m_prs.scale);
+        m_transform[3] = glm::vec4{m_prs.position, 1.0f};
+    }
+
+   private:
+    mutable bool prs_cache_valid = false;
+    mutable PRS m_prs{};
+
+    glm::mat4 m_transform{1};
 };
-
 }
 
 #endif // 
