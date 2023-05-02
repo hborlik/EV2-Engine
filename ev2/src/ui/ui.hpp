@@ -51,7 +51,7 @@ protected:
 
 class SceneEditor {
 public:
-    void editor(Node* scene);
+    void editor(Node* scene, const Camera* camera);
     void show_scene_explorer(Node* scene, bool* p_open);
     void show_node_editor_widget(Node* node);
 

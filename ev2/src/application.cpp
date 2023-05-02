@@ -101,7 +101,7 @@ void Application::on_drop_file(std::string_view path) {
 
 void Application::on_render_ui() {
     if (show_debug)
-        scene_editor.editor(current_scene.get());
+        scene_editor.editor(current_scene.get(), &current_camera->get_camera());
 }
 
 

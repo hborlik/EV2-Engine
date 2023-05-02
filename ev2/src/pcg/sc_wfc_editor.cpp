@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <cstddef>
 #include <filesystem>
+#include <unordered_set>
 
 #include "distributions.hpp"
 #include "pcg/sc_wfc.hpp"
@@ -592,15 +593,17 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
     if (m_file_dialog.show_file_dialog_modal("Save DB to File", &spath)) {
         save_obj_db(spath);
     }
-    
-    if (ImGui::TreeNode("Object Classes")) {
-        db_editor_show_object_class_editor_widget();
-        ImGui::TreePop();
-    }
 
-    if (ImGui::TreeNode("Patterns")) {
-        db_editor_show_pattern_editor_widget();
-        ImGui::TreePop();
+    if (obj_db) {
+        if (ImGui::TreeNode("Object Classes")) {
+            db_editor_show_object_class_editor_widget();
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Patterns")) {
+            db_editor_show_pattern_editor_widget();
+            ImGui::TreePop();
+        }
     }
 
     ImGui::End();
@@ -650,6 +653,10 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
         const glm::vec2 pos = uniform_disk(uniform2d());
         glm::vec3 offset = glm::vec3{pos.x, 0, pos.y};
 
+        // set of valid neighbors for the propagating node
+        // will be set of all possible patterns when node is null
+        std::unordered_set<const wfc::Pattern*> valid_neighbors{};
+
         // if spawning on an existing node
         if (node) {
             Sphere sph({}, n_radius);
@@ -659,6 +666,20 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
             offset += node->get_position();
 
             offset.y = 0;
+
+            // since we are propagating from an existing node, spawn a
+            // node that contains set of valid neighbors for that existing
+            // node.
+            for (auto p : node->domain) {
+                valid_neighbors.insert(p);
+            }
+
+        } else { // populate domain with all available patterns
+            std::vector<const wfc::Pattern*> dest(obj_db->patterns.size());
+            std::transform(obj_db->patterns.begin(), obj_db->patterns.end(), dest.begin(),
+                [](auto &elem){ return &elem; }
+            );
+            valid_neighbors = {dest.begin(), dest.end()};
         }
 
         nnode = m_scwfc_node->create_child_node<SCWFCGraphNode>("SGN " + std::to_string(m_scwfc_node->get_n_children()), m_scwfc_node.get());
@@ -667,12 +688,8 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
         nnode->set_model(m_internal->unsolved_drawable);
         nnode->set_position(offset);
 
-        // populate domain of new node 
-        std::vector<const wfc::Pattern*> dest(obj_db->patterns.size());
-        std::transform(obj_db->patterns.begin(), obj_db->patterns.end(), dest.begin(),
-            [](auto &elem){ return &elem; }
-        );
-        nnode->domain = dest;
+        // populate domain of new node
+        nnode->domain = {valid_neighbors.begin(), valid_neighbors.end()};
 
         // attach new node to all nearby neighbors
         m_scwfc_node->update_all_adjacencies(nnode, n_radius);
@@ -684,9 +701,8 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
 }
 
 void SCWFCEditor::wfc_solve(int steps) {
-    if (!(m_scwfc_node || m_internal)) {
+    if (!(m_scwfc_node || m_internal))
         return;
-    }
 
     m_internal->solver.graph = m_scwfc_node->get_graph();
     int cnt = 0;

@@ -3,6 +3,10 @@
 
 #include <physics.hpp>
 #include <resource.hpp>
+#include "ImGuizmo-1.83/ImGuizmo.h"
+#include "glm/gtc/type_ptr.hpp"
+#include "renderer/renderer.hpp"
+#include "ui/imgui_internal.hpp"
 
 namespace ev2 {
 
@@ -69,7 +73,47 @@ void show_settings_window(bool* p_open) {
     ImGui::End();
 }
 
-void SceneEditor::editor(Node* scene) {
+void SceneEditor::editor(Node* scene, const Camera* camera) {
+    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+    ImGuiIO& io = ImGui::GetIO();
+
+    constexpr ImGuiWindowFlags gizmoWindowFlags = 
+        ImGuiWindowFlags_NoInputs | 
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoSavedSettings |
+        ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration;
+    if (m_selected_node) {
+        
+        // ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
+        // ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
+        // ImGui::Begin("Gizmo", nullptr, gizmoWindowFlags);
+        
+        // ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
+        // ImVec2 canvas_sz = ImGui::GetContentRegionAvail();
+        // ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
+
+        ImDrawList* draw_list = ImGui::GetBackgroundDrawList();
+        // draw_list->AddRect(ImVec2(0, 0), ImVec2(io.DisplaySize.x, io.DisplaySize.y), IM_COL32(255, 255, 255, 255));
+        
+        // ImGuiWindow* window = ImGui::GetCurrentWindow();
+        // gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
+
+        glm::mat4 model = m_selected_node->get_world_transform();
+        glm::mat4 view = camera->get_view();
+        glm::mat4 projection = camera->get_projection();
+        ImGuizmo::SetDrawlist(draw_list);
+        // ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        if (ImGuizmo::Manipulate(
+                glm::value_ptr(view), glm::value_ptr(projection),
+                ImGuizmo::TRANSLATE, mCurrentGizmoMode, glm::value_ptr(model),
+                NULL, NULL, NULL, NULL)) {
+            
+            m_selected_node->set_world_matrix(model);
+        }
+
+        // ImGui::End();
+    }
 
     if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open);
 

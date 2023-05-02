@@ -145,15 +145,44 @@ public:
 
     void rotate(const glm::vec3& xyz) {transform.rotate(xyz);}
 
-    glm::mat4 get_transform() const noexcept {return transform.get_transform();}
-    glm::mat4 get_linear_transform() const noexcept {return transform.get_linear_transform();}
-    inline glm::vec3 get_position() const noexcept {return transform.get_position();}
-    inline glm::quat get_rotation() const noexcept {return transform.get_rotation();}
-    inline glm::vec3 get_scale() const noexcept {return transform.get_scale();}
+    glm::mat4 get_transform() const noexcept {
+        return transform.get_transform();
+    }
+    glm::mat4 get_linear_transform() const noexcept {
+        return transform.get_linear_transform();
+    }
+    inline glm::vec3 get_position() const noexcept {
+        return transform.get_position();
+    }
+    inline glm::quat get_rotation() const noexcept {
+        return transform.get_rotation();
+    }
+    inline glm::vec3 get_scale() const noexcept {
+        return transform.get_scale();
+    }
 
-    inline void set_position(glm::vec3 pos) noexcept {transform.set_position(pos);node_propagate_transform_changed(this);}
-    inline void set_rotation(glm::quat rot) noexcept {transform.set_rotation(rot);node_propagate_transform_changed(this);}
-    inline void set_scale(glm::vec3 s) noexcept {transform.set_scale(s);node_propagate_transform_changed(this);}
+    void set_position(const glm::vec3& pos) noexcept {
+        transform.set_position(pos);
+        node_propagate_transform_changed(this);
+    }
+    void set_rotation(const glm::quat& rot) noexcept {
+        transform.set_rotation(rot);
+        node_propagate_transform_changed(this);
+    }
+    void set_scale(const glm::vec3& s) noexcept {
+        transform.set_scale(s);
+        node_propagate_transform_changed(this);
+    }
+    void set_local_matrix(const glm::mat4& local_mat) noexcept {
+        transform.set_matrix(local_mat);
+        node_propagate_transform_changed(this);
+    }
+    void set_world_matrix(const glm::mat4& world_mat) noexcept {
+        glm::mat4 inv{1};
+        if (parent)
+            inv = glm::inverse(parent->get_world_transform());
+        set_local_matrix(inv * world_mat);
+    }
 
     bool is_inside_tree() const noexcept {return scene_tree;}
     bool is_destroyed() const noexcept {return m_is_destroyed;}

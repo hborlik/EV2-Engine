@@ -52,6 +52,11 @@ struct Transform {
         update_transform_from_prs();
     }
 
+    void set_matrix(const glm::mat4& mat) noexcept {
+        m_transform = mat;
+        m_prs_cache_valid = false;
+    }
+
     /**
      * @brief apply euler rotations
      *
@@ -80,12 +85,12 @@ struct Transform {
     };
 
     inline void update_prs() const noexcept {
-        if (prs_cache_valid) return;
+        if (m_prs_cache_valid) return;
         glm::vec3 skew;
         glm::vec4 perspective;
         glm::decompose(m_transform, m_prs.scale, m_prs.rotation, m_prs.position,
                        skew, perspective);
-        prs_cache_valid = true;
+        m_prs_cache_valid = true;
     }
 
     void update_transform_from_prs() noexcept {
@@ -95,7 +100,7 @@ struct Transform {
     }
 
    private:
-    mutable bool prs_cache_valid = false;
+    mutable bool m_prs_cache_valid = false;
     mutable PRS m_prs{};
 
     glm::mat4 m_transform{1};

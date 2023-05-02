@@ -253,12 +253,12 @@ public:
     void on_scroll(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos) override {
         Application::on_scroll(mouse_x, mouse_y, scroll_pos);
         auto& io = ImGui::GetIO();
+        static int32_t scroll_last = scroll_pos;
         if (!io.WantCaptureMouse) {
-            static int32_t scroll_last = scroll_pos;
             int32_t scroll_delta = scroll_pos - scroll_last;
-            scroll_last = scroll_pos;
             cam_boom_length = glm::clamp(cam_boom_length - scroll_delta, 0.1f, 1000.f);
         }
+        scroll_last = scroll_pos;
     }
 
     void cursor_pos(int32_t mouse_x, int32_t mouse_y, int32_t scroll_pos) override {
