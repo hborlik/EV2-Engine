@@ -5,6 +5,8 @@
  * 
  * @copyright Copyright (c) 2023
  * 
+ * TODO: this is currently completely unused
+ * 
  */
 #ifndef EV2_RENDERER_MATERIAL_STORAGE_HPP
 #define EV2_RENDERER_MATERIAL_STORAGE_HPP
