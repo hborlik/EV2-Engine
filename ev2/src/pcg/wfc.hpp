@@ -786,7 +786,7 @@ public:
             if (observe(n) || f) { // only update neighbors if the domain changed
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
-                std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
+                std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), *gen);
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
                     // if (neighbor->domain.size() > 1)
@@ -845,7 +845,7 @@ public:
                 weights.push_back(p->weight);
             }
             std::discrete_distribution<int> dist(weights.begin(), weights.end());
-            node->set_value(node->domain.at(dist(gen)));
+            node->set_value(node->domain.at(dist(*gen)));
         }
     }
 

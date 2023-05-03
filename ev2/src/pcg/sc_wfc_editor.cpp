@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <cstddef>
 #include <filesystem>
+#include <memory>
 #include <random>
 #include <unordered_set>
 
@@ -38,16 +39,20 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
 }
 
 struct SCWFCEditor::Data {
-    wfc::WFCSolver solver;
+    std::unique_ptr<wfc::WFCSolver> solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 };
 
 SCWFCEditor::SCWFCEditor():
+    rd{},
+    mt{rd()},
     m_internal{std::make_shared<SCWFCEditor::Data>()},
     obj_db{std::make_shared<ObjectMetadataDB>()} {
 
+    
     m_internal->unsolved_drawable = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
     m_internal->unsolved_drawable->materials[0]->diffuse = glm::vec3{1, 0, 0};
+
 }
 
 void SCWFCEditor::show_editor_tool() {
@@ -97,11 +102,11 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::InputInt("Steps", &steps);
         ImGui::SameLine();
         auto selected_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
-        // ImGui::BeginDisabled(m_internal->solver.next_node == nullptr);
-        ImGui::BeginDisabled(selected_node == nullptr && !m_internal->solver.can_continue());
+        // ImGui::BeginDisabled(m_internal->solver->next_node == nullptr);
+        ImGui::BeginDisabled(selected_node == nullptr && !m_internal->solver->can_continue());
         if (ImGui::Button("Solve")) {
-            if (!m_internal->solver.can_continue())
-                m_internal->solver.set_next_node(selected_node);
+            if (!m_internal->solver->can_continue())
+                m_internal->solver->set_next_node(selected_node);
             wfc_solve(steps);
         }
         ImGui::EndDisabled();
@@ -644,10 +649,8 @@ void SCWFCEditor::on_selected_node(Node* node) {
     if (node) {
         Ref<SCWFC> n = node->get_ref<SCWFC>();
         if (n) {
-            static std::random_device rd{};
-            static std::mt19937 mt{rd()};
             m_scwfc_node = n;
-            m_internal->solver = wfc::WFCSolver{m_scwfc_node->get_graph(), &mt};
+            m_internal->solver = std::make_unique<wfc::WFCSolver>(m_scwfc_node->get_graph(), &mt);
         }
     }
 }
@@ -779,9 +782,9 @@ void SCWFCEditor::wfc_solve(int steps) {
                                     on_node_scene->get_position());
         };
 
-    m_internal->solver.set_entropy_func(entropy_func);
-    while (m_internal->solver.can_continue() && cnt++ < steps) {
-        auto solved_node = m_internal->solver.step_wfc();
+    m_internal->solver->set_entropy_func(entropy_func);
+    while (m_internal->solver->can_continue() && cnt++ < steps) {
+        auto solved_node = m_internal->solver->step_wfc();
         c_callback(solved_node);
     }
 }

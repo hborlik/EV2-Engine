@@ -78,13 +78,14 @@ private:
     void show_db_editor_window(bool* p_open);
 
 private:
+    std::random_device rd;
+    std::mt19937 mt;
     std::shared_ptr<Data> m_internal{};
     Ref<SCWFC> m_scwfc_node{};
     std::shared_ptr<ObjectMetadataDB> obj_db{};
 
     bool m_db_editor_open = false;
     ui::FileDialogWindow m_file_dialog{};
-    
 };
 
 /**

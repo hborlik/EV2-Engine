@@ -1,6 +1,7 @@
 #include <pcg/procedural_grid.hpp>
 
 #include <filesystem>
+#include <random>
 
 #include "resource.hpp"
 #include "pcg/grid.hpp"
@@ -14,10 +15,11 @@ namespace fs = std::filesystem;
 namespace ev2::pcg {
 
 struct ProceduralGrid::Data {
-    Data(int w, int h) : grid{w, h}, solver{&grid.get_graph()} {}
+    Data(int w, int h) : grid{w, h}, rd{}, mt{rd()}, solver{&grid.get_graph(), &mt} {}
 
     pcg::NodeGrid grid;
-
+    std::random_device rd;
+    std::mt19937 mt;
     wfc::WFCSolver solver;
 };
 
@@ -36,7 +38,7 @@ void ProceduralGrid::generate(int n) {
 
     m_data->grid.reset_domains(patterns);
 
-    m_data->solver.next_node = m_data->grid.at(0, 0);
+    m_data->solver.set_next_node(m_data->grid.at(0, 0));
 
     while(m_data->solver.can_continue()) {
         m_data->solver.step_wfc();
