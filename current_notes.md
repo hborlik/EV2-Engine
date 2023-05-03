@@ -76,19 +76,10 @@ Jan 20 meeting notes: data structures for graph representation and understand WF
    - geometry (done)
    - normals (done)
    - texture
-2. Vegetation and terrain rendering (focus)
-    - scene object placement.
-    - what exactly is the problem
-    - Example based?
+
 
 A framework for both plant and building placement. Procedural open world scene generation.
 
-1. by Dec 7
-    - use a tree library
-    - urban models library
-    - define the constraints
-        - forest can be close to the road but not on
-    - Scene saving and loading? how to save scenes
 
 ### Other todos
 1. BUGS:

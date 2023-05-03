@@ -728,13 +728,26 @@ class Pattern {
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 
+template<typename T, typename = std::enable_if_t<std::is_base_of_v<DGraphNode, T>>>
+class IWFCSolver {
+public:
+    virtual ~IWFCSolver() = default;
+
+    virtual T* step_wfc() = 0;
+    virtual bool can_continue() const noexcept = 0;
+
+    virtual T* propagate(T* node) = 0;
+    virtual bool observe(T* node) = 0;
+    virtual void collapse(T* node) = 0;
+};
+
 /**
  * @brief WFC has two stages. 
  *      1. collapse a node to force it to have a single value
  *      2. propagate the changes applied to that node
  * 
  */
-class WFCSolver {
+class WFCSolver : public IWFCSolver<DGraphNode> {
 public:
     using entropy_callback_t = std::function<float(const DGraphNode*, const DGraphNode*)>;
 
@@ -742,21 +755,21 @@ public:
 
     WFCSolver(Graph<DGraphNode>* graph, std::mt19937* gen) : graph{graph}, gen{gen} {}
 
-    DGraphNode* step_wfc() {
+    DGraphNode* step_wfc() override {
         DGraphNode* solved_node = next_node;
         collapse(next_node);
         next_node = propagate(next_node);
         return solved_node;
     }
 
-    bool can_continue() noexcept {return next_node != nullptr;}
+    bool can_continue() const noexcept override {return next_node != nullptr;}
 
     /**
      * @brief Propagate the wave function collapse algorithm
      *
      * @param node
      */
-    DGraphNode* propagate(DGraphNode* node) {
+    DGraphNode* propagate(DGraphNode* node) override {
         assert(node != nullptr);
         std::queue<DGraphNode*> propagation_stack;
         propagation_stack.push(node);
@@ -797,7 +810,7 @@ public:
      *
      * @param node
      */
-    bool observe(DGraphNode* node) {
+    bool observe(DGraphNode* node) override {
         assert(node != nullptr);
         bool changed = false;
         decltype(node->domain) new_domain{};
@@ -816,7 +829,7 @@ public:
      *
      * @param node
      */
-    void collapse(DGraphNode* node) {
+    void collapse(DGraphNode* node) override {
         assert(node != nullptr);
         
         if (node->domain.size() == 0)
