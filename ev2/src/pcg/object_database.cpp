@@ -16,17 +16,12 @@ void ObjectMetadataDB::set_object_class_name(std::string_view name, int id) {
     m_object_classes.insert_or_assign(id, name.data());
 }
 
-std::string ObjectMetadataDB::object_class_name(int id) const {
+std::string ObjectMetadataDB::get_object_class_name(int id) const {
     std::string val{};
     if (auto itr = m_object_classes.find(id); itr != m_object_classes.end()) {
         val = itr->second;
     }
     return val;
-}
-
-bool ObjectMetadataDB::object_class_delete(int id, int rename_id) {
-
-    return false;
 }
 
 template<typename K, typename V>
@@ -53,8 +48,8 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
         json j = json::parse(json_str);
         j.at("object_data").get_to(object_data);
         j.at("object_classes").get_to(object_classes);
+        j.at("patterns").get_to(db->m_patterns);
 
-        j.at("patterns").get_to(db->patterns);
         db->m_object_classes = inverse_map(object_classes);
 
         for (auto& [class_name, obj_vec] : object_data) {
@@ -63,6 +58,8 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
                     object_classes.at(class_name), obj));
             }
         }
+
+        db->refresh_class_id_pattern_map();
 
         db->check_max_id();
     } catch (const json::exception& error) {
@@ -86,7 +83,7 @@ void ObjectMetadataDB::write_database(std::string_view path) {
 
     json j = json{{"object_data", object_data},
                   {"object_classes", object_classes},
-                  {"patterns", patterns}};
+                  {"patterns", m_patterns}};
 
     std::ofstream ostr{path.data(), std::ios::out};
     if (!ostr.is_open()) {

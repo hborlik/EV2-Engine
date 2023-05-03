@@ -9,27 +9,24 @@
  #ifndef EV2_PCG_SCWFC_EDITOR_HPP
  #define EV2_PCG_SCWFC_EDITOR_HPP
 
+#include <cassert>
+#include <string>
+#include <string_view>
+
 #include "pcg/wfc.hpp"
 #include "ui/ui.hpp"
 #include "ui/file_dialog.hpp"
 #include "object_database.hpp"
 #include "sc_wfc.hpp"
-#include <string>
-#include <string_view>
 
 namespace ev2::pcg {
 
 class SCWFCGraphNode;
 
 /**
- * @brief Defines the custom editor behavior for SCWFC nodes in scene
+ * @brief Custom editor tool
  * 
  */
-class SCWFCNodeEditor : public NodeEditorT<SCWFC> {
-public:
-    void show_editor(Node* node) override;
-};
-
 class SCWFCEditor : public EditorTool {
 public:
     SCWFCEditor();
@@ -51,6 +48,10 @@ public:
     void sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
 
     void wfc_solve(int steps);
+
+    ObjectMetadataDB* get_object_db() noexcept {
+        return obj_db.get();
+    }
 
 private:
     struct PatternProperties {
@@ -83,6 +84,23 @@ private:
 
     bool m_db_editor_open = false;
     ui::FileDialogWindow m_file_dialog{};
+    
+};
+
+/**
+ * @brief Defines the custom editor behavior for SCWFC nodes in scene
+ * 
+ */
+class SCWFCGraphNodeEditor : public NodeEditorT<SCWFCGraphNode> {
+public:
+    SCWFCGraphNodeEditor(SCWFCEditor* editor) : m_scwfc_editor{editor} {
+        assert(editor);
+    }
+
+    void show_editor(Node* node) override;
+
+private:
+    SCWFCEditor* m_scwfc_editor = nullptr;
 };
 
 }

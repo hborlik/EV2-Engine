@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include "scene/node.hpp"
 
 #include <tests.h>
 #include <tree.h>
@@ -95,9 +96,10 @@ public:
         set_current_scene(Node::create_node<Node>("root"));
 
         // add scene editors
+        auto node_editor = std::make_shared<ev2::pcg::SCWFCEditor>();
         scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::ProceduralGridEditor>());
-        scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::SCWFCNodeEditor>());
-        scene_editor.add_custom_editor_tool(std::make_shared<ev2::pcg::SCWFCEditor>());
+        scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::SCWFCGraphNodeEditor>(node_editor.get()));
+        scene_editor.add_custom_editor_tool(node_editor);
 
         get_current_scene()->create_child_node<ev2::pcg::ProceduralGrid>("WFC Grid");
         auto scwfc = get_current_scene()->create_child_node<ev2::pcg::SCWFC>("SCWFC");

@@ -724,7 +724,7 @@ class Pattern {
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
     std::vector<Value> required_classes{};
-    Value pattern_class{};
+    Value pattern_class{-1};
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 
@@ -739,8 +739,8 @@ public:
     using entropy_callback_t = std::function<float(const DGraphNode*, const DGraphNode*)>;
 
 public:
-    WFCSolver() = default;
-    WFCSolver(Graph<DGraphNode>* graph): graph{ graph } {}
+
+    WFCSolver(Graph<DGraphNode>* graph, std::mt19937* gen) : graph{graph}, gen{gen} {}
 
     DGraphNode* step_wfc() {
         DGraphNode* solved_node = next_node;
@@ -772,7 +772,9 @@ public:
 
             if (observe(n) || f) { // only update neighbors if the domain changed
                 f = false;
-                for (auto& neighbor_n : graph->adjacent_nodes(n)) {
+                auto neighbor_nodes = graph->adjacent_nodes(n);
+                std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
+                for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
                     // if (neighbor->domain.size() > 1)
                         propagation_stack.push(neighbor);
@@ -820,8 +822,6 @@ public:
         if (node->domain.size() == 0)
             return;
 
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
         if (node->domain.size() == 1) {
             node->set_value(node->domain[0]);
             return;
@@ -836,9 +836,19 @@ public:
         }
     }
 
+    void set_next_node(DGraphNode* next) {
+        next_node = next;
+    }
+
+    void set_entropy_func(const entropy_callback_t& callback) {
+        entropy_func = callback;
+    }
+
+private:
     Graph<DGraphNode>* graph = nullptr;
     DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
+    std::mt19937* gen;
 };
 
 } // namespace pcg

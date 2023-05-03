@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <cstddef>
 #include <filesystem>
+#include <random>
 #include <unordered_set>
 
 #include "distributions.hpp"
@@ -17,10 +18,22 @@ namespace fs = std::filesystem;
 
 namespace ev2::pcg {
 
-void SCWFCNodeEditor::show_editor(Node* node) {
-    SCWFC* n = dynamic_cast<SCWFC*>(node);
-    if (n) {
+void SCWFCGraphNodeEditor::show_editor(Node* node) {
+    SCWFCGraphNode* n = dynamic_cast<SCWFCGraphNode*>(node);
+    auto* obj_db = m_scwfc_editor->get_object_db();
+    if (n && obj_db) {
+        ImGui::Text("Domain");
+        auto p_itr = n->domain.begin();
+        while (p_itr != n->domain.end()) {
+            auto& p = **p_itr;
+            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class.val);
+            // need to push id to differentiate between different selections
+            ImGui::PushID(&p);
+            ImGui::Text("%s", pattern_name.c_str());
+            ImGui::PopID();
 
+            ++p_itr;
+        }
     }
 }
 
@@ -83,16 +96,13 @@ void SCWFCEditor::show_editor_tool() {
         static int steps = 1;
         ImGui::InputInt("Steps", &steps);
         ImGui::SameLine();
-        ImGui::BeginDisabled(m_internal->solver.next_node == nullptr);
-        if (ImGui::Button("Solve")) {
-            wfc_solve(steps);
-        }
-        ImGui::EndDisabled();
-
         auto selected_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
-        ImGui::BeginDisabled(selected_node == nullptr);
-        if (ImGui::Button("Set node as solver start")) {
-            m_internal->solver.next_node = dynamic_cast<wfc::DGraphNode*>(selected_node);
+        // ImGui::BeginDisabled(m_internal->solver.next_node == nullptr);
+        ImGui::BeginDisabled(selected_node == nullptr && !m_internal->solver.can_continue());
+        if (ImGui::Button("Solve")) {
+            if (!m_internal->solver.can_continue())
+                m_internal->solver.set_next_node(selected_node);
+            wfc_solve(steps);
         }
         ImGui::EndDisabled();
     }
@@ -111,7 +121,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
         new_prop = {}; // reset to default
     }
     if (show_dbe_edit_pattern_popup("New Pattern", new_prop)) {
-        obj_db->patterns.push_back(wfc::Pattern{
+        obj_db->add_pattern(wfc::Pattern{
             new_prop.pattern_class,
             {},
             new_prop.weight
@@ -122,10 +132,10 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
     if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
     {
-        auto p_itr = obj_db->patterns.begin();
-        while (p_itr != obj_db->patterns.end()) {
+        auto [p_itr, p_end] = obj_db->get_patterns();
+        while (p_itr != p_end) {
             auto& p = *p_itr;
-            const std::string pattern_name = obj_db->object_class_name(p.pattern_class.val);
+            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class.val);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
 
@@ -151,7 +161,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                 ImGui::SetTooltip("Edit Pattern \"%s\"", pattern_name.c_str());
             }
             if (show_dbe_edit_pattern_popup("Edit Pattern", prop)) { // true if saved
-                p.pattern_class = prop.pattern_class;
+                obj_db->pattern_change_class(p_itr, prop.pattern_class.val);
                 p.weight = std::max(prop.weight, 0.f);
             }
 
@@ -171,7 +181,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
 
             ImGui::SameLine();
             if (ImGui::Button("Delete")) {
-                obj_db->patterns.erase(p_itr++);
+                p_itr = obj_db->erase_pattern(p_itr);
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Delete Pattern \"%s\"", pattern_name.c_str());
@@ -179,7 +189,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
 
             if (node_open) {
                 for (std::size_t rv_i = 0; rv_i < p.required_classes.size(); rv_i++) {
-                    const std::string req_pattern_name = obj_db->object_class_name(p.required_classes[rv_i].val);
+                    const std::string req_pattern_name = obj_db->get_object_class_name(p.required_classes[rv_i].val);
 
                     ImGui::PushID(rv_i);
                     // ImGui::SetNextItemWidth(-FLT_MIN);
@@ -201,7 +211,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     }
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", obj_db->object_class_name(p.required_classes[rv_i].val).c_str());
+                    ImGui::Text("%s", obj_db->get_object_class_name(p.required_classes[rv_i].val).c_str());
                     ImGui::NextColumn();
 
                     ImGui::PopID();
@@ -394,7 +404,7 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
 
         static int item_current_idx = -1;
         ImGui::Text("Class \"%s\" (%d)",
-                    obj_db->object_class_name(prop.pattern_class.val).c_str(),
+                    obj_db->get_object_class_name(prop.pattern_class.val).c_str(),
                     prop.pattern_class.val);
         ImGui::SameLine();
         if (ImGui::Button("Select Class")) {
@@ -617,7 +627,8 @@ void SCWFCEditor::load_default_obj_db() {
     obj_db->set_object_class_name("Class 10", 10);
     obj_db->set_object_class_name("Class 11", 11);
 
-    obj_db->patterns = {PA, PB};
+    obj_db->add_pattern(PA);
+    obj_db->add_pattern(PB);
 }
 
 void SCWFCEditor::load_obj_db(std::string_view path) {
@@ -633,7 +644,10 @@ void SCWFCEditor::on_selected_node(Node* node) {
     if (node) {
         Ref<SCWFC> n = node->get_ref<SCWFC>();
         if (n) {
+            static std::random_device rd{};
+            static std::mt19937 mt{rd()};
             m_scwfc_node = n;
+            m_internal->solver = wfc::WFCSolver{m_scwfc_node->get_graph(), &mt};
         }
     }
 }
@@ -671,12 +685,20 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
             // node that contains set of valid neighbors for that existing
             // node.
             for (auto p : node->domain) {
-                valid_neighbors.insert(p);
+                std::for_each(
+                    p->required_classes.begin(), p->required_classes.end(),
+                    [&valid_neighbors, this](auto& value)->void {
+                        auto [p_b, p_e] = obj_db->patterns_for_id(value.val);
+                        // insert the entire returned range into our set of valid patterns
+                        for (; p_b != p_e; ++p_b)
+                            valid_neighbors.insert((const wfc::Pattern*)p_b->second);
+                    });
             }
 
         } else { // populate domain with all available patterns
-            std::vector<const wfc::Pattern*> dest(obj_db->patterns.size());
-            std::transform(obj_db->patterns.begin(), obj_db->patterns.end(), dest.begin(),
+            auto [p_itr, p_end] = obj_db->get_patterns();
+            std::vector<const wfc::Pattern*> dest(obj_db->patterns_size());
+            std::transform(p_itr, p_end, dest.begin(),
                 [](auto &elem){ return &elem; }
             );
             valid_neighbors = {dest.begin(), dest.end()};
@@ -704,15 +726,13 @@ void SCWFCEditor::wfc_solve(int steps) {
     if (!(m_scwfc_node || m_internal))
         return;
 
-    m_internal->solver.graph = m_scwfc_node->get_graph();
     int cnt = 0;
 
     auto c_callback = [this](wfc::DGraphNode* node) -> void {
         auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
         assert(s_node);
 
-        if (m_scwfc_node->intersects_any_solved_neighbor(Ref{ s_node }) ||
-            node->domain.size() == 0) {
+        if (node->domain.size() == 0) {
             
             // remove nodes with 0 valid objects in their domain from the scene
             s_node->destroy();
@@ -734,25 +754,32 @@ void SCWFCEditor::wfc_solve(int steps) {
                 }
             }
 
-            // rescale the object so that it fits withing the extent
-            const auto& aabb = model->bounding_box;
-            const glm::vec3 scale = glm::vec3{ extent } / glm::length(aabb.diagonal()); // scale uniformly
+            s_node->set_radius(extent / 2);
+            if (m_scwfc_node->intersects_any_solved_neighbor(Ref{ s_node })) {
+                // remove nodes whose final bounding volume intersects solved nodes
+                s_node->destroy();
+            } else {
+                // rescale the object so that it fits withing the extent
+                const auto& aabb = model->bounding_box;
+                const glm::vec3 scale = glm::vec3{ extent } / glm::length(aabb.diagonal()); // scale uniformly
 
-            s_node->set_model(model);
-            s_node->set_scale(scale);
+                s_node->set_model(model);
+                s_node->set_scale(scale);
+            }
         }
     };
+
     wfc::WFCSolver::entropy_callback_t entropy_func =
         [](auto* prop_node, auto* on_node) -> float {
-        auto* prop_node_scene =
-            dynamic_cast<const SCWFCGraphNode*>(prop_node);
-        auto* on_node_scene = dynamic_cast<const SCWFCGraphNode*>(on_node);
-        return on_node->entropy() -
-                1 / glm::length(prop_node_scene->get_position() -
-                                on_node_scene->get_position());
-    };
+            auto* prop_node_scene =
+                dynamic_cast<const SCWFCGraphNode*>(prop_node);
+            auto* on_node_scene = dynamic_cast<const SCWFCGraphNode*>(on_node);
+            return on_node->entropy() -
+                    1 / glm::length(prop_node_scene->get_position() -
+                                    on_node_scene->get_position());
+        };
 
-    m_internal->solver.entropy_func = entropy_func;
+    m_internal->solver.set_entropy_func(entropy_func);
     while (m_internal->solver.can_continue() && cnt++ < steps) {
         auto solved_node = m_internal->solver.step_wfc();
         c_callback(solved_node);
