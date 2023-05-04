@@ -27,7 +27,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
         auto p_itr = n->domain.begin();
         while (p_itr != n->domain.end()) {
             auto& p = **p_itr;
-            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class.val);
+            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
             ImGui::Text("%s", pattern_name.c_str());
@@ -140,7 +140,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
         auto [p_itr, p_end] = obj_db->get_patterns();
         while (p_itr != p_end) {
             auto& p = *p_itr;
-            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class.val);
+            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
 
@@ -166,7 +166,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                 ImGui::SetTooltip("Edit Pattern \"%s\"", pattern_name.c_str());
             }
             if (show_dbe_edit_pattern_popup("Edit Pattern", prop)) { // true if saved
-                obj_db->pattern_change_class(p_itr, prop.pattern_class.val);
+                obj_db->pattern_change_class(p_itr, prop.pattern_class);
                 p.weight = std::max(prop.weight, 0.f);
             }
 
@@ -179,7 +179,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Add Adjacency Requirement to \"%s\"", pattern_name.c_str());
             }
-            wfc::Value s_out{};
+            int s_out{};
             if (show_class_select_popup("Add Requirement", item_current_idx, s_out, false)) {
                 p.required_classes.push_back(s_out);
             }
@@ -194,7 +194,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
 
             if (node_open) {
                 for (std::size_t rv_i = 0; rv_i < p.required_classes.size(); rv_i++) {
-                    const std::string req_pattern_name = obj_db->get_object_class_name(p.required_classes[rv_i].val);
+                    const std::string req_pattern_name = obj_db->get_object_class_name(p.required_classes[rv_i]);
 
                     ImGui::PushID(rv_i);
                     // ImGui::SetNextItemWidth(-FLT_MIN);
@@ -216,7 +216,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     }
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", obj_db->get_object_class_name(p.required_classes[rv_i].val).c_str());
+                    ImGui::Text("%s", obj_db->get_object_class_name(p.required_classes[rv_i]).c_str());
                     ImGui::NextColumn();
 
                     ImGui::PopID();
@@ -409,8 +409,8 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
 
         static int item_current_idx = -1;
         ImGui::Text("Class \"%s\" (%d)",
-                    obj_db->get_object_class_name(prop.pattern_class.val).c_str(),
-                    prop.pattern_class.val);
+                    obj_db->get_object_class_name(prop.pattern_class).c_str(),
+                    prop.pattern_class);
         ImGui::SameLine();
         if (ImGui::Button("Select Class")) {
             ImGui::OpenPopup("Select Pattern Class");
@@ -419,7 +419,7 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Select Pattern Class");
         }
-        wfc::Value s_out{};
+        int s_out{};
         if (show_class_select_popup("Select Pattern Class", item_current_idx,
                                     s_out, true)) {
             prop.pattern_class = s_out;
@@ -437,7 +437,7 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
         // ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
         // ImGui::PopStyleVar();
 
-        ImGui::BeginDisabled(prop.pattern_class.val < 0);
+        ImGui::BeginDisabled(prop.pattern_class < 0);
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             saved = true;
             ImGui::CloseCurrentPopup();
@@ -504,7 +504,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 bool SCWFCEditor::show_class_select_popup(
     std::string_view popup_name,
     int& item_current_idx,
-    wfc::Value& selection_out,
+    int& selection_out,
     bool close_on_pick) {
 
     bool selected = false;
@@ -539,7 +539,7 @@ bool SCWFCEditor::show_class_select_popup(
 
         if (ImGui::Button("Choose")) {
             if (item_current_idx >= 0 && item_current_idx < class_names.size()) {
-                selection_out = wfc::Value{class_names[item_current_idx].first};
+                selection_out = class_names[item_current_idx].first;
                 if (close_on_pick) ImGui::CloseCurrentPopup();
                 selected = true;
             }
@@ -626,8 +626,8 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
 
 void SCWFCEditor::load_default_obj_db() {
 
-    wfc::Pattern PA{wfc::Value{10}, {wfc::Value{11}, wfc::Value{11}}};
-    wfc::Pattern PB{wfc::Value{11}, {wfc::Value{10}}};
+    wfc::Pattern PA{10, {11, 11}};
+    wfc::Pattern PB{11, {10}};
 
     obj_db->set_object_class_name("Class 10", 10);
     obj_db->set_object_class_name("Class 11", 11);
@@ -691,7 +691,7 @@ void SCWFCEditor::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float 
                 std::for_each(
                     p->required_classes.begin(), p->required_classes.end(),
                     [&valid_neighbors, this](auto& value)->void {
-                        auto [p_b, p_e] = obj_db->patterns_for_id(value.val);
+                        auto [p_b, p_e] = obj_db->patterns_for_id(value);
                         // insert the entire returned range into our set of valid patterns
                         for (; p_b != p_e; ++p_b)
                             valid_neighbors.insert((const wfc::Pattern*)p_b->second);
@@ -740,7 +740,7 @@ void SCWFCEditor::wfc_solve(int steps) {
             // remove nodes with 0 valid objects in their domain from the scene
             s_node->destroy();
         } else {
-            const int class_id = node->domain[0]->pattern_class.val;
+            const int class_id = node->domain[0]->pattern_class;
             auto model = m_internal->unsolved_drawable;
             float extent{2 * s_node->get_bounding_sphere()
                                     .radius};  // default to the same size

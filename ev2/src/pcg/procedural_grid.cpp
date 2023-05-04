@@ -31,8 +31,8 @@ void ProceduralGrid::generate(int n) {
 
     m_data = std::make_shared<Data>(n, n);
 
-    wfc::Pattern PA{wfc::Value{10}, {wfc::Value{11}, wfc::Value{11}}};
-    wfc::Pattern PB{wfc::Value{11}, {wfc::Value{10}}};
+    wfc::Pattern PA{10, {11, 11}};
+    wfc::Pattern PB{11, {10}};
 
     std::vector<const wfc::Pattern*> patterns{&PA, &PB};
 

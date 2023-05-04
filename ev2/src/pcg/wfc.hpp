@@ -50,21 +50,6 @@ struct coord {
     }
 };
 
-class Value
-{
-public:
-    Value() = default;
-    explicit Value(int cell_id): val{ cell_id } {}
-
-    int val = 0; // cell tile identifier
-
-private:
-
-    friend bool operator==(const Value& a, const Value& b) noexcept {
-        return a.val == b.val;
-    }
-};
-
 } // namespace pcg
 
 namespace std {
@@ -85,16 +70,6 @@ struct hash<wfc::coord>
         return ((hash<int>()(k.x)
             ^ (hash<int>()(k.y) << 1)) >> 1);
         // ^ (hash<int>()(k.third) << 1);
-    }
-};
-
-template<>
-struct hash<wfc::Value>
-{
-    size_t operator()(const wfc::Value& k) const {
-        using std::hash;
-
-        return hash<int>()(k.val);
     }
 };
 
@@ -129,7 +104,7 @@ public:
     void set_value(const Pattern* p) noexcept;
     
     std::vector<const Pattern*> domain{};      // valid patterns for this node
-    Value value{};
+    int value{};
 };
 
 template<typename T,
@@ -715,16 +690,16 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
 class Pattern {
   public:
     Pattern() = default;
-    explicit Pattern(const Value &pattern_class) noexcept : pattern_class{pattern_class} {}
+    explicit Pattern(int pattern_class) noexcept : pattern_class{pattern_class} {}
 
-    Pattern(const Value &pattern_class, std::initializer_list<Value> l,
+    Pattern(int pattern_class, std::initializer_list<int> l,
             float weight = 1.f) noexcept
         : required_classes{l}, pattern_class{pattern_class}, weight{weight} {}
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
-    std::vector<Value> required_classes{};
-    Value pattern_class{-1};
+    std::vector<int> required_classes{};
+    int pattern_class{-1};
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 

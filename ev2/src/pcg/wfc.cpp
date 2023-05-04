@@ -67,7 +67,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
         return false;
 
     struct ValueAndNode {
-        Value v;
+        int v;
         GraphNode* p;
     };
     std::vector<ValueAndNode> neigh_values{};   // values in neighborhood with associated node in flow graph
@@ -87,7 +87,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
     for (auto& rv : required_classes) {
-        auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv.val), ++id);
+        auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv), ++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
             .v = rv,
@@ -115,7 +115,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
 
     auto sort_vn = [](const ValueAndNode& a, const ValueAndNode& b) {
         // sorted high to low cell values
-        return a.v.val < b.v.val;
+        return a.v < b.v;
     };
 
     // sort by the cell values
@@ -133,7 +133,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
                 dg.add_edge(req.p, vn_pos->p, 1.f);
                 // there is at least one node satisfying the requirement
                 has_single_neighbor = true;
-            } else if (vn_pos->v.val > req.v.val) {
+            } else if (vn_pos->v > req.v) {
                 if (has_single_neighbor == false)
                     return false;
                 break; // did not match value

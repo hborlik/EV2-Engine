@@ -55,7 +55,7 @@ public:
 
 private:
     struct PatternProperties {
-        wfc::Value pattern_class{-1};
+        int pattern_class = -1;
         float weight = 0.f;
     };
 
@@ -73,7 +73,7 @@ private:
     bool show_dbe_edit_pattern_popup(std::string_view name, PatternProperties& prop);
     bool show_dbe_edit_object_data_popup(std::string_view name, ObjectData& prop);
 
-    bool show_class_select_popup(std::string_view popup_name, int& item_current_idx, wfc::Value& selection_out, bool close_on_pick);
+    bool show_class_select_popup(std::string_view popup_name, int& item_current_idx, int& selection_out, bool close_on_pick);
 
     void show_db_editor_window(bool* p_open);
 

@@ -1,5 +1,6 @@
 #include <memory>
 #include <iostream>
+#include <random>
 #include <set>
 
 #include <pcg/wfc.hpp>
@@ -496,10 +497,10 @@ void test_pattern_validity0() {
     std::cout << __FUNCTION__ << std::endl;
 
     // values
-    Value v0{3};
-    Value v1{30};
-    Value v2{6};
-    Value v3{60};
+    int v0{3};
+    int v1{30};
+    int v2{6};
+    int v3{60};
 
     Pattern p_center{v0, {v1, v2, v3}};
 
@@ -537,11 +538,11 @@ void test_pattern_validity1() {
     std::cout << __FUNCTION__ << std::endl;
 
     // values
-    Value v0{3};
-    Value v1{30};
-    Value v2{6};
-    Value v3{60};
-    Value v4{7};
+    int v0{3};
+    int v1{30};
+    int v2{6};
+    int v3{60};
+    int v4{7};
 
     Pattern p_center{v0, {v1, v2, v3}};
 
@@ -578,8 +579,8 @@ void test_pattern_validity2() {
     std::cout << __FUNCTION__ << std::endl;
 
     // values
-    Value v0{10};
-    Value v1{11};
+    int v0{10};
+    int v1{11};
 
     Pattern p_center{v0, {v1, v1}};
     Pattern PB{v1, {v0}};
@@ -610,8 +611,8 @@ void wfc_solver_grid0() {
 
     std::cout << to_string(ngrid) << std::endl;
 
-    Pattern PA{Value{10}, {Value{11}, Value{11}}};
-    Pattern PB{Value{11}, {Value{10}}};
+    Pattern PA{10, {11, 11}};
+    Pattern PB{11, {10}};
 
     std::vector<const Pattern*> patterns{&PA, &PB};
 
@@ -621,7 +622,10 @@ void wfc_solver_grid0() {
 
     // wfc tests
 
-    WFCSolver solver{&ngrid.get_graph()};
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+
+    WFCSolver solver{&ngrid.get_graph(), &gen};
 
     DGraphNode* next = ngrid.at(0, 0);
 

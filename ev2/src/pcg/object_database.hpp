@@ -118,7 +118,7 @@ public:
 
     void pattern_change_class(pattern_list_t::iterator itr, int id) {
         remove_pattern_from_id_map(&*itr);
-        itr->pattern_class.val = id;
+        itr->pattern_class = id;
         add_pattern_to_id_map(&*itr);
     }
 
@@ -131,7 +131,7 @@ private:
     }
 
     void remove_pattern_from_id_map(const wfc::Pattern* p) {
-        for (auto [b,e] = m_patterns_for_class.equal_range(p->pattern_class.val); b != e; ++b) {
+        for (auto [b,e] = m_patterns_for_class.equal_range(p->pattern_class); b != e; ++b) {
             auto& [id, pattern] = *b;
             if (pattern == p) {
                 m_patterns_for_class.erase(b);
@@ -141,13 +141,13 @@ private:
     }
 
     void add_pattern_to_id_map(wfc::Pattern* p) {
-        m_patterns_for_class.emplace(std::make_pair(p->pattern_class.val, p));
+        m_patterns_for_class.emplace(std::make_pair(p->pattern_class, p));
     }
 
     void refresh_class_id_pattern_map() {
         m_patterns_for_class = {};
         for (auto& p : m_patterns) {
-            m_patterns_for_class.insert(std::make_pair(p.pattern_class.val, &p));
+            m_patterns_for_class.insert(std::make_pair(p.pattern_class, &p));
         }
     }
 

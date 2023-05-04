@@ -73,7 +73,7 @@ private:
             std::stringstream dstr;
             dstr << "[";
             for (const auto& v : n->domain)
-                dstr << v->pattern_class.val << ",";
+                dstr << v->pattern_class << ",";
             dstr << "]";
             return dstr.str();
         };
