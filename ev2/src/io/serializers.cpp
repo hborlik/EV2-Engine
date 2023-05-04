@@ -1,4 +1,6 @@
 #include "serializers.hpp"
+#include <initializer_list>
+#include "glm/gtc/type_ptr.hpp"
 
 
 namespace ev2::io {
@@ -26,32 +28,19 @@ auto read_file(std::string_view path) -> std::string {
 
 namespace ev2 {
 
+
 void to_json(nlohmann::json& j, const OBB& p) {
-    std::vector<float> barr(9);
-    for (int i = 0; i < 3; i++) {
-        barr[i * 3 + 0] = { p.basis[i][0] };
-        barr[i * 3 + 1] = { p.basis[i][1] };
-        barr[i * 3 + 2] = { p.basis[i][2] };
-    }
+    std::vector<float> barr(glm::value_ptr(p.transform), glm::value_ptr(p.transform) + 16);
     j = nlohmann::json{ 
-        { "basis", barr },
-        { "position", { p.position.x, p.position.y, p.position.z } },
+        { "transform", barr },
         { "half_extents", { p.half_extents.x, p.half_extents.y, p.half_extents.z } } };
 }
 
 void from_json(const nlohmann::json& j, OBB& p) {
     std::vector<float> barr{};
-    j.at("basis").get_to(barr);
+    j.at("transform").get_to(barr);
 
-    p.basis = glm::mat3{
-        { barr.at(0), barr.at(1), barr.at(2) },
-        { barr.at(3), barr.at(4), barr.at(5) },
-        { barr.at(6), barr.at(7), barr.at(8) }
-    };
-
-    j.at("position").get_to(barr);
-
-    p.position = { barr.at(0), barr.at(1), barr.at(2) };
+    p.transform = glm::make_mat4(barr.data());
 
     j.at("half_extents").get_to(barr);
 

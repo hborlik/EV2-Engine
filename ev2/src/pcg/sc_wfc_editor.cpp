@@ -8,9 +8,14 @@
 #include <unordered_set>
 
 #include "distributions.hpp"
+#include "glm/common.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "pcg/sc_wfc.hpp"
 #include "ui/imgui.hpp"
+#include "ui/imgui_internal.hpp"
 #include "ui/imgui_stdlib.h"
+#include "ui/ImGuizmo-1.83/ImGuizmo.h"
 #include "../resource.hpp"
 #include "pcg/object_database.hpp"
 #include "pcg/wfc.hpp"
@@ -341,6 +346,7 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
                         ImGui::EndPopup();
                     }
 
+                    // advance to next item, if remove was set true, remove the previous iterator value (rm)
                     if (auto rm = itr++; remove) {
                         obj_db->objs_erase(rm);
                     }
@@ -376,7 +382,8 @@ bool SCWFCEditor::show_dbe_edit_object_class_popup(
     bool saved = false;
 
     if (ImGui::BeginPopupModal(name.data(), NULL,
-                               ImGuiWindowFlags_AlwaysAutoResize)) {
+                               ImGuiWindowFlags_AlwaysAutoResize |
+                               ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::Text("Edit Object Class Properties");
         ImGui::Separator();
 
@@ -402,7 +409,8 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
     bool saved = false;
 
     if (ImGui::BeginPopupModal(name.data(), NULL,
-                               ImGuiWindowFlags_AlwaysAutoResize)) {
+                               ImGuiWindowFlags_AlwaysAutoResize |
+                               ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::Text("Edit Pattern Properties");
         ImGui::Separator();
 
@@ -457,7 +465,8 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
     bool saved = false;
 
     if (ImGui::BeginPopupModal(name.data(), NULL,
-                               ImGuiWindowFlags_AlwaysAutoResize)) {
+                               ImGuiWindowFlags_AlwaysAutoResize |
+                               ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::Text("%s", name.data());
         if (!prop.name.empty()) {
             ImGui::SameLine();
@@ -479,6 +488,51 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         }
 
         ImGui::InputFloat("Scale", &prop.extent);
+
+        // OBB editor
+        ImGui::BeginChildFrame(ImGui::GetID("OBB Editor"), ImVec2(500, 200));
+
+        static ImGuizmo::MODE current_gizmo_mode{ImGuizmo::WORLD};
+        static ImGuizmo::OPERATION m_current_gizmo_operation{ImGuizmo::TRANSLATE};
+
+        if (ImGui::RadioButton("Translate",
+                               m_current_gizmo_operation == ImGuizmo::TRANSLATE))
+            m_current_gizmo_operation = ImGuizmo::TRANSLATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Rotate",
+                               m_current_gizmo_operation == ImGuizmo::ROTATE))
+            m_current_gizmo_operation = ImGuizmo::ROTATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Scale",
+                               m_current_gizmo_operation == ImGuizmo::SCALE))
+            m_current_gizmo_operation = ImGuizmo::SCALE;
+
+        if (prop.propagation_patterns.size() < 1)
+            prop.propagation_patterns.push_back(OBB{});
+
+        OBB& obb = prop.propagation_patterns.at(0);
+        glm::mat4 model = obb.transform;
+        // glm::abs(obb.half_extents)
+        glm::mat4 view = glm::lookAt(glm::vec3{10}, glm::vec3{0}, glm::vec3{0, 1, 0});
+        glm::mat4 projection = glm::perspectiveFov(60.f, 700.f, 500.f, 0.05f, 100.f);
+
+        static ImGuiWindowFlags gizmoWindowFlags = 0;
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
+
+        ImGuizmo::SetDrawlist();
+        float windowWidth = (float)ImGui::GetWindowWidth();
+        float windowHeight = (float)ImGui::GetWindowHeight();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        if (ImGuizmo::Manipulate(
+                glm::value_ptr(view), glm::value_ptr(projection),
+                m_current_gizmo_operation, current_gizmo_mode, glm::value_ptr(model),
+                NULL, NULL, NULL, NULL)) {
+            
+            // m_selected_node->set_world_matrix(model);
+        }
+
+        ImGui::EndChildFrame();
 
         // if (!prop.is_valid()) ImGui::PushStyleColor(ImGuiCol_Button,
         // (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));

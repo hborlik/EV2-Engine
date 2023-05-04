@@ -422,20 +422,19 @@ inline bool intersect(const Frustum& f, const AABB& b) noexcept {
  */
 struct OBB {
 
-    glm::mat3 basis{};
-    glm::vec3 position{};
+    glm::mat4 transform{1};
     glm::vec3 half_extents{};
 
     void normalize() noexcept {
         using namespace glm;
         const vec3 mag = {
-            length(basis[0]),
-            length(basis[1]),
-            length(basis[2]) };
+            length(transform[0]),
+            length(transform[1]),
+            length(transform[2]) };
         
-        basis[0] /= mag[0];
-        basis[1] /= mag[1];
-        basis[2] /= mag[2];
+        transform[0] /= mag[0];
+        transform[1] /= mag[1];
+        transform[2] /= mag[2];
         half_extents = half_extents * mag;
     }
 
@@ -443,12 +442,10 @@ private:
     friend OBB operator*(const glm::mat4& tr, const OBB& obb) noexcept {
         using namespace glm;
         OBB out{};
-        out.basis = tr * mat4{obb.basis};
+        out.transform = tr * obb.transform;
         out.half_extents = obb.half_extents;
 
         out.normalize();
-
-        out.position = tr * vec4{obb.position, 1.f};
 
         return out;
     }
