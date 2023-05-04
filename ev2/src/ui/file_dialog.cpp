@@ -26,7 +26,10 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (!ImGui::BeginPopupModal(name.data(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse)) {
+    if (!ImGui::BeginPopupModal(name.data(), nullptr,
+                                ImGuiWindowFlags_AlwaysAutoResize |
+                                    ImGuiWindowFlags_NoCollapse |
+                                    ImGuiWindowFlags_NoSavedSettings)) {
         return did_select;
     }
 
