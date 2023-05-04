@@ -95,10 +95,10 @@ public:
     }
 
     auto get_patterns() {
-        return std::make_pair(m_patterns.begin(), m_patterns.end());
+        return std::make_pair(m_patterns.cbegin(), m_patterns.cend());
     }
 
-    pattern_list_t::iterator erase_pattern(pattern_list_t::iterator itr) {
+    pattern_list_t::const_iterator pattern_erase(pattern_list_t::const_iterator itr) {
         remove_pattern_from_id_map(&*itr);
         return m_patterns.erase(itr);
     }
@@ -116,10 +116,27 @@ public:
         return m_patterns_for_class.equal_range(id);
     }
 
-    void pattern_change_class(pattern_list_t::iterator itr, int id) {
-        remove_pattern_from_id_map(&*itr);
-        itr->pattern_class = id;
-        add_pattern_to_id_map(&*itr);
+    void pattern_change_class(pattern_list_t::const_iterator cit, int id) {
+        auto it = to_internal_iterator(cit);
+
+        remove_pattern_from_id_map(&*it);
+        it->pattern_class = id;
+        add_pattern_to_id_map(&*it);
+    }
+
+    std::vector<int>::const_iterator pattern_erase_requirement(pattern_list_t::const_iterator cit, std::vector<int>::const_iterator rqit) {
+        auto it = to_internal_iterator(cit);
+        return it->required_classes.erase(rqit);
+    }
+
+    void pattern_add_requirement(pattern_list_t::const_iterator cit, int rq) {
+        auto it = to_internal_iterator(cit);
+        it->required_classes.push_back(rq);
+    }
+
+    void pattern_set_weight(pattern_list_t::const_iterator cit, float weight) {
+        auto it = to_internal_iterator(cit);
+        it->weight = weight;
     }
 
 private:
@@ -149,6 +166,15 @@ private:
         for (auto& p : m_patterns) {
             m_patterns_for_class.insert(std::make_pair(p.pattern_class, &p));
         }
+    }
+
+    pattern_list_t::iterator to_internal_iterator(pattern_list_t::const_iterator cit) {
+        // from https://www.technical-recipes.com/2012/how-to-convert-const_iterators-to-iterators-using-stddistance-and-stdadvance/
+        // convert constant iterator to an iterator in our internal list
+        using c_iter = pattern_list_t::const_iterator;
+        auto it = m_patterns.begin();
+        std::advance (it, std::distance<c_iter>(it, cit));
+        return it;
     }
 
 private:

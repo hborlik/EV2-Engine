@@ -167,7 +167,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
             if (show_dbe_edit_pattern_popup("Edit Pattern", prop)) { // true if saved
                 obj_db->pattern_change_class(p_itr, prop.pattern_class);
-                p.weight = std::max(prop.weight, 0.f);
+                obj_db->pattern_set_weight(p_itr, std::max(prop.weight, 0.f));
             }
 
             ImGui::SameLine();
@@ -181,12 +181,12 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
             int s_out{};
             if (show_class_select_popup("Add Requirement", item_current_idx, s_out, false)) {
-                p.required_classes.push_back(s_out);
+                obj_db->pattern_add_requirement(p_itr, s_out);
             }
 
             ImGui::SameLine();
             if (ImGui::Button("Delete")) {
-                p_itr = obj_db->erase_pattern(p_itr);
+                p_itr = obj_db->pattern_erase(p_itr);
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Delete Pattern \"%s\"", pattern_name.c_str());
@@ -208,8 +208,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     if (ImGui::BeginPopupContextItem()) {
                         ImGui::Text("\"%s\"!", req_pattern_name.c_str());
                         if (ImGui::Button("Remove Requirement")) {
-                            auto &vec = p.required_classes;
-                            vec.erase(p.required_classes.begin() + rv_i);
+                            obj_db->pattern_erase_requirement(p_itr, p.required_classes.begin() + rv_i);
                             ImGui::CloseCurrentPopup();
                         }
                         ImGui::EndPopup();

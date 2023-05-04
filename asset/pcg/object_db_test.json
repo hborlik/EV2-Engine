@@ -35,41 +35,23 @@
     },
     "patterns": [
         {
-            "pattern_class": {
-                "val": 10
-            },
+            "pattern_class": 10,
             "required_classes": [
-                {
-                    "val": 11
-                },
-                {
-                    "val": 12
-                }
+                11,
+                12
             ],
             "weight": 1.0
         },
         {
-            "pattern_class": {
-                "val": 11
-            },
-            "required_classes": [
-                {
-                    "val": 10
-                }
-            ],
+            "pattern_class": 11,
+            "required_classes": [10],
             "weight": 1.0
         },
         {
-            "pattern_class": {
-                "val": 12
-            },
+            "pattern_class":12,
             "required_classes": [
-                {
-                    "val": 10
-                },
-                {
-                    "val": 10
-                }
+                10,
+                10
             ],
             "weight": 0.5
         }
