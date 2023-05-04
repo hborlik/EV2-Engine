@@ -123,14 +123,15 @@ void Editor::show_scene_explorer(Node* scene, bool* p_open, const Camera* camera
         return;
     }
 
-    static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
+    static ImGuizmo::MODE current_gizmo_mode{ImGuizmo::WORLD};
+    static ImGuizmo::OPERATION m_current_gizmo_operation{ImGuizmo::TRANSLATE};
     ImGuiIO& io = ImGui::GetIO();
 
-    constexpr ImGuiWindowFlags gizmoWindowFlags = 
-        ImGuiWindowFlags_NoInputs | 
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration;
+    // constexpr ImGuiWindowFlags gizmoWindowFlags = 
+    //     ImGuiWindowFlags_NoInputs | 
+    //     ImGuiWindowFlags_NoMove |
+    //     ImGuiWindowFlags_NoSavedSettings |
+    //     ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration;
     if (m_selected_node) {
         
         // ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
@@ -155,7 +156,7 @@ void Editor::show_scene_explorer(Node* scene, bool* p_open, const Camera* camera
         ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
         if (ImGuizmo::Manipulate(
                 glm::value_ptr(view), glm::value_ptr(projection),
-                ImGuizmo::TRANSLATE, mCurrentGizmoMode, glm::value_ptr(model),
+                m_current_gizmo_operation, current_gizmo_mode, glm::value_ptr(model),
                 NULL, NULL, NULL, NULL)) {
             
             m_selected_node->set_world_matrix(model);
@@ -181,6 +182,32 @@ void Editor::show_scene_explorer(Node* scene, bool* p_open, const Camera* camera
 
         ImGui::Text("Node: %s", m_selected_node->name.c_str());
         ImGui::Text("Path: %s", m_selected_node->get_path().c_str());
+        ImGui::Separator();
+
+        ImGui::RadioButton("LOCAL", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::LOCAL); ImGui::SameLine();
+        ImGui::RadioButton("WORLD", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::WORLD);
+
+        if (ImGui::IsWindowHovered()) {
+            if (ImGui::IsKeyPressed(ImGuiKey_T))
+                m_current_gizmo_operation = ImGuizmo::TRANSLATE;
+            if (ImGui::IsKeyPressed(ImGuiKey_R))
+                m_current_gizmo_operation = ImGuizmo::ROTATE;
+            if (ImGui::IsKeyPressed(ImGuiKey_S))
+                m_current_gizmo_operation = ImGuizmo::SCALE;
+        }
+        
+        if (ImGui::RadioButton("Translate",
+                               m_current_gizmo_operation == ImGuizmo::TRANSLATE))
+            m_current_gizmo_operation = ImGuizmo::TRANSLATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Rotate",
+                               m_current_gizmo_operation == ImGuizmo::ROTATE))
+            m_current_gizmo_operation = ImGuizmo::ROTATE;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("Scale",
+                               m_current_gizmo_operation == ImGuizmo::SCALE))
+            m_current_gizmo_operation = ImGuizmo::SCALE;
+
         ImGui::Separator();
 
         show_node_editor_widget(m_selected_node.get());
