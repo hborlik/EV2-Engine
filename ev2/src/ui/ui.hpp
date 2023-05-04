@@ -13,6 +13,7 @@
 
 #include <scene/scene_tree.hpp>
 #include <scene/node.hpp>
+#include "renderer/camera.hpp"
 
 namespace ev2 {
 
@@ -24,8 +25,8 @@ public:
     virtual std::type_index get_edited_type() const = 0;
 
 protected:
-    friend class SceneEditor;
-    class SceneEditor* m_editor = nullptr;
+    friend class Editor;
+    class Editor* m_editor = nullptr;
 };
 
 template<typename T>
@@ -44,15 +45,15 @@ public:
     virtual void on_selected_node(Node* node) {}
 
 protected:
-    friend class SceneEditor;
-    class SceneEditor* m_editor = nullptr;
+    friend class Editor;
+    class Editor* m_editor = nullptr;
     bool m_is_open = false;
 };
 
-class SceneEditor {
+class Editor {
 public:
-    void editor(Node* scene, const Camera* camera);
-    void show_scene_explorer(Node* scene, bool* p_open);
+    void show_editor(Node* scene, const Camera* camera);
+    void show_scene_explorer(Node* scene, bool* p_open, const Camera* camera);
     void show_node_editor_widget(Node* node);
 
     void set_selected_node(Node* node) noexcept {select_node(Ref<Node>{node});}

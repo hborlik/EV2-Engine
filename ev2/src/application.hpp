@@ -58,7 +58,7 @@ public:
 
 protected:
     bool show_debug = false;
-    SceneEditor scene_editor{};
+    Editor scene_editor{};
 
     int32_t window_width = 1920;
     int32_t window_height = 1080;

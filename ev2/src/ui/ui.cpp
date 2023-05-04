@@ -5,6 +5,7 @@
 #include <resource.hpp>
 #include "ImGuizmo-1.83/ImGuizmo.h"
 #include "glm/gtc/type_ptr.hpp"
+#include "renderer/camera.hpp"
 #include "renderer/renderer.hpp"
 #include "ui/imgui_internal.hpp"
 
@@ -73,7 +74,55 @@ void show_settings_window(bool* p_open) {
     ImGui::End();
 }
 
-void SceneEditor::editor(Node* scene, const Camera* camera) {
+void Editor::show_editor(Node* scene, const Camera* camera) {
+
+    if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open, camera);
+
+    if (m_show_settings)        show_settings_window(&m_show_settings);
+
+    if (m_material_editor_open) show_material_editor_window(&m_material_editor_open);
+
+    if (m_demo_open)            ImGui::ShowDemoWindow();
+
+    if (ImGui::BeginMainMenuBar()) {
+
+        if (ImGui::BeginMenu("Editor"))
+        {
+            // if (ImGui::MenuItem("New")) {}
+            if (ImGui::MenuItem("Scene Tree"))  {m_scene_editor_open = !m_scene_editor_open;}
+            if (ImGui::MenuItem("Material Editor"))  {m_material_editor_open = !m_material_editor_open;}
+            if (ImGui::MenuItem("Settings"))    {m_show_settings = !m_show_settings;}
+            if (ImGui::MenuItem("ImGui Demo"))  {m_demo_open = !m_demo_open;}
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tools"))
+        {
+            // if (ImGui::MenuItem("New")) {}
+            for (auto& [name, tool] : m_editor_tools) {
+                if (ImGui::MenuItem(name.c_str()))  {tool->m_is_open = true;}
+            }
+            ImGui::EndMenu();
+        }
+
+        for (auto& [name, tool] : m_editor_tools) {
+            if (tool->m_is_open) {
+                tool->show_editor_tool();
+            }
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+}
+
+void Editor::show_scene_explorer(Node* scene, bool* p_open, const Camera* camera) {
+    ImGui::SetNextWindowSize(ImVec2(550, 450), ImGuiCond_FirstUseEver);
+    // ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
+    if (!ImGui::Begin("Scene Tree", p_open, ImGuiWindowFlags_NoSavedSettings)) {
+        ImGui::End();
+        return;
+    }
+
     static ImGuizmo::MODE mCurrentGizmoMode(ImGuizmo::WORLD);
     ImGuiIO& io = ImGui::GetIO();
 
@@ -115,53 +164,6 @@ void SceneEditor::editor(Node* scene, const Camera* camera) {
         // ImGui::End();
     }
 
-    if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open);
-
-    if (m_show_settings)        show_settings_window(&m_show_settings);
-
-    if (m_material_editor_open) show_material_editor_window(&m_material_editor_open);
-
-    if (m_demo_open)            ImGui::ShowDemoWindow();
-
-    if (ImGui::BeginMainMenuBar()) {
-
-        if (ImGui::BeginMenu("Editor"))
-        {
-            // if (ImGui::MenuItem("New")) {}
-            if (ImGui::MenuItem("Scene Tree"))  {m_scene_editor_open = !m_scene_editor_open;}
-            if (ImGui::MenuItem("Material Editor"))  {m_material_editor_open = !m_material_editor_open;}
-            if (ImGui::MenuItem("Settings"))    {m_show_settings = !m_show_settings;}
-            if (ImGui::MenuItem("ImGui Demo"))  {m_demo_open = !m_demo_open;}
-            ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Tools"))
-        {
-            // if (ImGui::MenuItem("New")) {}
-            for (auto& [name, tool] : m_editor_tools) {
-                if (ImGui::MenuItem(name.c_str()))  {tool->m_is_open = true;}
-            }
-            ImGui::EndMenu();
-        }
-
-        for (auto& [name, tool] : m_editor_tools) {
-            if (tool->m_is_open) {
-                tool->show_editor_tool();
-            }
-        }
-
-        ImGui::EndMainMenuBar();
-    }
-}
-
-void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
-    ImGui::SetNextWindowSize(ImVec2(550, 450), ImGuiCond_FirstUseEver);
-    // ImGui::SetNextWindowSizeConstraints(ImVec2(0, -1),    ImVec2(FLT_MAX, -1)); 
-    if (!ImGui::Begin("Scene Tree", p_open, ImGuiWindowFlags_NoSavedSettings)) {
-        ImGui::End();
-        return;
-    }
-
     // Left side
     ImGui::BeginChild("left pane", ImVec2(250, 0), true);
     show_scene_tree_widget(0, (Node*)scene);
@@ -191,7 +193,7 @@ void SceneEditor::show_scene_explorer(Node* scene, bool* p_open) {
     ImGui::End();
 }
 
-void SceneEditor::show_node_editor_widget(Node* node) {
+void Editor::show_node_editor_widget(Node* node) {
     if (!node)
         return;
     if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
@@ -218,7 +220,7 @@ void SceneEditor::show_node_editor_widget(Node* node) {
     }
 }
 
-void SceneEditor::add_custom_node_editor(std::shared_ptr<NodeEditor> editor) {
+void Editor::add_custom_node_editor(std::shared_ptr<NodeEditor> editor) {
     assert(editor);
     if (m_editor_types.find(editor->get_edited_type()) == m_editor_types.end()) {
         m_editor_types.emplace(editor->get_edited_type(), editor);
@@ -226,7 +228,7 @@ void SceneEditor::add_custom_node_editor(std::shared_ptr<NodeEditor> editor) {
     }
 }
 
-void SceneEditor::add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool) {
+void Editor::add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool) {
     assert(editor_tool);
     if (m_editor_tools.find(editor_tool->get_name()) == m_editor_tools.end()) {
         m_editor_tools.emplace(editor_tool->get_name(), editor_tool);
@@ -234,7 +236,7 @@ void SceneEditor::add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool
     }
 }
 
-std::shared_ptr<EditorTool> SceneEditor::get_editor_tool(std::string_view name) {
+std::shared_ptr<EditorTool> Editor::get_editor_tool(std::string_view name) {
     auto itr = m_editor_tools.find(name.data());
     std::shared_ptr<EditorTool> tool{};
     if (itr != m_editor_tools.end()) {
@@ -243,7 +245,7 @@ std::shared_ptr<EditorTool> SceneEditor::get_editor_tool(std::string_view name) 
     return tool;
 }
 
-void SceneEditor::show_scene_tree_widget(int id, Node* node) {
+void Editor::show_scene_tree_widget(int id, Node* node) {
     if (!node)
         return;
     const std::string node_name = std::to_string(id) + " " + node->name;
@@ -311,7 +313,7 @@ void SceneEditor::show_scene_tree_widget(int id, Node* node) {
     }
 }
 
-void SceneEditor::show_transform_editor(Node* node) {
+void Editor::show_transform_editor(Node* node) {
     if (!node)
         return;
 
@@ -334,7 +336,7 @@ void SceneEditor::show_transform_editor(Node* node) {
 
 }
 
-void SceneEditor::select_node(const Ref<Node>& n) {
+void Editor::select_node(const Ref<Node>& n) {
     m_selected_node = n;
 
     if (m_selected_node) {
