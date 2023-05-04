@@ -16,7 +16,7 @@
 #include "ui/imgui_internal.hpp"
 #include "ui/imgui_stdlib.h"
 #include "ui/ImGuizmo-1.83/ImGuizmo.h"
-#include "../resource.hpp"
+#include "resource.hpp"
 #include "pcg/object_database.hpp"
 #include "pcg/wfc.hpp"
 
@@ -482,18 +482,38 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         if (ImGui::Button("Select Path")) {
             ImGui::OpenPopup("Select Asset Path");
         }
+        // static bool loaded_model{};
+        // std::array<float, 6> model_bounds; // pMin (3), pMax (3)
+        // if (loaded_model == false) {
+        //     auto model = ResourceManager::get_singleton().get_model_relative_path(prop.asset_path);
+        //     loaded_model = (bool)model;
+        //     // change model AABB points to array
+        //     if (loaded_model) {
+        //         for (int i = 0; i < 3; ++i) {
+        //             model_bounds[i]     = model->bounding_box.pMin[i];
+        //             model_bounds[i+3]   = model->bounding_box.pMin[i];
+        //         }
+        //     }
+        // }
+
         std::string spath{};
         if (m_file_dialog.show_file_dialog_modal("Select Asset Path", &spath)) {
             prop.asset_path = spath;
+
+            // loaded_model = ResourceManager::get_singleton().get_model_relative_path(spath);
         }
 
         ImGui::InputFloat("Scale", &prop.extent);
 
         // OBB editor
-        ImGui::BeginChildFrame(ImGui::GetID("OBB Editor"), ImVec2(500, 200));
+        ImVec2 viewport_size(500, 300);
+        ImGui::BeginChildFrame(ImGui::GetID("OBB Editor"), viewport_size);
 
         static ImGuizmo::MODE current_gizmo_mode{ImGuizmo::WORLD};
         static ImGuizmo::OPERATION m_current_gizmo_operation{ImGuizmo::TRANSLATE};
+
+        ImGui::RadioButton("LOCAL", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::LOCAL); ImGui::SameLine();
+        ImGui::RadioButton("WORLD", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::WORLD);
 
         if (ImGui::RadioButton("Translate",
                                m_current_gizmo_operation == ImGuizmo::TRANSLATE))
@@ -511,10 +531,11 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
             prop.propagation_patterns.push_back(OBB{});
 
         OBB& obb = prop.propagation_patterns.at(0);
-        glm::mat4 model = obb.transform;
+        glm::mat4& model = obb.transform;
         // glm::abs(obb.half_extents)
         glm::mat4 view = glm::lookAt(glm::vec3{10}, glm::vec3{0}, glm::vec3{0, 1, 0});
-        glm::mat4 projection = glm::perspectiveFov(60.f, 700.f, 500.f, 0.05f, 100.f);
+        // glm::mat4 projection = glm::perspectiveFov(60.f, viewport_size.x, viewport_size.y, 0.05f, 100.f);
+        glm::mat4 projection = glm::perspective(glm::radians(60.f), viewport_size.x/viewport_size.y, 0.05f, 100.f);
 
         static ImGuiWindowFlags gizmoWindowFlags = 0;
         ImGuiWindow* window = ImGui::GetCurrentWindow();
@@ -524,6 +545,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         float windowWidth = (float)ImGui::GetWindowWidth();
         float windowHeight = (float)ImGui::GetWindowHeight();
         ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        ImGuizmo::DrawGrid(glm::value_ptr(view), glm::value_ptr(projection), glm::value_ptr(glm::mat4{1}), 10.f);
         if (ImGuizmo::Manipulate(
                 glm::value_ptr(view), glm::value_ptr(projection),
                 m_current_gizmo_operation, current_gizmo_mode, glm::value_ptr(model),
