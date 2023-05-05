@@ -14,10 +14,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
 #include <util.hpp>
 #include <ev.hpp>
 #include <reference_counted.hpp>
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
+#include "glm/geometric.hpp"
 
 namespace ev2 {
 
@@ -422,32 +426,34 @@ inline bool intersect(const Frustum& f, const AABB& b) noexcept {
  */
 struct OBB {
 
-    glm::mat4 transform{1};
-    glm::vec3 half_extents{};
+    glm::vec3 center{};
+    glm::quat rotation = glm::identity<glm::quat>();
+    glm::vec3 half_extents{1};
 
-    void normalize() noexcept {
-        using namespace glm;
-        const vec3 mag = {
-            length(transform[0]),
-            length(transform[1]),
-            length(transform[2]) };
-        
-        transform[0] /= mag[0];
-        transform[1] /= mag[1];
-        transform[2] /= mag[2];
-        half_extents = half_extents * mag;
-    }
+    OBB() = default;
+    OBB(const glm::vec3& center, const glm::mat3& R, const glm::vec3& extents)
+        : center{center}, rotation{R}, half_extents{extents} {
+            rotation = glm::normalize(rotation);
+        }
 
-private:
-    friend OBB operator*(const glm::mat4& tr, const OBB& obb) noexcept {
-        using namespace glm;
-        OBB out{};
-        out.transform = tr * obb.transform;
-        out.half_extents = obb.half_extents;
+    OBB(const glm::mat4& tr, const glm::vec3& extents)
+        : center{},
+          rotation{},
+          half_extents{} {
+                        glm::vec3 skew;
+                        glm::vec4 perspective;
+                        glm::decompose(tr, half_extents, rotation, center,
+                                    skew, perspective);
+                        rotation = glm::normalize(rotation);
+                        half_extents *= .5f * extents.x;
+                       }
 
-        out.normalize();
+    glm::mat4 make_transform(const glm::vec3& extents) const {
+        glm::mat4 scale = glm::scale(glm::mat4{1}, 2.f * half_extents / extents);
+        glm::mat4 rot{rotation};
+        glm::mat4 translate = glm::translate(glm::mat4{1}, center);
 
-        return out;
+        return translate * rot * scale;
     }
 };
 

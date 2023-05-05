@@ -8,9 +8,12 @@
 #include <unordered_set>
 
 #include "distributions.hpp"
+#include "geometry.hpp"
 #include "glm/common.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
+#include "glm/geometric.hpp"
 #include "pcg/sc_wfc.hpp"
 #include "ui/imgui.hpp"
 #include "ui/imgui_internal.hpp"
@@ -62,25 +65,35 @@ SCWFCEditor::SCWFCEditor():
 
 void SCWFCEditor::show_editor_tool() {
 
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Tools")) {
+            if (ImGui::MenuItem("SCWFC DB Editor")) m_db_editor_open = true;
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
     if (m_db_editor_open) show_db_editor_window(&m_db_editor_open);
+
+    // begin displaying our main tool window
+    if (!m_is_open)
+        return;
 
     if (!ImGui::Begin("SCWFCEditor", &m_is_open)) {
         ImGui::End();
         return;
     }
 
+    if (ImGui::Button("Open DB Editor")) {
+        m_db_editor_open = true;
+    }
+
+    ImGui::Spacing();
+    
     if (m_scwfc_node) {
         ImGui::Text("Selected %s", m_scwfc_node->name.c_str());
     } else {
         ImGui::Text("Please select a SCWFC node");
-    }
-
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Object DataBase")) {
-        if (ImGui::Button("Open DB Editor")) {
-            m_db_editor_open = true;
-        }
     }
 
     ImGui::BeginDisabled(m_scwfc_node == nullptr);
@@ -98,7 +111,7 @@ void SCWFCEditor::show_editor_tool() {
             m_scwfc_node->reset();
         }
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Remove all SCWFC nodes in scene");
+            ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
         }
 
         ImGui::Separator();
@@ -462,10 +475,17 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
 }
 
 bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectData& prop) {
-    bool saved = false;
+    static ImGuizmo::MODE current_gizmo_mode{ImGuizmo::WORLD};
+    static ImGuizmo::OPERATION m_current_gizmo_operation{ImGuizmo::TRANSLATE};
+    static OBB* selected_propagation_pattern = nullptr;
+    static bool model_valid = false;
+    static bool model_load_failed = false;
+    ImGuiIO& io = ImGui::GetIO();
 
+    bool saved = false;
+    ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x * 0.6, io.DisplaySize.y * 0.6), ImGuiCond_Appearing);
     if (ImGui::BeginPopupModal(name.data(), NULL,
-                               ImGuiWindowFlags_AlwaysAutoResize |
+                            //    ImGuiWindowFlags_AlwaysAutoResize |
                                ImGuiWindowFlags_NoSavedSettings)) {
         ImGui::Text("%s", name.data());
         if (!prop.name.empty()) {
@@ -482,35 +502,183 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         if (ImGui::Button("Select Path")) {
             ImGui::OpenPopup("Select Asset Path");
         }
-        // static bool loaded_model{};
-        // std::array<float, 6> model_bounds; // pMin (3), pMax (3)
-        // if (loaded_model == false) {
-        //     auto model = ResourceManager::get_singleton().get_model_relative_path(prop.asset_path);
-        //     loaded_model = (bool)model;
-        //     // change model AABB points to array
-        //     if (loaded_model) {
-        //         for (int i = 0; i < 3; ++i) {
-        //             model_bounds[i]     = model->bounding_box.pMin[i];
-        //             model_bounds[i+3]   = model->bounding_box.pMin[i];
-        //         }
-        //     }
-        // }
 
         std::string spath{};
         if (m_file_dialog.show_file_dialog_modal("Select Asset Path", &spath)) {
             prop.asset_path = spath;
 
             // loaded_model = ResourceManager::get_singleton().get_model_relative_path(spath);
+            model_valid = false;
+            model_load_failed = false;
         }
 
-        ImGui::InputFloat("Scale", &prop.extent);
+        ImGui::InputFloat("Extent", &prop.extent);
+
+        static AABB model_aabb{};
+        static std::array<float, 6> model_bounds; // pMin (3), pMax (3)
+        if (!model_valid && !model_load_failed) {
+            auto model = ResourceManager::get_singleton().get_model_relative_path(prop.asset_path);
+            model_valid = (bool)model;
+            model_load_failed = !model_valid;
+            // change model AABB points to array
+            if (model) {
+                model_aabb = model->bounding_box;
+                for (int i = 0; i < 3; ++i) {
+                    model_bounds[i]     = model->bounding_box.pMin[i];
+                    model_bounds[i+3]   = model->bounding_box.pMax[i];
+                }
+            }
+        }
+
 
         // OBB editor
-        ImVec2 viewport_size(500, 300);
+        ImVec2 viewport_size(0, -ImGui::GetFrameHeightWithSpacing()); // leave room for one vertical line below for Save and Cancel
         ImGui::BeginChildFrame(ImGui::GetID("OBB Editor"), viewport_size);
 
-        static ImGuizmo::MODE current_gizmo_mode{ImGuizmo::WORLD};
-        static ImGuizmo::OPERATION m_current_gizmo_operation{ImGuizmo::TRANSLATE};
+        static ImVec2 scrolling(0.0f, 0.0f);
+        static float mouse_wheel = 10.f;
+        static bool opt_enable_context_menu = true;
+
+        // ImGui::Checkbox("Enable context menu", &opt_enable_context_menu);
+
+        ImVec2 window_p0 = ImGui::GetCursorPos();
+        ImVec2 canvas_p0 = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
+        ImVec2 canvas_sz = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
+        if (canvas_sz.x < 50.0f) canvas_sz.x = 50.0f;
+        if (canvas_sz.y < 50.0f) canvas_sz.y = 50.0f;
+        ImVec2 canvas_p1 = ImVec2(canvas_p0.x + canvas_sz.x, canvas_p0.y + canvas_sz.y);
+
+        // Draw border and background color
+        ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        draw_list->AddRectFilled(canvas_p0, canvas_p1, IM_COL32(50, 50, 50, 255));
+        // draw_list->AddRect(canvas_p0, canvas_p1, IM_COL32(255, 255, 255, 255));
+
+        const float WindowWidth = (float)ImGui::GetWindowWidth();
+        const float WindowHeight = (float)ImGui::GetWindowHeight();
+
+         // build scale matrix to scale unit cube as bounding box of loaded model
+         // model_scale is scaling value applied to actual model when it is spawned
+         // model_cube mat is for scaling unit cube
+        const glm::vec3 model_scale = glm::vec3{ prop.extent } / glm::length(model_aabb.diagonal());
+        const glm::mat4 model_cube_mat = glm::scale(glm::mat4{1}, model_scale * model_aabb.diagonal());
+
+        const glm::vec3 camera_boom =
+            glm::rotate(glm::mat4{1.f}, -10.f * scrolling.x / WindowWidth,
+                        glm::vec3{0, 1, 0}) *
+            (mouse_wheel * glm::vec4{1, 1, 1, 0});
+
+        glm::mat4 view =
+            glm::lookAt(camera_boom, glm::vec3{0}, glm::vec3{0, 1, 0});
+        glm::mat4 projection = glm::perspective(
+            glm::radians(60.f), WindowWidth / WindowHeight, 0.05f, 100.f);
+
+        ImGuizmo::SetDrawlist();
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y,
+                          WindowWidth, WindowHeight);
+        ImGuizmo::DrawGrid(glm::value_ptr(view), glm::value_ptr(projection),
+                           glm::value_ptr(glm::mat4{1}), 10.f);
+
+        std::vector<glm::mat4> cube_matrix_vec{};
+        if (model_valid) { // display cube for the model
+            cube_matrix_vec.push_back(model_cube_mat);
+        }
+        for (auto obb_itr = prop.propagation_patterns.begin(),
+                  end = prop.propagation_patterns.end();
+             obb_itr != end; ++obb_itr) {
+                OBB& obb = *obb_itr;
+
+                glm::mat4 model = obb.make_transform(glm::vec3{1.f});
+                cube_matrix_vec.push_back(model);
+             }
+
+        ImGuizmo::DrawCubes(glm::value_ptr(view),
+                            glm::value_ptr(projection),
+                            (float*)cube_matrix_vec.data(), cube_matrix_vec.size());
+
+        // display gizmo if there is a selected OBB
+        if (selected_propagation_pattern) {
+            OBB& obb = *selected_propagation_pattern;
+
+            glm::mat4 model = obb.make_transform(glm::vec3{1.f});
+            // glm::mat4 cube_mm = model * glm::scale(glm::mat4{1}, obb.half_extents * 2.f);
+            std::array<float, 6> obb_bounds; // pMin (3), pMax (3)
+            for (int i = 0; i < 3; ++i) {
+                obb_bounds[i]     = -.5;//-obb.half_extents[i];
+                obb_bounds[i+3]   = .5;//obb.half_extents[i];
+            }
+
+            ImGuizmo::Manipulate(glm::value_ptr(view),
+                                 glm::value_ptr(projection),
+                                 m_current_gizmo_operation, current_gizmo_mode,
+                                 glm::value_ptr(model), NULL, NULL, obb_bounds.data(), NULL);
+            
+            if (ImGuizmo::IsUsing())
+                obb = OBB{model, glm::vec3{1}};
+        }
+
+
+        if (!ImGuizmo::IsOver()) {
+            // This will catch our interactions
+            ImGui::InvisibleButton("canvas", canvas_sz, ImGuiButtonFlags_MouseButtonRight);
+            const bool is_hovered = ImGui::IsItemHovered(); // Hovered
+            const bool is_active = ImGui::IsItemActive();   // Held
+            const ImVec2 origin(canvas_p0.x + scrolling.x, canvas_p0.y + scrolling.y); // Lock scrolled origin
+            const ImVec2 mouse_pos_in_canvas(io.MousePos.x - origin.x, io.MousePos.y - origin.y);
+
+            const float mouse_threshold_for_pan = opt_enable_context_menu ? -1.0f : 0.0f;
+            if (is_active && ImGui::IsMouseDragging(ImGuiMouseButton_Right, mouse_threshold_for_pan))
+            {
+                scrolling.x += io.MouseDelta.x;
+                scrolling.y += io.MouseDelta.y;
+
+                std::cout << scrolling.x << std::endl;
+            }
+
+            ImGui::SetItemUsingMouseWheel(); // capture the mouse wheel with invisible button
+            if (is_hovered) {
+                float wheel = -ImGui::GetIO().MouseWheel;
+                mouse_wheel = glm::clamp(mouse_wheel + wheel, 1.f, 20.f);
+            }
+        }
+
+        ImGui::SetCursorPos(window_p0);
+
+        // left side display list of all patterns for this object
+        const int controls_height = ImGui::GetFrameHeightWithSpacing() * 2 + ImGui::GetFrameHeight(); // below we render a couple rows of radio buttons in a frame
+        ImGui::BeginChild("left pane", ImVec2(ImGui::GetContentRegionAvail().x * 0.2f, -controls_height), true);
+
+        if (ImGui::Button("Add OBB"))
+            prop.propagation_patterns.push_back(OBB{});
+
+        ImGui::Separator();
+
+        ImGui::Text("Select Propagaion OBB to edit");
+
+        // display list of propagation patterns
+        int propagation_idx = 0;
+        for (auto pattern_itr = prop.propagation_patterns.begin(),
+                  end = prop.propagation_patterns.end();
+             pattern_itr != end; ++pattern_itr) {
+        
+            int node_flags = ImGuiTreeNodeFlags_Leaf;
+
+            if (selected_propagation_pattern == &*pattern_itr)
+                node_flags |= ImGuiTreeNodeFlags_Selected;
+
+            auto& he = pattern_itr->half_extents;
+            if (ImGui::TreeNodeEx("obb tree node", node_flags,
+                                  "(%d) [%.2f, %.2f, %.2f]", propagation_idx,
+                                  he[0], he[1], he[2]))
+                ImGui::TreePop();
+
+            if (ImGui::IsItemClicked()) {
+                selected_propagation_pattern = &*pattern_itr;
+            }
+        }
+
+        ImGui::EndChild(); // end left pane
+
+        ImGui::BeginChild("left pane controls", ImVec2(ImGui::GetContentRegionAvail().x * 0.2f, 0), true);
 
         ImGui::RadioButton("LOCAL", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::LOCAL); ImGui::SameLine();
         ImGui::RadioButton("WORLD", (int*)&current_gizmo_mode, (int)ImGuizmo::MODE::WORLD);
@@ -527,40 +695,18 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
                                m_current_gizmo_operation == ImGuizmo::SCALE))
             m_current_gizmo_operation = ImGuizmo::SCALE;
 
-        if (prop.propagation_patterns.size() < 1)
-            prop.propagation_patterns.push_back(OBB{});
-
-        OBB& obb = prop.propagation_patterns.at(0);
-        glm::mat4& model = obb.transform;
-        // glm::abs(obb.half_extents)
-        glm::mat4 view = glm::lookAt(glm::vec3{10}, glm::vec3{0}, glm::vec3{0, 1, 0});
-        // glm::mat4 projection = glm::perspectiveFov(60.f, viewport_size.x, viewport_size.y, 0.05f, 100.f);
-        glm::mat4 projection = glm::perspective(glm::radians(60.f), viewport_size.x/viewport_size.y, 0.05f, 100.f);
-
-        static ImGuiWindowFlags gizmoWindowFlags = 0;
-        ImGuiWindow* window = ImGui::GetCurrentWindow();
-        gizmoWindowFlags = ImGui::IsWindowHovered() && ImGui::IsMouseHoveringRect(window->InnerRect.Min, window->InnerRect.Max) ? ImGuiWindowFlags_NoMove : 0;
-
-        ImGuizmo::SetDrawlist();
-        float windowWidth = (float)ImGui::GetWindowWidth();
-        float windowHeight = (float)ImGui::GetWindowHeight();
-        ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-        ImGuizmo::DrawGrid(glm::value_ptr(view), glm::value_ptr(projection), glm::value_ptr(glm::mat4{1}), 10.f);
-        if (ImGuizmo::Manipulate(
-                glm::value_ptr(view), glm::value_ptr(projection),
-                m_current_gizmo_operation, current_gizmo_mode, glm::value_ptr(model),
-                NULL, NULL, NULL, NULL)) {
-            
-            // m_selected_node->set_world_matrix(model);
-        }
+        ImGui::EndChild(); // end left pane controls
 
         ImGui::EndChildFrame();
+        // end of OBB editor
 
         // if (!prop.is_valid()) ImGui::PushStyleColor(ImGuiCol_Button,
         // (ImVec4)ImColor::HSV(7.0f, 0.6f, 0.6f));
         ImGui::BeginDisabled(!prop.is_valid());
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             saved = true;
+            model_valid = false;
+            model_load_failed = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SetItemDefaultFocus();
@@ -569,6 +715,8 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            model_valid = false;
+            model_load_failed = false;
             ImGui::CloseCurrentPopup();
         }
         ImGui::EndPopup();

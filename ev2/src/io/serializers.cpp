@@ -30,17 +30,23 @@ namespace ev2 {
 
 
 void to_json(nlohmann::json& j, const OBB& p) {
-    std::vector<float> barr(glm::value_ptr(p.transform), glm::value_ptr(p.transform) + 16);
+    std::vector<float> barr(glm::value_ptr(p.rotation), glm::value_ptr(p.rotation) + 4);
+    std::vector<float> carr(glm::value_ptr(p.center), glm::value_ptr(p.rotation) + 3);
     j = nlohmann::json{ 
-        { "transform", barr },
+        { "rotation", barr },
+        {"center", carr},
         { "half_extents", { p.half_extents.x, p.half_extents.y, p.half_extents.z } } };
 }
 
 void from_json(const nlohmann::json& j, OBB& p) {
     std::vector<float> barr{};
-    j.at("transform").get_to(barr);
+    j.at("rotation").get_to(barr);
 
-    p.transform = glm::make_mat4(barr.data());
+    p.rotation = glm::make_quat(barr.data());
+
+    j.at("center").get_to(barr);
+
+    p.center = glm::make_vec3(barr.data());
 
     j.at("half_extents").get_to(barr);
 

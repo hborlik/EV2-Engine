@@ -8,9 +8,52 @@
         "House": [
             {
                 "asset_path": "asset/models/house/house.obj",
-                "extent": 5.0,
+                "extent": 7.0,
                 "name": "House1",
-                "propagation_patterns": [],
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            5.879963397979736,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            0.4602317214012146,
+                            1.0,
+                            0.3755684792995453
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            6.6654181480407715,
+                            -2.963271072076168e-06,
+                            0.03048086166381836,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
                 "properties": {}
             }
         ],
@@ -44,11 +87,13 @@
         },
         {
             "pattern_class": 11,
-            "required_classes": [10],
+            "required_classes": [
+                10
+            ],
             "weight": 1.0
         },
         {
-            "pattern_class":12,
+            "pattern_class": 12,
             "required_classes": [
                 10,
                 10

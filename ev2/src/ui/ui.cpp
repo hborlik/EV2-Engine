@@ -105,13 +105,11 @@ void Editor::show_editor(Node* scene, const Camera* camera) {
             ImGui::EndMenu();
         }
 
-        for (auto& [name, tool] : m_editor_tools) {
-            if (tool->m_is_open) {
-                tool->show_editor_tool();
-            }
-        }
-
         ImGui::EndMainMenuBar();
+    }
+
+    for (auto& [name, tool] : m_editor_tools) {
+        tool->show_editor_tool();
     }
 }
 
