@@ -646,6 +646,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         // left side display list of all patterns for this object
         const int controls_height = ImGui::GetFrameHeightWithSpacing() * 2 + ImGui::GetFrameHeight(); // below we render a couple rows of radio buttons in a frame
         ImGui::BeginChild("left pane", ImVec2(ImGui::GetContentRegionAvail().x * 0.2f, -controls_height), true);
+        ImGui::PushItemWidth(-FLT_MIN); // align to right side
 
         if (ImGui::Button("Add OBB"))
             prop.propagation_patterns.push_back(OBB{});
@@ -676,6 +677,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
             }
         }
 
+        ImGui::PopItemWidth();
         ImGui::EndChild(); // end left pane
 
         ImGui::BeginChild("left pane controls", ImVec2(ImGui::GetContentRegionAvail().x * 0.2f, 0), true);

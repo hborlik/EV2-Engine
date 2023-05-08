@@ -1,7 +1,7 @@
 {
     "object_classes": {
         "House": 12,
-        "Spheres": 11,
+        "Sphere": 11,
         "Wagons": 10
     },
     "object_data": {
@@ -57,7 +57,7 @@
                 "properties": {}
             }
         ],
-        "Spheres": [
+        "Sphere": [
             {
                 "asset_path": "asset/models/sphere.obj",
                 "extent": 1.0,

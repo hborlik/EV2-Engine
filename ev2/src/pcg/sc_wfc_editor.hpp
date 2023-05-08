@@ -80,6 +80,7 @@ private:
 private:
     std::random_device rd;
     std::mt19937 mt;
+    std::normal_distribution<float> nd;
     std::shared_ptr<Data> m_internal{};
     Ref<SCWFC> m_scwfc_node{};
     std::shared_ptr<ObjectMetadataDB> obj_db{};
