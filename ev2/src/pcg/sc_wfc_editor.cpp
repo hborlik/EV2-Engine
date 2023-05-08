@@ -631,7 +631,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
                 scrolling.x += io.MouseDelta.x;
                 scrolling.y += io.MouseDelta.y;
 
-                std::cout << scrolling.x << std::endl;
+                // std::cout << scrolling.x << std::endl;
             }
 
             ImGui::SetItemUsingMouseWheel(); // capture the mouse wheel with invisible button
