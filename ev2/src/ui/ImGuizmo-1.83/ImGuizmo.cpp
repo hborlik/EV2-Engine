@@ -1438,9 +1438,9 @@ namespace ImGuizmo
       }
    }
 
-   static bool CanActivate()
+   static bool CanActivate(bool ignoreHover = false)
    {
-      return ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered() && !ImGui::IsAnyItemActive();
+      return ImGui::IsMouseClicked(0) && (!ImGui::IsAnyItemHovered() || ignoreHover) && !ImGui::IsAnyItemActive();
    }
 
    static void HandleAndDrawLocalBounds(const float* bounds, matrix_t* matrix, const float* snapValues, OPERATION operation)
@@ -1590,7 +1590,7 @@ namespace ImGuizmo
             drawList->AddCircleFilled(midBound, AnchorSmallRadius - 1.2f, smallAnchorColor);
             int oppositeIndex = (i + 2) % 4;
             // big anchor on corners
-            if (!gContext.mbUsingBounds && gContext.mbEnable && overBigAnchor && CanActivate())
+            if (!gContext.mbUsingBounds && gContext.mbEnable && overBigAnchor && CanActivate(true))
             {
                gContext.mBoundsPivot.TransformPoint(aabb[(i + 2) % 4], gContext.mModelSource);
                gContext.mBoundsAnchor.TransformPoint(aabb[i], gContext.mModelSource);
@@ -1608,7 +1608,7 @@ namespace ImGuizmo
                gContext.mBoundsMatrix = gContext.mModelSource;
             }
             // small anchor on middle of segment
-            if (!gContext.mbUsingBounds && gContext.mbEnable && overSmallAnchor && CanActivate())
+            if (!gContext.mbUsingBounds && gContext.mbEnable && overSmallAnchor && CanActivate(true))
             {
                vec_t midPointOpposite = (aabb[(i + 2) % 4] + aabb[(i + 3) % 4]) * 0.5f;
                gContext.mBoundsPivot.TransformPoint(midPointOpposite, gContext.mModelSource);
