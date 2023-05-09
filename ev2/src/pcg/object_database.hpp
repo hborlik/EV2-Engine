@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <string>
 #include <memory>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -46,8 +47,9 @@ struct ObjectData {
 
 class ObjectMetadataDB {
 public:
-    using ObjectDataMap = std::unordered_multimap<int, ObjectData>;
+    using object_data_map_t = std::unordered_multimap<int, ObjectData>;
     using pattern_list_t = std::list<wfc::Pattern>;
+    using class_id_map_t = std::unordered_map<int, std::string>;
 
 public:
     ObjectMetadataDB() = default;
@@ -59,7 +61,7 @@ public:
      * @param id 
      * @return void 
      */
-    void set_object_class_name(std::string_view name, int id);
+    void set_class_name(std::string_view name, int id);
 
     /**
      * @brief Get the name of a class given its id
@@ -67,7 +69,13 @@ public:
      * @param id 
      * @return std::string empty if id not found
      */
-    std::string get_object_class_name(int id) const;
+    std::string get_class_name(int id) const;
+
+    class_id_map_t::const_iterator erase_class(int id) {
+        if (auto itr = m_object_classes.find(id); itr != m_object_classes.end())
+            return m_object_classes.erase(itr);
+        return m_object_classes.end();
+    }
 
     /**
      * @brief Get a new id for an object class
@@ -86,7 +94,7 @@ public:
         return m_obj_data.equal_range(id);
     }
 
-    ObjectDataMap::iterator objs_erase(ObjectDataMap::iterator iterator) {
+    object_data_map_t::iterator objs_erase(object_data_map_t::iterator iterator) {
         return m_obj_data.erase(iterator);
     }
 

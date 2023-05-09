@@ -11,12 +11,12 @@
 
 namespace ev2::pcg {
 
-void ObjectMetadataDB::set_object_class_name(std::string_view name, int id) {
+void ObjectMetadataDB::set_class_name(std::string_view name, int id) {
     max_id = std::max(max_id, id);
     m_object_classes.insert_or_assign(id, name.data());
 }
 
-std::string ObjectMetadataDB::get_object_class_name(int id) const {
+std::string ObjectMetadataDB::get_class_name(int id) const {
     std::string val{};
     if (auto itr = m_object_classes.find(id); itr != m_object_classes.end()) {
         val = itr->second;
@@ -53,10 +53,11 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
         db->m_object_classes = inverse_map(object_classes);
 
         for (auto& [class_name, obj_vec] : object_data) {
-            for (auto& obj : obj_vec) {
-                db->m_obj_data.insert(std::make_pair(
-                    object_classes.at(class_name), obj));
-            }
+            if (!class_name.empty())
+                for (auto& obj : obj_vec) {
+                    db->m_obj_data.insert(std::make_pair(
+                        object_classes.at(class_name), obj));
+                }
         }
 
         db->refresh_class_id_pattern_map();

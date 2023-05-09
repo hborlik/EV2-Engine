@@ -197,6 +197,11 @@ public:
         return d.x * d.y * d.z;
     }
 
+    float min_diagonal() const noexcept {
+        auto d = diagonal();
+        return std::min(d.x, std::min(d.y, d.z));
+    }
+
     static AABB from_points(const glm::vec3 points[8]) noexcept {
         glm::vec3 minp{INFINITY};
         glm::vec3 maxp{-INFINITY};

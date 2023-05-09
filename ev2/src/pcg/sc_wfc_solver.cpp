@@ -60,9 +60,10 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 
             const OBB& obb = *select_randomly(obj.propagation_patterns.begin(), obj.propagation_patterns.end(), m_mt);
 
-            std::normal_distribution<float> dist_x{obb.center.x, obb.half_extents.x};
-            std::normal_distribution<float> dist_y{obb.center.y, obb.half_extents.y};
-            std::normal_distribution<float> dist_z{obb.center.z, obb.half_extents.z};
+            // values within 3 standard deviations account for 99.7% of samples
+            std::normal_distribution<float> dist_x{obb.center.x, obb.half_extents.x / 3};
+            std::normal_distribution<float> dist_y{obb.center.y, obb.half_extents.y / 3};
+            std::normal_distribution<float> dist_z{obb.center.z, obb.half_extents.z / 3};
 
             glm::vec3 pos_in_obb {
                 dist_x(m_mt),
@@ -72,7 +73,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 
             // try to place sphere center in the OBB
             Sphere sph({}, n_radius);
-            sph.center = node->get_position() + pos_in_obb;
+            sph.center = node->get_linear_transform() * glm::vec4{pos_in_obb, 1.f};
             
             offset = sph.center;
             offset += mass * scwfc_node.sphere_repulsion(sph);
@@ -91,15 +92,15 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
         nnode = scwfc_node.create_child_node<SCWFCGraphNode>("SGN " + std::to_string(scwfc_node.get_n_children()));
         // populate domain of new node
         nnode->domain = {valid_neighbors.begin(), valid_neighbors.end()};
-
-        // update visual based on domain
-        update_node_model(nnode.get());
-
         nnode->set_position(offset);
+
         // attach new node to all nearby neighbors
         scwfc_node.update_all_adjacencies(nnode, n_radius);
 
-        if (i % brf == 0)
+        // update node state, may be destroyed
+        node_check_and_update(nnode.get());
+
+        if (i % brf == 0 && !nnode->is_destroyed())
             node = nnode.get();
     }
     return node->get_ref<SCWFCGraphNode>();
@@ -121,11 +122,11 @@ void SCWFCSolver::wfc_solve(int steps) {
     wfc_solver->set_entropy_func(entropy_func);
     while (wfc_solver->can_continue() && cnt++ < steps) {
         auto solved_node = wfc_solver->step_wfc();
-        update_node_model(solved_node);
+        node_check_and_update(solved_node);
     }
 }
 
-void SCWFCSolver::update_node_model(wfc::DGraphNode* node) {
+void SCWFCSolver::node_check_and_update(wfc::DGraphNode* node) {
     auto* s_node = dynamic_cast<SCWFCGraphNode*>(node);
     assert(s_node);
 
@@ -151,24 +152,25 @@ void SCWFCSolver::update_node_model(wfc::DGraphNode* node) {
             }
         }
 
-        s_node->set_radius(extent / 2);
+        // rescale the object so that it fits withing the extent
+        const auto& aabb = model->bounding_box;
+        const float scale = extent / glm::length(aabb.diagonal()); // scale uniformly
+
+        s_node->set_model(model);
+        s_node->set_scale(glm::vec3{scale});
+        s_node->set_radius(aabb.min_diagonal() * scale / 2.f);
+
         if (scwfc_node.intersects_any_solved_neighbor(Ref{ s_node })) {
             // remove nodes whose final bounding volume intersects solved nodes
             s_node->destroy();
-        } else {
-            // rescale the object so that it fits withing the extent
-            const auto& aabb = model->bounding_box;
-            const glm::vec3 scale = glm::vec3{ extent } / glm::length(aabb.diagonal()); // scale uniformly
-
-            s_node->set_model(model);
-            s_node->set_scale(scale);
         }
     } else {
         const auto& aabb = model->bounding_box;
-        const glm::vec3 scale = glm::vec3{ extent } / glm::length(aabb.diagonal()); // scale uniformly
+        const float scale = extent / glm::length(aabb.diagonal()); // scale uniformly
 
         s_node->set_model(model);
-        s_node->set_scale(scale);
+        s_node->set_scale(glm::vec3{scale});
+        s_node->set_radius(aabb.min_diagonal() * scale / 2.f);
     }
 }
 

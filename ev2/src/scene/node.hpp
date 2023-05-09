@@ -141,6 +141,13 @@ public:
         return tr;
     }
 
+    glm::mat4 get_linear_world_transform() const {
+        glm::mat4 tr = transform.get_linear_transform();
+        if (parent)
+            tr = parent->get_linear_world_transform() * tr;
+        return tr;
+    }
+
     glm::vec3 get_world_position() const {return glm::vec3(get_world_transform()[3]);}
 
     void rotate(const glm::vec3& xyz) {transform.rotate(xyz);}

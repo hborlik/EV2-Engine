@@ -245,6 +245,7 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
             else {
                 std::string newFilePath = current_path / path{newFolderName};
                 fs::create_directory(newFilePath);
+                need_directory_refresh = true;
                 ImGui::CloseCurrentPopup();
             }
         }
@@ -266,6 +267,7 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
         ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 6);
         if (ImGui::Button("Yes")) {
             fs::remove(current_path / path{dialog_current_dir});
+            need_directory_refresh = true;
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
@@ -285,6 +287,7 @@ bool FileDialogWindow::show_file_dialog_modal(std::string_view name, std::string
     }
     ImGui::SameLine();
     if (ImGui::Button("Choose")) {
+        need_directory_refresh = true;
         path output_path{};
         if (type == FileDialogType::SelectFolder) {
             if (dialog_current_dir == "") {

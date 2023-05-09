@@ -28,7 +28,7 @@ public:
 
     void wfc_solve(int steps);
 
-    void update_node_model(wfc::DGraphNode* node);
+    void node_check_and_update(wfc::DGraphNode* node);
 
     bool can_continue() const noexcept;
 

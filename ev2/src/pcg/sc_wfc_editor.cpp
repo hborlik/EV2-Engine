@@ -36,7 +36,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
         auto p_itr = n->domain.begin();
         while (p_itr != n->domain.end()) {
             auto& p = **p_itr;
-            const std::string pattern_name = obj_db->get_object_class_name(p.pattern_class);
+            const std::string pattern_name = obj_db->get_class_name(p.pattern_class);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
             ImGui::Text("%s", pattern_name.c_str());
@@ -152,7 +152,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
         auto [p_itr, p_end] = m_obj_db->get_patterns();
         while (p_itr != p_end) {
             auto& p = *p_itr;
-            const std::string pattern_name = m_obj_db->get_object_class_name(p.pattern_class);
+            const std::string pattern_name = m_obj_db->get_class_name(p.pattern_class);
             // need to push id to differentiate between different selections
             ImGui::PushID(&p);
 
@@ -206,7 +206,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
 
             if (node_open) {
                 for (std::size_t rv_i = 0; rv_i < p.required_classes.size(); rv_i++) {
-                    const std::string req_pattern_name = m_obj_db->get_object_class_name(p.required_classes[rv_i]);
+                    const std::string req_pattern_name = m_obj_db->get_class_name(p.required_classes[rv_i]);
 
                     ImGui::PushID(rv_i);
                     // ImGui::SetNextItemWidth(-FLT_MIN);
@@ -227,7 +227,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     }
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", m_obj_db->get_object_class_name(p.required_classes[rv_i]).c_str());
+                    ImGui::Text("%s", m_obj_db->get_class_name(p.required_classes[rv_i]).c_str());
                     ImGui::NextColumn();
 
                     ImGui::PopID();
@@ -255,7 +255,7 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
     }
     if (show_dbe_edit_object_class_popup("New Object Class", new_obj_class)) {
         int new_id = m_obj_db->object_class_create_id();
-        m_obj_db->set_object_class_name(new_obj_class.name, new_id);
+        m_obj_db->set_class_name(new_obj_class.name, new_id);
     }
 
 
@@ -287,7 +287,7 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
                 ImGui::SetTooltip("Edit Object Class \"%s\"", object_class_name.c_str());
             }
             if (show_dbe_edit_object_class_popup("Edit Object Class", obj_class)) {
-                m_obj_db->set_object_class_name(obj_class.name, object_class_id);
+                m_obj_db->set_class_name(obj_class.name, object_class_id);
             }
 
             ImGui::SameLine();
@@ -304,13 +304,13 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
             }
 
 
-            // ImGui::SameLine();
-            // if (ImGui::Button("Delete")) {
-            //     obj_db->patterns.erase(p_itr++);
-            // }
-            // if (ImGui::IsItemHovered()) {
-            //     ImGui::SetTooltip("Delete Object Class \"%s\"", object_class_name.c_str());
-            // }
+            ImGui::SameLine();
+            if (ImGui::Button("Delete")) {
+                m_obj_db->erase_class(object_class_id);
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Delete Object Class \"%s\"", object_class_name.c_str());
+            }
 
             if (node_open) {
                 // get all ObjectData's for the current class id 'object_class_id'
@@ -423,7 +423,7 @@ bool SCWFCEditor::show_dbe_edit_pattern_popup(std::string_view name,
 
         static int item_current_idx = -1;
         ImGui::Text("Class \"%s\" (%d)",
-                    m_obj_db->get_object_class_name(prop.pattern_class).c_str(),
+                    m_obj_db->get_class_name(prop.pattern_class).c_str(),
                     prop.pattern_class);
         ImGui::SameLine();
         if (ImGui::Button("Select Class")) {
@@ -865,8 +865,8 @@ void SCWFCEditor::load_default_obj_db() {
     wfc::Pattern PA{10, {11, 11}};
     wfc::Pattern PB{11, {10}};
 
-    m_obj_db->set_object_class_name("Class 10", 10);
-    m_obj_db->set_object_class_name("Class 11", 11);
+    m_obj_db->set_class_name("Class 10", 10);
+    m_obj_db->set_class_name("Class 11", 11);
 
     m_obj_db->add_pattern(PA);
     m_obj_db->add_pattern(PB);
