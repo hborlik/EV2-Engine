@@ -59,7 +59,7 @@ private:
 
 class SCWFCGraphNode : public VisualInstance, public wfc::DGraphNode {
 public:
-    explicit SCWFCGraphNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, wfc::DGraphNode{name, (int)uuid_hash}, m_scwfc{scwfc} {}
+    explicit SCWFCGraphNode(const std::string &name) : VisualInstance{name}, wfc::DGraphNode{name, (int)uuid_hash} {}
 
     void on_init() override {
         VisualInstance::on_init();
@@ -78,16 +78,13 @@ public:
     void set_radius(float r) noexcept {m_bounding_sphere.radius = r;}
 
 private:
-    SCWFC* m_scwfc = nullptr;
     Sphere m_bounding_sphere{};
 };
 
 class SCWFCAttractorNode : public VisualInstance {
 public:
-    explicit SCWFCAttractorNode(const std::string &name, SCWFC* scwfc) : VisualInstance{name}, m_scwfc{scwfc} {}
+    explicit SCWFCAttractorNode(const std::string &name) : VisualInstance{name} {}
 
-private:
-    SCWFC* m_scwfc = nullptr;
 };
 
 

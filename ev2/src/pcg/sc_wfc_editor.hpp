@@ -10,10 +10,14 @@
  #define EV2_PCG_SCWFC_EDITOR_HPP
 
 #include <cassert>
+#include <memory>
+#include <random>
 #include <string>
 #include <string_view>
 
+#include "pcg/sc_wfc_solver.hpp"
 #include "pcg/wfc.hpp"
+#include "renderer/renderer.hpp"
 #include "ui/ui.hpp"
 #include "ui/file_dialog.hpp"
 #include "object_database.hpp"
@@ -45,12 +49,8 @@ public:
 
     void save_obj_db(std::string_view path);
 
-    void sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
-
-    void wfc_solve(int steps);
-
     ObjectMetadataDB* get_object_db() noexcept {
-        return obj_db.get();
+        return m_obj_db.get();
     }
 
 private:
@@ -62,8 +62,6 @@ private:
     struct ObjectClassProperties {
         std::string name{};
     };
-
-    struct Data;
 
 private:
     void db_editor_show_pattern_editor_widget();
@@ -78,12 +76,12 @@ private:
     void show_db_editor_window(bool* p_open);
 
 private:
-    std::random_device rd;
-    std::mt19937 mt;
-    std::normal_distribution<float> nd;
-    std::shared_ptr<Data> m_internal{};
+    std::random_device m_rd{};
     Ref<SCWFC> m_scwfc_node{};
-    std::shared_ptr<ObjectMetadataDB> obj_db{};
+    std::shared_ptr<ObjectMetadataDB> m_obj_db{};
+    std::shared_ptr<renderer::Drawable> m_unsolved_drawable;
+
+    std::unique_ptr<SCWFCSolver> m_scwfc_solver;
 
     bool m_db_editor_open = false;
     ui::FileDialogWindow m_file_dialog{};

@@ -102,9 +102,16 @@ public:
     float entropy() const;
 
     void set_value(const Pattern* p) noexcept;
+
+    /**
+     * @brief weighted pick of value in node domain
+     * 
+     * @param gen 
+     * @return const Pattern* 
+     */
+    const Pattern* weighted_pick(std::mt19937* gen) const;
     
     std::vector<const Pattern*> domain{};      // valid patterns for this node
-    int value{};
 };
 
 template<typename T,
@@ -706,6 +713,9 @@ class Pattern {
 template<typename T, typename = std::enable_if_t<std::is_base_of_v<DGraphNode, T>>>
 class IWFCSolver {
 public:
+    using entropy_callback_t = std::function<float(const T*, const T*)>;
+
+public:
     virtual ~IWFCSolver() = default;
 
     virtual T* step_wfc() = 0;
@@ -714,6 +724,8 @@ public:
     virtual T* propagate(T* node) = 0;
     virtual bool observe(T* node) = 0;
     virtual void collapse(T* node) = 0;
+
+    virtual void set_entropy_func(const entropy_callback_t& callback) = 0;
 };
 
 /**
@@ -724,11 +736,8 @@ public:
  */
 class WFCSolver : public IWFCSolver<DGraphNode> {
 public:
-    using entropy_callback_t = std::function<float(const DGraphNode*, const DGraphNode*)>;
 
-public:
-
-    WFCSolver(Graph<DGraphNode>* graph, std::mt19937* gen) : graph{graph}, gen{gen} {}
+    WFCSolver(Graph<DGraphNode>* graph, std::mt19937& gen) : graph{graph}, gen{gen} {}
 
     DGraphNode* step_wfc() override {
         DGraphNode* solved_node = next_node;
@@ -761,7 +770,7 @@ public:
             if (observe(n) || f) { // only update neighbors if the domain changed
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
-                std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), *gen);
+                std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
                     // if (neighbor->domain.size() > 1)
@@ -815,12 +824,7 @@ public:
             return;
         } else {
             // weighted random selection of available domain values
-            std::vector<float> weights{};
-            for (auto& p : node->domain) {
-                weights.push_back(p->weight);
-            }
-            std::discrete_distribution<int> dist(weights.begin(), weights.end());
-            node->set_value(node->domain.at(dist(*gen)));
+            node->set_value(node->weighted_pick(&gen));
         }
     }
 
@@ -828,7 +832,7 @@ public:
         next_node = next;
     }
 
-    void set_entropy_func(const entropy_callback_t& callback) {
+    void set_entropy_func(const entropy_callback_t& callback) override {
         entropy_func = callback;
     }
 
@@ -836,7 +840,7 @@ private:
     Graph<DGraphNode>* graph = nullptr;
     DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
-    std::mt19937* gen;
+    std::mt19937& gen;
 };
 
 } // namespace pcg

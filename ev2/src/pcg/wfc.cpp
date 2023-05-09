@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <pcg/wfc.hpp>
 
 #include <memory>
@@ -51,8 +52,16 @@ float DGraphNode::entropy() const {
 
 void DGraphNode::set_value(const Pattern* p) noexcept {
     assert(p);
-    value = p->pattern_class;
     domain = {p};
+}
+
+const Pattern* DGraphNode::weighted_pick(std::mt19937* gen) const {
+    std::vector<float> weights(domain.size());
+    std::transform(domain.begin(), domain.end(), weights.begin(), [](const Pattern* d) -> auto {
+        return d->weight;
+    });
+    std::discrete_distribution<int> dist(weights.begin(), weights.end());
+    return domain.at(dist(*gen));
 }
 
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {

@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 namespace ev2::pcg {
 
 struct ProceduralGrid::Data {
-    Data(int w, int h) : grid{w, h}, rd{}, mt{rd()}, solver{&grid.get_graph(), &mt} {}
+    Data(int w, int h) : grid{w, h}, rd{}, mt{rd()}, solver{&grid.get_graph(), mt} {}
 
     pcg::NodeGrid grid;
     std::random_device rd;
