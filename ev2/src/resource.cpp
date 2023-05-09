@@ -719,7 +719,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model_relative_path(con
     if (loaded_model) {
         auto drawable = std::shared_ptr{loaded_model->create_renderer_drawable()};
         if (cache)
-            model_lookup.insert(std::make_pair(filename.generic_string(), drawable));
+            model_lookup.insert_or_assign(filename.generic_string(), drawable);
         return drawable;
     } else {
         std::cerr << "Failed to load model " + filename.generic_string() << std::endl;
