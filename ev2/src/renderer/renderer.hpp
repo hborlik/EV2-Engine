@@ -176,9 +176,6 @@ struct Drawable {
 };
 
 struct ModelInstance {
-
-    ModelInstance() = default;
-
     ~ModelInstance() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
@@ -194,6 +191,8 @@ public:
 private:
     friend class Renderer;
 
+    ModelInstance() = default;
+
     Ref<Material>               material_override{};
 
     int32_t                     id = -1;
@@ -201,9 +200,10 @@ private:
     GLuint                      gl_vao = 0;
 };
 
-struct InstancedDrawable {
+using ModelInstancePtr = std::unique_ptr<ModelInstance, void (*)(ModelInstance*)>;
 
-    InstancedDrawable() = default;
+
+struct InstancedDrawable {
     InstancedDrawable(InstancedDrawable &&o) = default;
 
     InstancedDrawable& operator=(InstancedDrawable &&o) = default;
@@ -223,10 +223,14 @@ public:
 private:
     friend class Renderer;
 
+    InstancedDrawable() = default;
+
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
     GLuint                      gl_vao = 0;
 };
+
+using InstancedDrawablePtr = std::unique_ptr<InstancedDrawable, void (*)(InstancedDrawable*)>;
 
 class RenderPass {
 public:
@@ -270,12 +274,9 @@ public:
     void set_light_ambient(LID lid, const glm::vec3& color);
     void destroy_light(LID lid);
 
-    ModelInstance* create_model_instance();
-    void destroy_model_instance(ModelInstance* model);
+    ModelInstancePtr create_model_instance();
 
-    InstancedDrawable* create_instanced_drawable();
-    void destroy_instanced_drawable(InstancedDrawable* drawable);
-    
+    InstancedDrawablePtr create_instanced_drawable();
 
     void render(const Camera &camera);
 
@@ -332,6 +333,10 @@ private:
      */
     void destroy_material(Material* material);
 
+    void destroy_model_instance(ModelInstance* model);
+
+    void destroy_instanced_drawable(InstancedDrawable* drawable);
+
 public:
     float exposure      = .8f;
     float gamma         = 2.2f;
@@ -369,11 +374,11 @@ private:
     std::queue<mat_slot_t> free_material_slots; // queue of free slots in material_data_buffer
 
     // single instance of a drawable
-    std::unordered_map<int32_t, ModelInstance> model_instances;
+    std::unordered_map<int32_t, ModelInstance*> model_instances;
     uint32_t next_model_instance_id = 100;
 
     // instances of a drawable with instanced draw calls
-    std::unordered_map<int32_t, InstancedDrawable> instanced_drawables;
+    std::unordered_map<int32_t, InstancedDrawable*> instanced_drawables;
     uint32_t next_instanced_drawable_id = 100;
 
     // std::unordered_map<int32_t, RenderObj> meshes;

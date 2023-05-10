@@ -2,6 +2,8 @@
 #include <game.h>
 
 #include <skinning.hpp>
+#include <utility>
+#include "glm/fwd.hpp"
 
 /**
  * @brief Monopodial tree-like structures of Honda
@@ -272,8 +274,8 @@ void TreeNode::generate(int iterations) {
         tree_skeleton = tree.to_skeleton();
 
         if (leafs) {
-            leafs->instance_transforms.clear();
-            leafs->instance_transforms.reserve(tree_skeleton.endpoints.size());
+            std::vector<glm::mat4> instance_transforms{};
+            instance_transforms.reserve(tree_skeleton.endpoints.size());
             const glm::mat4 rot_leaf = glm::mat4(glm::rotate<float>(glm::identity<glm::quat>(), M_PI / 2.1f, glm::vec3{1, 0, 0}));
             for (const auto& ind : tree_skeleton.endpoints) {
                 glm::mat4 tr = glm::translate(glm::identity<glm::mat4>(), tree_skeleton.joints[ind].position) 
@@ -281,8 +283,9 @@ void TreeNode::generate(int iterations) {
                     * rot_leaf
                     * glm::translate(glm::identity<glm::mat4>(), {0, 2 * leaf_scale * growth_current * -0.05, 0})
                     * glm::scale(glm::identity<glm::mat4>(), glm::vec3{leaf_scale * growth_current, 2 * leaf_scale * growth_current, 1.0f});
-                leafs->instance_transforms.push_back(tr);
+                instance_transforms.push_back(tr);
             }
+            leafs->set_instance_transforms(std::move(instance_transforms));
         }
 
         ptree::DefaultColorizer dc{c0, c1, tree.max_joint_depth};
@@ -317,8 +320,6 @@ void FireFlies::on_init() {
     material->emissive = glm::vec3{10, 10, 5};
     flies = create_child_node<ev2::InstancedGeometry>("flies");
     flies->set_material_override(material);
-
-    flies->instance_transforms.resize(NFlies, glm::identity<glm::mat4>());
     
     for (int i = 0; i < NFlies; i++) {
         Particle p{};
@@ -331,11 +332,13 @@ void FireFlies::on_init() {
 }
 
 void FireFlies::on_process(float dt) {
-    flies->instance_transforms.clear();
+    std::vector<glm::mat4> instance_transforms(NFlies);
+    int i = 0;
     for (auto& p : particles) {
         p.m_fAge += dt;
         p.m_Velocity = glm::vec3(glm::sin(p.m_fAge) + glm::sin(2 * p.m_Position.y + randomFloatRange(-1, 1)), glm::cos(p.m_fAge) + glm::sin(randomFloatRange(-2, 2)), 0);
         p.m_Position += dt * p.m_Velocity;
-        flies->instance_transforms.push_back(p.particle_transform());
+        instance_transforms[i++] = p.particle_transform();
     }
+    flies->set_instance_transforms(std::move(instance_transforms));
 }

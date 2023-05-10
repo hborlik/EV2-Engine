@@ -1,4 +1,5 @@
 #include "scene/visual_nodes.hpp"
+#include <utility>
 
 #include "renderer/shader.hpp"
 
@@ -13,7 +14,7 @@ void VisualInstance::on_ready() {
 }
 
 void VisualInstance::on_destroy() {
-    renderer::Renderer::get_singleton().destroy_model_instance(iid);
+    iid.reset();
 }
 
 void VisualInstance::pre_render() {
@@ -69,12 +70,12 @@ void InstancedGeometry::on_init() {
 }
 
 void InstancedGeometry::on_destroy() {
-    ev2::renderer::Renderer::get_singleton().destroy_instanced_drawable(instance);
+    instance.reset();
 }
 
 void InstancedGeometry::pre_render() {
-    if (instance) {
-        instance->instance_world_transform = get_world_transform();
+    if (instance && m_transforms_modified) {
+        m_transforms_modified = false;
         instance->instance_transform_buffer->copy_data(instance_transforms);
         instance->n_instances = instance_transforms.size();
     }
@@ -89,6 +90,17 @@ void InstancedGeometry::set_material_override(Ref<renderer::Material> material_o
     } else {
         geometry->primitives[0].material_ind = -1;
     }
+}
+
+void InstancedGeometry::on_transform_changed(Ref<Node> origin) {
+    Node::on_transform_changed(origin);
+
+    instance->instance_world_transform = get_world_transform();
+}
+
+void InstancedGeometry::set_instance_transforms(std::vector<glm::mat4> tr) {
+    instance_transforms = std::move(tr);
+    m_transforms_modified = true;
 }
 
 // camera

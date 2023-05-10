@@ -1,4 +1,5 @@
 #include "renderer/renderer.hpp"
+#include <memory>
 
 
 #include "renderer/ev_gl.hpp"
@@ -626,16 +627,20 @@ void Renderer::destroy_light(LID lid) {
     point_lights.erase(lid._v);
 }
 
-ModelInstance* Renderer::create_model_instance() {
-    int32_t id = next_model_instance_id++;
-    ModelInstance model{};
-    model.id = id;
-    auto [mi, inserted] = model_instances.emplace(id, std::move(model));
-    ModelInstance* new_model = nullptr;
-    if (inserted)
-        new_model = &(mi->second);
+ModelInstancePtr Renderer::create_model_instance() {
 
-    return new_model;
+    auto model_deleter = [](ModelInstance* mi) {
+        get_singleton().destroy_model_instance(mi);
+    };
+
+    int32_t id = next_model_instance_id++;
+    ModelInstancePtr model(new ModelInstance(), model_deleter);
+    model->id = id;
+    auto [mi, inserted] = model_instances.emplace(id, model.get());
+
+    assert(inserted);
+
+    return model;
 }
 
 void Renderer::destroy_model_instance(ModelInstance* model) {
@@ -643,18 +648,22 @@ void Renderer::destroy_model_instance(ModelInstance* model) {
     model_instances.erase(model->id);
 }
 
-InstancedDrawable* Renderer::create_instanced_drawable() {
-    int32_t id = next_instanced_drawable_id++;
-    InstancedDrawable model{};
-    model.id = id;
-    auto [mi, inserted] = instanced_drawables.emplace(id, std::move(model));
-    InstancedDrawable* new_instanced = nullptr;
-    if (inserted) {
-        new_instanced = &(mi->second);
-        new_instanced->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
-    }
+InstancedDrawablePtr Renderer::create_instanced_drawable() {
 
-    return new_instanced;
+    auto instanced_drawable_deleter = [](InstancedDrawable* id) {
+        get_singleton().destroy_instanced_drawable(id);
+    };
+
+    int32_t id = next_instanced_drawable_id++;
+    InstancedDrawablePtr model(new InstancedDrawable(), instanced_drawable_deleter);
+    model->id = id;
+    model->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
+
+    auto [mi, inserted] = instanced_drawables.emplace(id, model.get());
+    
+    assert(inserted);
+
+    return model;
 }
 
 void Renderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
@@ -754,11 +763,11 @@ void Renderer::render(const Camera &camera) {
         //render scene
         ev2::gl::glUniform(LOV, sdp_lpv_location);
         for (auto &mPair : model_instances) {
-            auto& m = mPair.second;
-            if (m.drawable) {
-                ev2::gl::glUniform(m.transform, sdp_m_location);
+            auto m = mPair.second;
+            if (m->drawable) {
+                ev2::gl::glUniform(m->transform, sdp_m_location);
 
-                draw(m.drawable.get(), depth_program, false, m.gl_vao);
+                draw(m->drawable.get(), depth_program, false, m->gl_vao);
             }
         }
         depth_program.program.unbind();
@@ -789,32 +798,32 @@ void Renderer::render(const Camera &camera) {
 
     int cull_count = 0;
     for (auto &mPair : model_instances) {
-        auto& m = mPair.second;
-        if (m.drawable) {
+        auto m = mPair.second;
+        if (m->drawable) {
             bool visible = true;
-            switch(m.drawable->frustum_cull) {
+            switch(m->drawable->frustum_cull) {
                 case FrustumCull::None:
                     break;
                 case FrustumCull::Sphere:
-                    visible = intersect(cull_frustum, m.transform * m.drawable->bounding_sphere);
+                    visible = intersect(cull_frustum, m->transform *m->drawable->bounding_sphere);
                     break;
                 case FrustumCull::AABB:
-                    visible = intersect(cull_frustum, m.transform * m.drawable->bounding_box);
+                    visible = intersect(cull_frustum, m->transform * m->drawable->bounding_box);
                     break;
             }
             if (!visible && culling_enabled) {
                 cull_count++;
                 continue;
             }
-            const glm::mat3 G = glm::inverse(glm::transpose(glm::mat3(m.transform)));
+            const glm::mat3 G = glm::inverse(glm::transpose(glm::mat3(m->transform)));
 
-            ev2::gl::glUniform(m.transform, gp_m_location);
-            ev2::gl::glUniform(V * m.transform, gp_mv_location);
+            ev2::gl::glUniform(m->transform, gp_m_location);
+            ev2::gl::glUniform(V * m->transform, gp_mv_location);
             ev2::gl::glUniform(G, gp_g_location);
 
-            int32_t mat_id_override = m.material_override ? m.material_override->get_material_id() : -1;
+            int32_t mat_id_override = m->material_override ? m->material_override->get_material_id() : -1;
 
-            draw(m.drawable.get(), geometry_program, true, m.gl_vao, mat_id_override);
+            draw(m->drawable.get(), geometry_program, true, m->gl_vao, mat_id_override);
         }
     }
     geometry_program.program.unbind();
@@ -827,11 +836,11 @@ void Renderer::render(const Camera &camera) {
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
     for (auto &mPair : instanced_drawables) {
-        auto& m = mPair.second;
-        if (m.drawable) {
-            ev2::gl::glUniform(m.instance_world_transform, gpi_m_location);
+        auto m = mPair.second;
+        if (m->drawable) {
+            ev2::gl::glUniform(m->instance_world_transform, gpi_m_location);
 
-            draw(m.drawable.get(), geometry_program_instanced, true, m.gl_vao, -1, m.n_instances);
+            draw(m->drawable.get(), geometry_program_instanced, true, m->gl_vao, -1, m->n_instances);
         }
     }
     geometry_program_instanced.program.unbind();

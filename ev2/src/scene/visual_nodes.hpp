@@ -7,6 +7,7 @@
 #ifndef EV2_VISUAL_INSTANCE_H
 #define EV2_VISUAL_INSTANCE_H
 
+#include <memory>
 #include "scene/node.hpp"
 #include "renderer/mesh.hpp"
 #include "renderer/buffer.hpp"
@@ -28,7 +29,7 @@ public:
     void set_material_override(Ref<renderer::Material> material_override);
 
 private:
-    renderer::ModelInstance* iid{};
+    std::shared_ptr<renderer::ModelInstance> iid = nullptr;
 };
 
 class InstancedGeometry : public Node {
@@ -38,14 +39,18 @@ public:
     void on_init() override;
     void on_destroy() override;
     void pre_render() override;
+    void on_transform_changed(Ref<Node> origin) override;
 
     void set_material_override(Ref<renderer::Material> material_override);
 
-    std::vector<glm::mat4> instance_transforms{};
+    void set_instance_transforms(std::vector<glm::mat4> tr);
 
 protected:
-    std::shared_ptr<renderer::Drawable> geometry = {};
-    renderer::InstancedDrawable* instance = nullptr;
+    std::vector<glm::mat4> instance_transforms{};
+    bool m_transforms_modified = false;
+
+    std::shared_ptr<renderer::Drawable> geometry = nullptr;
+    std::shared_ptr<renderer::InstancedDrawable> instance = nullptr;
 };
 
 class CameraNode : public Node {

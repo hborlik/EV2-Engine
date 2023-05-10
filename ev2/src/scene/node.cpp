@@ -4,11 +4,14 @@
 namespace ev2 {
 
 void Node::add_child(Ref<Node> node) {
+    if (!node)
+        return;
+    
+    // if the node already has a parent, remove the child from that parent
     if (node->parent)
         node->parent->remove_child(node);
-    int ind = children.size();
-    children.push_back(node);
-    node->add_as_child(this);
+    
+    int ind = node->add_as_child(this);
 
     on_child_added(node, ind);
 }
@@ -16,13 +19,12 @@ void Node::add_child(Ref<Node> node) {
 void Node::remove_child(Ref<Node> node) {
     auto itr = std::find(children.begin(), children.end(), node);
     if (itr != children.end()) {
-        (*itr)->remove_from_parent(this);
+        (*itr)->remove_from_parent();
         children.erase(itr);
+        on_child_removed(node);
     } else {
         throw engine_exception{"Node: " + name + " does not have child " + node->name};
     }
-
-    on_child_removed(node);
 }
 
 void Node::destroy() {
@@ -33,7 +35,7 @@ void Node::destroy() {
 
     // fast remove and destroy all children
     for (auto& c : children) {
-        c->remove_from_parent(this); // prevent child from calling remove_child and invalidating children list
+        c->remove_from_parent(); // prevent child from calling remove_child and invalidating children list
         c->destroy();
     }
     children = {};
@@ -72,10 +74,10 @@ void Node::node_propagate_ready() {
 }
 
 void Node::node_propagate_enter_tree() {
-    if (parent) {
-        scene_tree = parent->scene_tree;
-    }
-
+    if (!(parent && parent->scene_tree))
+        return;
+    
+    scene_tree = parent->scene_tree;
     scene_tree->node_added(this);
 
     for (auto& c : children) {
@@ -84,6 +86,9 @@ void Node::node_propagate_enter_tree() {
 }
 
 void Node::node_propagate_exit_tree() {
+    if (!scene_tree)
+        return;
+
     for (auto& c : children) {
         c->node_propagate_exit_tree();
     }
@@ -98,11 +103,11 @@ void Node::node_propagate_transform_changed(Node* p_origin) {
     if (!is_inside_tree())
         return;
 
+    b_world_transform_dirty = true;
+
     for (auto& c : children) {
         c->node_propagate_transform_changed(p_origin);
     }
-
-    b_world_transform_dirty = true;
 
     on_transform_changed(p_origin->get_ref().ref_cast<Node>());
 }
@@ -115,21 +120,32 @@ void Node::node_propagate_pre_render() {
     }
 }
 
-void Node::add_as_child(Node* p_node) {
+// add this as a child to p_node
+int Node::add_as_child(Node* p_node) {
     assert(parent == nullptr);
     assert(p_node != this);
+
+    int ind = p_node->children.size();
+    
+    p_node->children.push_back(get_ref<Node>());
     parent = p_node;
 
-    if (parent->scene_tree)
-        node_propagate_enter_tree();
-    
+    // first enter scene tree for bookkeeping
+    node_propagate_enter_tree();
+
+    // changing parent pointer invalidates transforms
+    node_propagate_transform_changed(this);
+
+    return ind;
 }
 
-void Node::remove_from_parent(Node* p_node) {
-    assert(p_node != this);
-    assert(parent == p_node);
-    
+void Node::remove_from_parent() {
     parent = nullptr;
+
+    // changing parent pointer invalidates transforms
+    node_propagate_transform_changed(this);
+
+    node_propagate_exit_tree();
 }
 
 } // namespace ev2

@@ -147,8 +147,6 @@ public:
 
     glm::vec3 get_world_position() const {return glm::vec3(get_world_transform()[3]);}
 
-    void rotate(const glm::vec3& xyz) {transform.rotate(xyz);}
-
     glm::mat4 get_transform() const noexcept {
         return transform.get_transform();
     }
@@ -163,6 +161,11 @@ public:
     }
     inline glm::vec3 get_scale() const noexcept {
         return transform.get_scale();
+    }
+
+    void rotate(const glm::vec3& xyz) {
+        transform.rotate(xyz);
+        node_propagate_transform_changed(this);
     }
 
     void set_position(const glm::vec3& pos) noexcept {
@@ -204,13 +207,14 @@ private:
     void node_propagate_transform_changed(Node* p_origin);
     void node_propagate_pre_render();
 
-    void add_as_child(Node* p_node);
-    void remove_from_parent(Node* p_node);
+    int add_as_child(Node* p_node);
+    void remove_from_parent();
 
     bool m_is_ready = false;
     bool m_is_destroyed = false;
     Transform transform{};
     std::list<Ref<Node>> children;
+    
     Node* parent = nullptr;
     SceneTree* scene_tree = nullptr;
 
