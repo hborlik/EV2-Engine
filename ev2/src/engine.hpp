@@ -7,15 +7,11 @@
 #ifndef EV2_ENGINE_HPP
 #define EV2_ENGINE_HPP
 
-#include <fstream>
-#include <filesystem>
-#include <memory>
-#include <iostream>
-#include <chrono>
+#include "evpch.hpp"
 
-#include <singleton.hpp>
-#include <ev.hpp>
-#include <util.hpp>
+#include "singleton.hpp"
+#include "ev.hpp"
+#include "util.hpp"
 
 namespace ev2 {
 

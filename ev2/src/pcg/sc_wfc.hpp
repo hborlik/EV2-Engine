@@ -9,8 +9,7 @@
 #ifndef EV2_SC_WHC_HPP
 #define EV2_SC_WHC_HPP
 
-#include <functional>
-#include <optional>
+#include "evpch.hpp"
 
 #include "scene/node.hpp"
 #include "scene/visual_nodes.hpp"

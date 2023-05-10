@@ -9,9 +9,7 @@
 #ifndef EV2_GL_H
 #define EV2_GL_H
 
-#include <iostream>
-#include <unordered_map>
-#include <string>
+#include "evpch.hpp"
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>

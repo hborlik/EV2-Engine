@@ -8,8 +8,8 @@
 #ifndef EV2_GLTF_H
 #define EV2_GLTF_H
 
-#include <scene/node.hpp>
-#include <renderer/renderer.hpp>
+#include "scene/node.hpp"
+#include "renderer/renderer.hpp"
 
 #if 0
 

@@ -1,7 +1,5 @@
-#include <scene/node.hpp>
-#include <scene/scene_tree.hpp>
-
-#include <algorithm>
+#include "scene/node.hpp"
+#include "scene/scene_tree.hpp"
 
 namespace ev2 {
 

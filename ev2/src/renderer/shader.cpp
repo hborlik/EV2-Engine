@@ -9,14 +9,8 @@
  * 
  */
 
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <sstream>
-#include <algorithm>
-
-#include <engine.hpp>
-#include <renderer/shader.hpp>
+#include "engine.hpp"
+#include "renderer/shader.hpp"
 
 using namespace ev2;
 

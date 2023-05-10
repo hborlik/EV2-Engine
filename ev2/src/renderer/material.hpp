@@ -9,11 +9,10 @@
 #ifndef EV2_RENDERER_MATERIAL_H
 #define EV2_RENDERER_MATERIAL_H
 
-#include <memory>
-#include <cstdint>
+#include "evpch.hpp"
 
-#include <renderer/texture.hpp>
-#include <ev.hpp>
+#include "renderer/texture.hpp"
+#include "ev.hpp"
 
 namespace ev2::renderer {
 

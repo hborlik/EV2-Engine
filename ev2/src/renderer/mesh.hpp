@@ -7,12 +7,11 @@
 #ifndef EV2_MESH_H
 #define EV2_MESH_H
 
-#include <memory>
+#include "evpch.hpp"
 
-#include <renderer/buffer.hpp>
-#include <renderer/shader.hpp>
-#include <renderer/texture.hpp>
-#include <transform.hpp>
+#include "renderer/buffer.hpp"
+#include "renderer/shader.hpp"
+#include "renderer/texture.hpp"
 
 namespace ev2::renderer {
 

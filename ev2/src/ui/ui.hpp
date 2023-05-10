@@ -7,12 +7,10 @@
 #ifndef EV2_UI_H
 #define EV2_UI_H
 
-#include <unordered_map>
-#include <typeinfo>
-#include <typeindex>
+#include "evpch.hpp"
 
-#include <scene/scene_tree.hpp>
-#include <scene/node.hpp>
+#include "scene/scene_tree.hpp"
+#include "scene/node.hpp"
 #include "renderer/camera.hpp"
 
 namespace ev2 {

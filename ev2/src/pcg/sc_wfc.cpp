@@ -2,12 +2,6 @@
 #include <cstddef>
 #include <pcg/sc_wfc.hpp>
 
-#include <filesystem>
-#include <fstream>
-#include <unordered_map>
-
-
-
 namespace ev2::pcg {
 
 struct SCWFC::Data {

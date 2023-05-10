@@ -10,10 +10,10 @@
 #ifndef EV2_BUFFER_H
 #define EV2_BUFFER_H
 
-#include <vector>
+#include "evpch.hpp"
 
-#include <renderer/ev_gl.hpp>
-#include <util.hpp>
+#include "renderer/ev_gl.hpp"
+#include "util.hpp"
 
 namespace ev2::renderer {
 

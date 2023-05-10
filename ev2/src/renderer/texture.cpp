@@ -1,6 +1,4 @@
-#include <renderer/texture.hpp>
-
-#include <vector>
+#include "renderer/texture.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 

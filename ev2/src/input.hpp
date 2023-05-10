@@ -7,7 +7,7 @@
 #ifndef EV2_INPUT_H
 #define EV2_INPUT_H
 
-#include <stdint.h>
+#include "evpch.hpp"
 
 #include <glm/glm.hpp>
 

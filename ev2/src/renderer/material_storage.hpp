@@ -11,12 +11,9 @@
 #ifndef EV2_RENDERER_MATERIAL_STORAGE_HPP
 #define EV2_RENDERER_MATERIAL_STORAGE_HPP
 
-#include <unordered_map>
-#include <array>
-#include <queue>
-#include <cstdint>
+#include "evpch.hpp"
 
-#include <renderer/shader.hpp>
+#include "renderer/shader.hpp"
 
 namespace ev2::renderer {
 

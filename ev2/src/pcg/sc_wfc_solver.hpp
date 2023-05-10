@@ -9,9 +9,7 @@
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
-#include <memory>
-#include <random>
-#include <unordered_set>
+#include "evpch.hpp"
 
 #include "pcg/wfc.hpp"
 #include "sc_wfc.hpp"

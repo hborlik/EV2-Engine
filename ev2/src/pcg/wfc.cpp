@@ -1,9 +1,4 @@
-#include <algorithm>
 #include <pcg/wfc.hpp>
-
-#include <memory>
-#include <unordered_set>
-#include <iostream>
 
 namespace wfc {
 

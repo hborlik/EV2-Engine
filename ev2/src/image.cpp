@@ -1,7 +1,5 @@
-#include <stdexcept>
+#include "image.hpp"
 
-#include <image.hpp>
-#include <renderer/ev_gl.hpp>
 #include <stb_image.h>
 
 namespace ev2 {

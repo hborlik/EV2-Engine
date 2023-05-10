@@ -7,22 +7,18 @@
 #ifndef EV2_RENDERER_H
 #define EV2_RENDERER_H
 
-#include <unordered_map>
-#include <memory>
-#include <filesystem>
-#include <array>
-#include <queue>
+#include "evpch.hpp"
 
-#include <singleton.hpp>
-#include <renderer/mesh.hpp>
-#include <renderer/shader.hpp>
-#include <renderer/texture.hpp>
-#include <renderer/camera.hpp>
-#include <renderer/material.hpp>
-#include <renderer/debug_renderer.hpp>
-#include <renderer/render_state.hpp>
+#include "singleton.hpp"
+#include "renderer/mesh.hpp"
+#include "renderer/shader.hpp"
+#include "renderer/texture.hpp"
+#include "renderer/camera.hpp"
+#include "renderer/material.hpp"
+#include "renderer/debug_renderer.hpp"
+#include "renderer/render_state.hpp"
 
-#include <geometry.hpp>
+#include "geometry.hpp"
 
 namespace ev2::renderer {
 

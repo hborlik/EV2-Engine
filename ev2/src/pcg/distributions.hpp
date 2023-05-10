@@ -9,8 +9,7 @@
 #ifndef EV2_PCG_DISTRIBUTIONS_HPP
 #define EV2_PCG_DISTRIBUTIONS_HPP
 
-#include <cmath>
-#include <random>
+#include "evpch.hpp"
 
 #include <glm/glm.hpp>
 

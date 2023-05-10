@@ -10,9 +10,10 @@
 #ifndef EV2_SINGLETON_H
 #define EV2_SINGLETON_H
 
-#include <memory>
-#include <ev.hpp>
-#include <util.hpp>
+#include "evpch.hpp"
+
+#include "ev.hpp"
+#include "util.hpp"
 
 namespace ev2 {
 

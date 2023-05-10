@@ -11,14 +11,13 @@
 #ifndef EV2_WINDOW_H
 #define EV2_WINDOW_H
 
-#include <string>
-#include <cstdint>
+#include "evpch.hpp"
 
-#include <ev.hpp>
-#include <renderer/ev_gl.hpp>
-#include <delegate.hpp>
-#include <singleton.hpp>
-#include <application.hpp>
+#include "ev.hpp"
+#include "renderer/ev_gl.hpp"
+#include "delegate.hpp"
+#include "singleton.hpp"
+#include "application.hpp"
 
 namespace ev2::window {
 

@@ -1,8 +1,6 @@
 
-#include <scene/scene_tree.hpp>
-#include <scene/node.hpp>
-
-#include <algorithm>
+#include "scene/scene_tree.hpp"
+#include "scene/node.hpp"
 
 namespace ev2 {
 

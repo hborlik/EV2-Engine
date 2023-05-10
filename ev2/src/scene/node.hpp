@@ -7,14 +7,11 @@
 #ifndef EV2_NODE_H
 #define EV2_NODE_H
 
-#include <string>
-#include <vector>
-#include <list>
-#include <memory>
+#include "evpch.hpp"
 
-#include <transform.hpp>
-#include <ev.hpp>
-#include <reference_counted.hpp>
+#include "ev.hpp"
+#include "transform.hpp"
+#include "reference_counted.hpp"
 
 namespace ev2 {
 

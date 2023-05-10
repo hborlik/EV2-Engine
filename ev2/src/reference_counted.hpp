@@ -7,12 +7,7 @@
 #ifndef EV2_REFERENCE_COUNTED_H
 #define EV2_REFERENCE_COUNTED_H
 
-#include <stdint.h>
-
-#include <type_traits>
-#include <utility>
-#include <cstddef>
-#include <functional>
+#include "evpch.hpp"
 
 namespace ev2 {
 

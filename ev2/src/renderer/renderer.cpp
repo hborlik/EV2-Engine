@@ -1,12 +1,9 @@
-#include <renderer/renderer.hpp>
+#include "renderer/renderer.hpp"
 
-#include <random>
-#include <cmath>
-#include <chrono>
 
-#include <renderer/ev_gl.hpp>
-#include <resource.hpp>
-#include "../engine.hpp"
+#include "renderer/ev_gl.hpp"
+#include "resource.hpp"
+#include "engine.hpp"
 
 namespace ev2::renderer {
 

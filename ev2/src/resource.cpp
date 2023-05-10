@@ -1,19 +1,13 @@
-#include <memory>
-#include <resource.hpp>
+#include "resource.hpp"
 
-#include <map>
-#include <unordered_map>
-#include <algorithm>
-#include <iostream>
+#include "renderer/buffer.hpp"
+#include "renderer/renderer.hpp"
+#include "engine.hpp"
 
 #include <glm/glm.hpp>
 
 #include <tiny_obj_loader.h>
 #include <stb_image.h>
-
-#include <renderer/buffer.hpp>
-#include <renderer/renderer.hpp>
-#include <engine.hpp>
 
 namespace {
 

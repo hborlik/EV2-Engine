@@ -7,9 +7,7 @@
 #ifndef EV2_UTIL_H
 #define EV2_UTIL_H
 
-#include <string>
-#include <type_traits>
-#include <typeinfo>
+#include "evpch.hpp"
 
 namespace ev2::util {
 

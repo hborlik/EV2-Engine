@@ -9,15 +9,11 @@
 #ifndef EV2_SHADER_H
 #define EV2_SHADER_H
 
-#include <memory>
-#include <vector>
-#include <string>
-#include <unordered_map>
-#include <filesystem>
+#include "evpch.hpp"
 
-#include <ev.hpp>
-#include <renderer/ev_gl.hpp>
-#include <renderer/buffer.hpp>
+#include "ev.hpp"
+#include "renderer/ev_gl.hpp"
+#include "renderer/buffer.hpp"
 
 namespace ev2::renderer
 {

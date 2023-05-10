@@ -7,18 +7,7 @@
 #ifndef WFC_H
 #define WFC_H
 
-#include <vector>
-#include <functional>
-#include <random>
-#include <list>
-#include <queue>
-#include <string>
-#include <algorithm>
-#include <unordered_map>
-#include <iomanip>
-#include <set>
-
-#include <assert.h>
+#include "evpch.hpp"
 
 namespace wfc {
 

@@ -1,10 +1,5 @@
 #include "file_dialog.hpp"
 
-#include <cstring>
-#include <vector>
-#include <algorithm>
-#include <filesystem>
-
 #include "imgui.hpp"
 #include "imgui_internal.hpp"
 

@@ -7,8 +7,8 @@
 #ifndef EV2_GEOMETRY_H
 #define EV2_GEOMETRY_H
 
-#include <vector>
-#include <optional>
+#include "evpch.hpp"
+
 #include <glm/glm.hpp>
 
 namespace ev2 {

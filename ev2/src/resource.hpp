@@ -7,18 +7,18 @@
 #ifndef EV2_RESOURCE_H
 #define EV2_RESOURCE_H
 
-#include "reference_counted.hpp"
-#include <filesystem>
+#include "evpch.hpp"
+
 
 #include <glm/glm.hpp>
 
-#include <memory>
-#include <renderer/mesh.hpp>
-#include <renderer/renderer.hpp>
-#include <renderer/texture.hpp>
-#include <renderer/material.hpp>
-#include <image.hpp>
-#include <gltf.hpp>
+#include "reference_counted.hpp"
+#include "renderer/mesh.hpp"
+#include "renderer/renderer.hpp"
+#include "renderer/texture.hpp"
+#include "renderer/material.hpp"
+#include "image.hpp"
+#include "gltf.hpp"
 
 namespace ev2 {
 

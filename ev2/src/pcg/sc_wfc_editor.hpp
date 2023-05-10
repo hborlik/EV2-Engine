@@ -9,11 +9,7 @@
  #ifndef EV2_PCG_SCWFC_EDITOR_HPP
  #define EV2_PCG_SCWFC_EDITOR_HPP
 
-#include <cassert>
-#include <memory>
-#include <random>
-#include <string>
-#include <string_view>
+#include "evpch.hpp"
 
 #include "pcg/sc_wfc_solver.hpp"
 #include "pcg/wfc.hpp"

@@ -7,11 +7,9 @@
 #ifndef EV2_TEXTURE_H
 #define EV2_TEXTURE_H
 
-#include <string>
-#include <unordered_map>
-#include <memory>
+#include "evpch.hpp"
 
-#include <renderer/ev_gl.hpp>
+#include "renderer/ev_gl.hpp"
 
 namespace ev2::renderer {
 

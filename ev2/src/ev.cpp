@@ -9,21 +9,17 @@
  * 
  */
 
-#include <ev.hpp>
+#include "ev.hpp"
 
-#include <iostream>
-#include <string>
-#include <sstream>
+#include "window.hpp"
+#include "renderer/renderer.hpp"
+#include "resource.hpp"
+#include "physics.hpp"
+#include "engine.hpp"
 
-#include <window.hpp>
-#include <renderer/renderer.hpp>
-#include <resource.hpp>
-#include <physics.hpp>
-#include <engine.hpp>
-
-#include <ui/imgui.hpp>
-#include <ui/imgui_impl_glfw.hpp>
-#include <ui/imgui_impl_opengl3.hpp>
+#include "ui/imgui.hpp"
+#include "ui/imgui_impl_glfw.hpp"
+#include "ui/imgui_impl_opengl3.hpp"
 
 namespace ev2 {
 

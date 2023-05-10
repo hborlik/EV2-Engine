@@ -9,13 +9,9 @@
 #ifndef EV2_IMAGE_HPP
 #define EV2_IMAGE_HPP
 
-#include <utility>
-#include <string>
-#include <memory>
-#include <cmath>
-#include <stdint.h>
+#include "evpch.hpp"
 
-#include <util.hpp>
+#include "util.hpp"
 
 namespace ev2 {
 

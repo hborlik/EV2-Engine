@@ -9,9 +9,7 @@
 #ifndef EV2_UI_FILE_DIALOG_HPP
 #define EV2_UI_FILE_DIALOG_HPP
 
-#include <string>
-#include <filesystem>
-#include <string_view>
+#include "evpch.hpp"
 
 namespace ev2::ui {
 

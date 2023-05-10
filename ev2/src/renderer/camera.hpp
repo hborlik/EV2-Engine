@@ -7,14 +7,13 @@
 #ifndef EV2_CAMERA_H
 #define EV2_CAMERA_H
 
-#include <array>
+#include "evpch.hpp"
+#include "geometry.hpp"
+
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <geometry.hpp>
-
 
 namespace ev2 {
 

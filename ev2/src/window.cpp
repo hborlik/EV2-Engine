@@ -5,16 +5,12 @@
  * 
  * 
  */
-#include <window.hpp>
+#include "window.hpp"
 
-#include <iostream>
-#include <iomanip>
-#include <array>
-
-#include <ev.hpp>
-#include <input.hpp>
-#include <application.hpp>
-#include <engine.hpp>
+#include "ev.hpp"
+#include "input.hpp"
+#include "application.hpp"
+#include "engine.hpp"
 
 #define EV_GL_MIN_SEVERITY GL_DEBUG_SEVERITY_LOW
 #define EV_GL_ALLOW_NOTIFICATIONS false

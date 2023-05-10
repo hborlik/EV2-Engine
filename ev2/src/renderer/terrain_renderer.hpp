@@ -7,13 +7,13 @@
 #ifndef EV2_RENDERER_TERRAIN_H
 #define EV2_RENDERER_TERRAIN_H
 
-#include "renderer.hpp"
-#include <memory>
+#include "evpch.hpp"
 
-#include <renderer/render_state.hpp>
-#include <renderer/shader.hpp>
-#include <renderer/material.hpp>
-#include <image.hpp>
+#include "renderer.hpp"
+#include "renderer/render_state.hpp"
+#include "renderer/shader.hpp"
+#include "renderer/material.hpp"
+#include "image.hpp"
 
 namespace ev2::renderer {
 

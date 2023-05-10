@@ -1,9 +1,6 @@
 #include "sc_wfc_solver.hpp"
 
-#include <algorithm>
-#include <cmath>
-#include <memory>
-#include <unordered_set>
+
 
 #include "pcg/sc_wfc.hpp"
 #include "pcg/wfc.hpp"

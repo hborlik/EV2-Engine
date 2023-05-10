@@ -7,11 +7,10 @@
 #ifndef EV2_APPLICATION_H
 #define EV2_APPLICATION_H
 
-#include <memory>
-#include <string>
+#include "evpch.hpp"
 
-#include <input.hpp>
-#include <ui/ui.hpp>
+#include "input.hpp"
+#include "ui/ui.hpp"
 
 #include "renderer/terrain_renderer.hpp"
 

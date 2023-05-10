@@ -7,18 +7,15 @@
 #ifndef EV2_SCENE_H
 #define EV2_SCENE_H
 
-#include <string>
-#include <vector>
-#include <list>
-#include <memory>
+#include "evpch.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <reference_counted.hpp>
-#include <scene/node.hpp>
-#include <scene/visual_nodes.hpp>
+#include "reference_counted.hpp"
+#include "scene/node.hpp"
+#include "scene/visual_nodes.hpp"
 
 namespace ev2 {
 

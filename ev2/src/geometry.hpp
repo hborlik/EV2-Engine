@@ -7,21 +7,19 @@
 #ifndef EV2_GEOMETRY_H
 #define EV2_GEOMETRY_H
 
-#include <optional>
-#include <limits>
-#include <cmath>
+#include "evpch.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
-
-#include <util.hpp>
-#include <ev.hpp>
-#include <reference_counted.hpp>
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
+
+#include "util.hpp"
+#include "ev.hpp"
+#include "reference_counted.hpp"
 
 namespace ev2 {
 

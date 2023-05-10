@@ -3,7 +3,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tiny_gltf.h>
 
-#include <resource.hpp>
+#include "resource.hpp"
 
 #if 0
 

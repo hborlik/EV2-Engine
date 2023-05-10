@@ -8,9 +8,9 @@
 #ifndef EV2_DEBUG_RENDERER_H
 #define EV2_DEBUG_RENDERER_H
 
-#include <renderer/ev_gl.hpp>
-#include <renderer/camera.hpp>
-#include <renderer/render_state.hpp>
+#include "renderer/ev_gl.hpp"
+#include "renderer/camera.hpp"
+#include "renderer/render_state.hpp"
 
 namespace ev2::renderer {
 

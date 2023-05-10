@@ -9,15 +9,7 @@
 #ifndef EV2_PCG_OBJECT_DATABASE_HPP
 #define EV2_PCG_OBJECT_DATABASE_HPP
 
-#include <algorithm>
-#include <cstddef>
-#include <cstdio>
-#include <string>
-#include <memory>
-#include <string_view>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include "evpch.hpp"
 
 #include "wfc.hpp"
 #include "renderer/renderer.hpp"
