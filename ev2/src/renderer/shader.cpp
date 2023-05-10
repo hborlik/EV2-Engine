@@ -158,7 +158,7 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
 
 // UbiquitousShader
 
-void UbiquitousShader::push_source_file(const std::filesystem::path &path) {
+void ShaderBuilder::push_source_file(const std::filesystem::path &path) {
     last_shader_begin = source.length();
 #if not NDEBUG
     source += "\n//" + path.generic_string() + "\n";
@@ -166,7 +166,7 @@ void UbiquitousShader::push_source_file(const std::filesystem::path &path) {
     source += load_shader_content(path);
 }
 
-void UbiquitousShader::push_source_string(const std::string& source_string) {
+void ShaderBuilder::push_source_string(const std::string& source_string) {
     last_shader_begin = source.length();
     source += source_string;
 }
@@ -180,7 +180,7 @@ std::unique_ptr<Shader> create_shader_stage(const std::string& stage_define, con
     return out;
 }
 
-std::vector<std::unique_ptr<Shader>> UbiquitousShader::get_shader_stages(int version) {
+std::vector<std::unique_ptr<Shader>> ShaderBuilder::get_shader_stages(int version) {
     std::vector<std::unique_ptr<Shader>> output_shaders{};
     GLSLShaderTypeFlag stages{};
     if (source.find("VERTEX_SHADER", last_shader_begin) != std::string::npos) {

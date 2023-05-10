@@ -215,7 +215,7 @@ private:
  * @brief Shader source that contains multiple stages
  * 
  */
-class UbiquitousShader {
+class ShaderBuilder {
 public:
     /**
      * @brief Read shader source and append it to the source content.

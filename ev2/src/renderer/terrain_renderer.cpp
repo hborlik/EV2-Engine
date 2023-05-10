@@ -376,7 +376,7 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
     if (g_terrain.flags.wire)
         source_string += "#define FLAG_WIRE 1\n";
 
-    UbiquitousShader cull_shader{};
+    ShaderBuilder cull_shader{};
     cull_shader.push_source_string(source_string);
     cull_shader.push_source_file("./shaders/terrain/FrustumCulling.glsl");
 
@@ -494,7 +494,7 @@ bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre
  */
 bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
 {
-    UbiquitousShader usp{};
+    ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION] = std::make_unique<Program>("LebReductionProgram");
 
     LOG("Loading {Reduction-Program}\n");
@@ -515,7 +515,7 @@ bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
 
 bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
 {
-    UbiquitousShader usp{};
+    ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION_PREPASS] = std::make_unique<Program>("LebReductionPrepass");
 
     LOG("Loading {Reduction-Prepass-Program}\n");
@@ -541,7 +541,7 @@ bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
  */
 bool LoadBatchProgram(const ShaderPreprocessor& pre)
 {
-    UbiquitousShader usp{};
+    ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_BATCH] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Batch-Program}\n");
@@ -591,7 +591,7 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
  */
 bool LoadTopViewProgram(const ShaderPreprocessor& pre)
 {
-    UbiquitousShader usp{};
+    ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_TOPVIEW] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Top-View-Program}\n");
@@ -635,7 +635,7 @@ bool LoadTopViewProgram(const ShaderPreprocessor& pre)
  */
 bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
 {
-    UbiquitousShader usp{};
+    ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_CBT_NODE_COUNT] = std::make_unique<Program>("BatchProgram");
 
     LOG("Loading {Cbt-Node-Count-Program}\n");
