@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <utility>
 #include <cstddef>
+#include <functional>
 
 namespace ev2 {
 
@@ -196,5 +197,18 @@ public:
 };
 
 }
+
+namespace std {
+
+template<typename T>
+struct hash<ev2::Ref<T>>
+{
+    size_t operator()(const ev2::Ref<T>& k) const {
+        using std::hash;
+        return hash<T*>()(k._ref);
+    }
+};
+
+} // namespace std
 
 #endif // PARAKEET_REFERENCE_COUNTED_H

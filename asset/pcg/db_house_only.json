@@ -94,7 +94,14 @@
                         ]
                     }
                 ],
-                "properties": {}
+                "properties": {},
+                "axis_settings": {
+                    "v": [
+                        0,
+                        0,
+                        0
+                    ]
+                }
             }
         ]
     },

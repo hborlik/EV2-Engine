@@ -1,12 +1,17 @@
 #include "sc_wfc_solver.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <memory>
 #include <unordered_set>
 
 #include "pcg/sc_wfc.hpp"
+#include "pcg/wfc.hpp"
+#include "reference_counted.hpp"
 #include "resource.hpp"
 #include "pcg/distributions.hpp"
 #include "pcg/object_database.hpp"
+#include "scene/node.hpp"
 
 namespace ev2::pcg {
 
@@ -29,6 +34,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
     Ref<SCWFCGraphNode> nnode{};
     for (int i = 0; i < n; ++i) {
         glm::vec3 offset = glm::vec3{0};
+        float rotation_y = 0.f;
 
         // set of valid neighbors for the propagating node
         // will be set of all possible patterns when node is null
@@ -80,6 +86,17 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 
             offset.y = 0; // TODO placement rules
 
+            switch (obj.axis_settings.y) {
+                case ObjectData::Orientation::Free:
+                    rotation_y = uniform1d() * 2.f * M_PI;
+                    break;
+                case ObjectData::Orientation::Stepped:
+                    rotation_y = (int)(4 * uniform1d()) / 4.f * 2.f * M_PI;
+                    break;
+                case ObjectData::Orientation::Lock:
+                    break;
+            }
+
         } else { // populate domain with all available patterns
             auto [p_itr, p_end] = obj_db->get_patterns();
             std::vector<const wfc::Pattern*> dest(obj_db->patterns_size());
@@ -93,6 +110,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
         // populate domain of new node
         nnode->domain = {valid_neighbors.begin(), valid_neighbors.end()};
         nnode->set_position(offset);
+        nnode->rotate(glm::vec3{0, rotation_y, 0});
 
         // attach new node to all nearby neighbors
         scwfc_node.update_all_adjacencies(nnode, n_radius);
@@ -107,8 +125,6 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 }
 
 void SCWFCSolver::wfc_solve(int steps) {
-    int cnt = 0;
-
     wfc::WFCSolver::entropy_callback_t entropy_func =
         [](auto* prop_node, auto* on_node) -> float {
             auto* prop_node_scene =
@@ -119,9 +135,20 @@ void SCWFCSolver::wfc_solve(int steps) {
                                     on_node_scene->get_position());
         };
 
-    wfc_solver->set_entropy_func(entropy_func);
-    while (wfc_solver->can_continue() && cnt++ < steps) {
-        auto solved_node = wfc_solver->step_wfc();
+    // wfc_solver->set_entropy_func(entropy_func);
+    for (int cnt = 0; cnt < steps; ++cnt) {
+        if (m_boundary.size() < 1)
+            break;
+        auto& n = m_boundary.front();
+        m_boundary.pop();
+
+        auto solved_node = wfc_solver->step_wfc((wfc::DGraphNode*)n.get());
+        // add all adjacent nodes to the solver boundary
+        auto adjacent = scwfc_node.get_graph()->adjacent_nodes(solved_node);
+        std::for_each(adjacent.begin(), adjacent.end(), [this](auto* dgn) -> void {
+            m_boundary.push(dynamic_cast<SCWFCGraphNode*>(dgn)->get_ref<SCWFCGraphNode>());
+        });
+
         node_check_and_update(solved_node);
     }
 }
@@ -178,8 +205,10 @@ bool SCWFCSolver::can_continue() const noexcept {
     return wfc_solver->can_continue();
 }
 
-void SCWFCSolver::set_seed_node(wfc::DGraphNode* node) {
-    wfc_solver->set_next_node(node);
+void SCWFCSolver::set_seed_node(Ref<SCWFCGraphNode> node) {
+    decltype(m_boundary) empty;
+    std::swap( m_boundary, empty );
+    m_boundary.push(node);
 }
 
 

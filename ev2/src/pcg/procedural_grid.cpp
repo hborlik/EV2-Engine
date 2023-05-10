@@ -41,7 +41,7 @@ void ProceduralGrid::generate(int n) {
     m_data->solver.set_next_node(m_data->grid.at(0, 0));
 
     while(m_data->solver.can_continue()) {
-        m_data->solver.step_wfc();
+        m_data->solver.step_wfc(nullptr);
     }
 
     

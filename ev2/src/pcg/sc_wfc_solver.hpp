@@ -11,6 +11,8 @@
 
 #include <memory>
 #include <random>
+#include <unordered_set>
+
 #include "pcg/wfc.hpp"
 #include "sc_wfc.hpp"
 #include "object_database.hpp"
@@ -32,7 +34,7 @@ public:
 
     bool can_continue() const noexcept;
 
-    void set_seed_node(wfc::DGraphNode* node);
+    void set_seed_node(Ref<SCWFCGraphNode> node);
 
 private:
     SCWFC& scwfc_node;
@@ -40,6 +42,8 @@ private:
     std::shared_ptr<ObjectMetadataDB> obj_db;
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
+
+    std::queue<Ref<SCWFCGraphNode>> m_boundary{};
 };
 
 } // namespace ev2::pcg

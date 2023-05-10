@@ -47,6 +47,8 @@ public:
 
     void load_obj_db(std::string_view path);
 
+    void new_obj_db();
+
     void save_obj_db(std::string_view path);
 
     ObjectMetadataDB* get_object_db() noexcept {

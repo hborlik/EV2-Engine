@@ -26,11 +26,28 @@
 namespace ev2::pcg {
 
 struct ObjectData {
+    enum class Orientation {
+        Free = 0,
+        Lock,
+        Stepped // 4 possible orientations N S E W
+    };
+
     std::string name{};
     std::string asset_path{};
     std::unordered_map<std::string, float> properties{};
     std::vector<OBB> propagation_patterns{};
     float extent = 1.f;
+
+    struct XYZ {
+        union {
+            Orientation v[3];
+            struct {
+                Orientation x;
+                Orientation y;
+                Orientation z;
+            };
+        }; 
+    } axis_settings{};
 
     bool is_valid() const noexcept {
         return extent > 0.f && !name.empty() && !asset_path.empty();

@@ -16,6 +16,10 @@
 
 namespace ev2::pcg {
 
+inline float uniform1d() {
+    return (float)std::rand() / (float)RAND_MAX;
+}
+
 inline glm::vec2 uniform2d() {
     return {(float)std::rand() / (float)RAND_MAX, (float)std::rand() / (float)RAND_MAX};
 }

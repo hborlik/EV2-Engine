@@ -113,12 +113,12 @@ void SCWFCEditor::show_editor_tool() {
         static int steps = 1;
         ImGui::InputInt("Steps", &steps);
         ImGui::SameLine();
-        auto selected_node = dynamic_cast<wfc::DGraphNode*>(m_editor->get_selected_node());
+        auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
         // ImGui::BeginDisabled(m_internal->solver->next_node == nullptr);
         ImGui::BeginDisabled(m_scwfc_solver == nullptr || (selected_node == nullptr && !m_scwfc_solver->can_continue()));
         if (ImGui::Button("Solve")) {
             if (!m_scwfc_solver->can_continue())
-                m_scwfc_solver->set_seed_node(selected_node);
+                m_scwfc_solver->set_seed_node(selected_node->get_ref<SCWFCGraphNode>());
             m_scwfc_solver->wfc_solve(steps);
         }
         ImGui::EndDisabled();
@@ -517,6 +517,17 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
         ImGui::InputFloat("Extent", &prop.extent);
 
+        constexpr const char* AxisNames[]{"X", "Y", "Z"};
+        for (int i = 0; i < 3; ++i) {
+            ImGui::PushID(i);
+            ImGui::Spacing();
+            ImGui::Text("Axis %s", AxisNames[i]);
+            ImGui::RadioButton("Free", (int*)&prop.axis_settings.v[i], (int)ObjectData::Orientation::Free); ImGui::SameLine();
+            ImGui::RadioButton("Lock", (int*)&prop.axis_settings.v[i], (int)ObjectData::Orientation::Lock); ImGui::SameLine(); 
+            ImGui::RadioButton("Stepped", (int*)&prop.axis_settings.v[i], (int)ObjectData::Orientation::Stepped);
+            ImGui::PopID();
+        }
+
         if (!model_valid && !model_load_failed) {
             auto model = ResourceManager::get_singleton().get_model_relative_path(prop.asset_path);
             model_valid = (bool)model;
@@ -795,6 +806,7 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
 
     enum MenuAction {
         None,
+        NewDB,
         LoadDB,
         LoadDefaultDB,
         SaveDB
@@ -803,6 +815,9 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
     MenuAction menu_action = None;
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+
+            if (ImGui::MenuItem("New DB"))
+                menu_action = NewDB;
 
             if (ImGui::MenuItem("Load DB"))
                 menu_action = LoadDB;
@@ -822,6 +837,9 @@ void SCWFCEditor::show_db_editor_window(bool* p_open) {
     }
 
     switch (menu_action) {
+        case NewDB:
+            new_obj_db();
+            break;
         case LoadDB:
             ImGui::OpenPopup("Load DB From File");
             break;
@@ -874,6 +892,10 @@ void SCWFCEditor::load_default_obj_db() {
 
 void SCWFCEditor::load_obj_db(std::string_view path) {
     m_obj_db = ObjectMetadataDB::load_object_database(path);
+}
+
+void SCWFCEditor::new_obj_db() {
+    m_obj_db = std::make_shared<ObjectMetadataDB>();
 }
 
 void SCWFCEditor::save_obj_db(std::string_view path) {

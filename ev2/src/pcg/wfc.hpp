@@ -718,7 +718,7 @@ public:
 public:
     virtual ~IWFCSolver() = default;
 
-    virtual T* step_wfc() = 0;
+    virtual T* step_wfc(T* node) = 0;
     virtual bool can_continue() const noexcept = 0;
 
     virtual T* propagate(T* node) = 0;
@@ -739,10 +739,10 @@ public:
 
     WFCSolver(Graph<DGraphNode>* graph, std::mt19937& gen) : graph{graph}, gen{gen} {}
 
-    DGraphNode* step_wfc() override {
-        DGraphNode* solved_node = next_node;
-        collapse(next_node);
-        next_node = propagate(next_node);
+    DGraphNode* step_wfc(DGraphNode* node) override {
+        DGraphNode* solved_node = node ? node : next_node;
+        collapse(solved_node);
+        next_node = propagate(solved_node);
         return solved_node;
     }
 
