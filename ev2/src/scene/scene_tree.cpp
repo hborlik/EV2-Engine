@@ -31,11 +31,13 @@ void SceneTree::update_pre_render() {
 }
 
 void SceneTree::change_scene(Ref<Node> p_scene) {
+    if (current_scene)
+        current_scene->node_propagate_exit_tree();
+
     current_scene = p_scene;
-    if (current_scene) {
-        current_scene->scene_tree = this;
-        current_scene->node_propagate_enter_tree();
-    }
+
+    if (current_scene)
+        current_scene->node_propagate_enter_tree(this);
 }
 
 } // namespace ev2

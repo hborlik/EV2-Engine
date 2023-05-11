@@ -73,15 +73,15 @@ void Node::node_propagate_ready() {
     }
 }
 
-void Node::node_propagate_enter_tree() {
-    if (!(parent && parent->scene_tree))
+void Node::node_propagate_enter_tree(SceneTree* scene_tree) {
+    if (!scene_tree) // use exit tree to set scene_tree null
         return;
-    
-    scene_tree = parent->scene_tree;
-    scene_tree->node_added(this);
+
+    this->scene_tree = scene_tree;
+    this->scene_tree->node_added(this);
 
     for (auto& c : children) {
-        c->node_propagate_enter_tree();
+        c->node_propagate_enter_tree(scene_tree);
     }
 }
 
@@ -131,7 +131,7 @@ int Node::add_as_child(Node* p_node) {
     parent = p_node;
 
     // first enter scene tree for bookkeeping
-    node_propagate_enter_tree();
+    node_propagate_enter_tree(p_node->scene_tree);
 
     // changing parent pointer invalidates transforms
     node_propagate_transform_changed(this);

@@ -202,7 +202,7 @@ private:
 
     void node_propagate_update(float dt);
     void node_propagate_ready();
-    void node_propagate_enter_tree();
+    void node_propagate_enter_tree(SceneTree* scene_tree);
     void node_propagate_exit_tree();
     void node_propagate_transform_changed(Node* p_origin);
     void node_propagate_pre_render();
