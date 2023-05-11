@@ -16,6 +16,7 @@
 namespace ev2 {
 
 namespace fs = std::filesystem;
+
 class Engine : public Singleton<Engine> {
 public:
 

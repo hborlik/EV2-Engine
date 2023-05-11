@@ -76,8 +76,12 @@ public:
 
     void set_radius(float r) noexcept {m_bounding_sphere.radius = r;}
 
+    bool is_finalized() const noexcept {return m_is_finalized;}
+    void set_finalized() noexcept {m_is_finalized = true;}
+
 private:
     Sphere m_bounding_sphere{};
+    bool m_is_finalized = false;
 };
 
 class SCWFCAttractorNode : public VisualInstance {

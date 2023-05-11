@@ -39,7 +39,7 @@ public:
      * 
      * @param patterns 
      */
-    void reset_domains(const std::vector<const wfc::Pattern*>& patterns) {
+    void reset_domains(const std::vector<int>& patterns) {
         for (int y = 0; y < height; ++y) {
             for(int x = 0; x < width; ++x) {
                 auto* n = at(x, y);
@@ -70,8 +70,8 @@ private:
         auto print_domain = [](const wfc::DGraphNode* n) -> std::string {
             std::stringstream dstr;
             dstr << "[";
-            for (const auto& v : n->domain)
-                dstr << v->pattern_class << ",";
+            for (const auto v : n->domain)
+                dstr << v << ",";
             dstr << "]";
             return dstr.str();
         };

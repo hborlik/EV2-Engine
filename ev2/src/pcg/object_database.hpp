@@ -9,6 +9,7 @@
 #ifndef EV2_PCG_OBJECT_DATABASE_HPP
 #define EV2_PCG_OBJECT_DATABASE_HPP
 
+#include <utility>
 #include "evpch.hpp"
 
 #include "wfc.hpp"
@@ -111,8 +112,17 @@ public:
         m_obj_data.emplace(std::make_pair(id, obj));
     }
 
-    auto get_patterns() {
+    auto get_patterns_iterator() {
         return std::make_pair(m_patterns.cbegin(), m_patterns.cend());
+    }
+
+    wfc::PatternMap make_pattern_map() const {
+        wfc::PatternMap pm{};
+        pm.reserve(m_patterns_for_class.size());
+        for (auto itr = m_patterns.begin(), end = m_patterns.end(); itr != end; ++itr) {
+            pm.insert(std::make_pair(itr->pattern_class, *itr));
+        }
+        return pm;
     }
 
     pattern_list_t::const_iterator pattern_erase(pattern_list_t::const_iterator itr) {

@@ -12,6 +12,7 @@
 #include <scene/node.hpp>
 #include <ui/ui.hpp>
 
+#if 0
 namespace ev2::pcg {
 
 class ObjectMetadataDB;
@@ -39,5 +40,6 @@ public:
 };
 
 }
+#endif
 
 #endif // EV2_PROCEDURAL_GRID_HPP

@@ -13,7 +13,13 @@ namespace ev2 {
 
 class ReferenceCountedBase {
 public:
+    ReferenceCountedBase() = default;
     virtual ~ReferenceCountedBase() = default;
+
+    ReferenceCountedBase(const ReferenceCountedBase&) = delete;
+    
+    ReferenceCountedBase operator=(const ReferenceCountedBase& o) = delete;
+    ReferenceCountedBase operator=(ReferenceCountedBase&& o) = delete;
 
     uint32_t count = 0;
 
@@ -176,16 +182,10 @@ public:
     ReferenceCounted() = default;
     virtual ~ReferenceCounted() = default;
 
-    ReferenceCounted(const ReferenceCounted&) = delete;
-    
-    ReferenceCounted<T> operator=(const ReferenceCounted<T>& o) = delete;
-    ReferenceCounted<T> operator=(ReferenceCounted<T>&& o) = delete;
-
-
     Ref<T> get_ref() noexcept {return Ref<T>{this};}
 
     template<typename U, typename = std::enable_if_t<std::is_base_of_v<T, U>>>
-    Ref<U> get_ref() noexcept {return Ref<T>{this}.template ref_cast<U>();}
+    Ref<U> get_ref() noexcept {return get_ref().template ref_cast<U>();}
 
     uint32_t get_ref_count() const noexcept {return count;}
 

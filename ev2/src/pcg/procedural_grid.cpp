@@ -9,6 +9,8 @@
 #include "pcg/wfc.hpp"
 #include "ui/imgui.hpp"
 
+#if 0
+
 namespace fs = std::filesystem;
 
 namespace ev2::pcg {
@@ -35,7 +37,7 @@ void ProceduralGrid::generate(int n) {
 
     std::vector<const wfc::Pattern*> patterns{&PA, &PB};
 
-    m_data->grid.reset_domains(patterns);
+    m_data->grid.reset_domains({PA.pattern_class, PB.pattern_class});
 
     m_data->solver.set_next_node(m_data->grid.at(0, 0));
 
@@ -84,3 +86,5 @@ void ProceduralGridEditor::show_editor(Node* node) {
 }
 
 }
+
+#endif

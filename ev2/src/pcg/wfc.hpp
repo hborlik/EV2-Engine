@@ -7,6 +7,9 @@
 #ifndef WFC_H
 #define WFC_H
 
+#include <algorithm>
+#include <initializer_list>
+#include <utility>
 #include "evpch.hpp"
 
 namespace wfc {
@@ -88,19 +91,9 @@ class DGraphNode : public GraphNode {
 public:
     DGraphNode(const std::string& identifier, int node_id) : GraphNode{identifier, node_id} {}
 
-    float entropy() const;
-
-    void set_value(const Pattern* p) noexcept;
-
-    /**
-     * @brief weighted pick of value in node domain
-     * 
-     * @param gen 
-     * @return const Pattern* 
-     */
-    const Pattern* weighted_pick(std::mt19937* gen) const;
+    void set_value(int v) noexcept;
     
-    std::vector<const Pattern*> domain{};      // valid patterns for this node
+    std::vector<int> domain{};      // valid patterns for this node
 };
 
 template<typename T,
@@ -699,6 +692,17 @@ class Pattern {
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 
+using PatternMap = std::unordered_multimap<int, Pattern>;
+
+inline PatternMap make_pattern_map(std::initializer_list<Pattern> patterns) {
+    PatternMap pm{};
+    pm.reserve(patterns.size());
+    for (auto itr = patterns.begin(), end = patterns.end(); itr != end; ++itr) {
+        pm.insert(std::make_pair(itr->pattern_class, *itr));
+    }
+    return pm;
+}
+
 template<typename T, typename = std::enable_if_t<std::is_base_of_v<DGraphNode, T>>>
 class IWFCSolver {
 public:
@@ -714,6 +718,7 @@ public:
     virtual bool observe(T* node) = 0;
     virtual void collapse(T* node) = 0;
 
+    virtual float node_entropy(const T* node) const = 0;
     virtual void set_entropy_func(const entropy_callback_t& callback) = 0;
 };
 
@@ -725,8 +730,9 @@ public:
  */
 class WFCSolver : public IWFCSolver<DGraphNode> {
 public:
-
-    WFCSolver(Graph<DGraphNode>* graph, std::mt19937& gen) : graph{graph}, gen{gen} {}
+    WFCSolver(Graph<DGraphNode>* graph, PatternMap patterns,
+            std::mt19937& gen)
+        : graph{graph}, gen{gen}, m_patterns{std::move(patterns)} {}
 
     DGraphNode* step_wfc(DGraphNode* node) override {
         DGraphNode* solved_node = node ? node : next_node;
@@ -736,6 +742,10 @@ public:
     }
 
     bool can_continue() const noexcept override {return next_node != nullptr;}
+
+    auto get_patterns(int class_value) const {
+        return m_patterns.equal_range(class_value);
+    }
 
     /**
      * @brief Propagate the wave function collapse algorithm
@@ -767,7 +777,7 @@ public:
                 }
             }
             
-            if (float en = entropy_func ? entropy_func(node, n) : n->entropy(); 
+            if (float en = entropy_func ? entropy_func(node, n) : node_entropy(n);
                 n != node && 
                 (!min_e || en < entropy)) {
                 
@@ -787,11 +797,18 @@ public:
         assert(node != nullptr);
         bool changed = false;
         decltype(node->domain) new_domain{};
-        for (auto& p : node->domain) {
-            if (p->valid(graph->adjacent_nodes(node)))
-                new_domain.push_back(p);
-            else
-                changed = true;
+        for (auto value : node->domain) {
+            // for every pattern for this class id, check if it has a valid neighborhood
+            // for each valid pattern id, push that class id (only once) to the new domain
+            bool value_kept = false;
+            for (auto [itr, end] = get_patterns(value); itr != end; ++itr) {
+                if (itr->second.valid(graph->adjacent_nodes(node))) {
+                    new_domain.push_back(value);
+                    value_kept = true; // a pattern for this class id was still valid
+                    break; // only add one of this value
+                }
+            }
+            changed |= !value_kept; // if the class id was not kept, set changed flag
         }
         node->domain = new_domain;
         return changed;
@@ -813,7 +830,7 @@ public:
             return;
         } else {
             // weighted random selection of available domain values
-            node->set_value(node->weighted_pick(&gen));
+            node->set_value(weighted_pick(node));
         }
     }
 
@@ -825,11 +842,39 @@ public:
         entropy_func = callback;
     }
 
+    float node_entropy(const DGraphNode* node) const override {
+        float sum = 0;
+        for (auto value : node->domain) {
+            for (auto [itr, end] = get_patterns(value); itr != end; ++itr)
+                sum += itr->second.weight;
+        }
+        return sum;
+    }
+
+    /**
+     * @brief weighted pick of value in node domain
+     * 
+     * @param gen 
+     * @return int value picked
+     */
+    int weighted_pick(DGraphNode* node) const {
+        std::vector<float> weights(node->domain.size());
+        std::transform(node->domain.begin(), node->domain.end(), weights.begin(), [this](int value) -> auto {
+            auto [itr, end] = get_patterns(value);
+            float total_class_weight = 0.f;
+            std::for_each(itr, end, [&total_class_weight](auto& p) -> void {total_class_weight += p.second.weight;});
+            return total_class_weight;
+        });
+        std::discrete_distribution<int> dist(weights.begin(), weights.end());
+        return node->domain.at(dist(gen));
+    }
+
 private:
     Graph<DGraphNode>* graph = nullptr;
     DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
     std::mt19937& gen;
+    PatternMap m_patterns{};
 };
 
 } // namespace pcg

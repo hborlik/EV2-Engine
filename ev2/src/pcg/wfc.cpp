@@ -37,26 +37,8 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
     return max_flow;
 }
 
-float DGraphNode::entropy() const {
-    float sum = 0;
-    for (auto& p : domain) {
-        sum += p->weight;
-    }
-    return sum;
-}
-
-void DGraphNode::set_value(const Pattern* p) noexcept {
-    assert(p);
-    domain = {p};
-}
-
-const Pattern* DGraphNode::weighted_pick(std::mt19937* gen) const {
-    std::vector<float> weights(domain.size());
-    std::transform(domain.begin(), domain.end(), weights.begin(), [](const Pattern* d) -> auto {
-        return d->weight;
-    });
-    std::discrete_distribution<int> dist(weights.begin(), weights.end());
-    return domain.at(dist(*gen));
+void DGraphNode::set_value(int v) noexcept {
+    domain = {v};
 }
 
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
@@ -106,11 +88,11 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     for (const auto& node : neighborhood) {
         auto domain_node = std::make_unique<GraphNode>(node->identifier, ++id);
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
-        for (const auto& val : node->domain) {
+        for (auto val : node->domain) {
             neigh_values.emplace_back(ValueAndNode{
-                .v = val->pattern_class,
+                .v = val,
                 .p = domain_node.get()
-                });
+            });
         }
 
         // save reference for cleanup

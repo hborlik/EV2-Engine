@@ -240,6 +240,8 @@ void Editor::show_node_editor_widget(Node* node) {
             ImGui::Text("Node type: %s", util::name_demangle(typeid(*node).name()).c_str());
             std::string uuid_text = node->uuid;
             ImGui::TextWrapped("UUID: %s", uuid_text.c_str());
+            ImGui::Text("In tree: %d", node->is_inside_tree());
+            ImGui::Text("Is destroyed %d", node->is_destroyed());
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

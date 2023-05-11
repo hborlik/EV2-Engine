@@ -33,17 +33,17 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
     auto* obj_db = m_scwfc_editor->get_object_db();
     if (n && obj_db) {
         ImGui::Text("Domain");
-        auto p_itr = n->domain.begin();
-        while (p_itr != n->domain.end()) {
-            auto& p = **p_itr;
-            const std::string pattern_name = obj_db->get_class_name(p.pattern_class);
-            // need to push id to differentiate between different selections
-            ImGui::PushID(&p);
-            ImGui::Text("%s", pattern_name.c_str());
-            ImGui::PopID();
+        // auto p_itr = n->domain.begin();
+        // while (p_itr != n->domain.end()) {
+        //     auto& p = **p_itr;
+        //     const std::string pattern_name = obj_db->get_class_name(p.pattern_class);
+        //     // need to push id to differentiate between different selections
+        //     ImGui::PushID(&p);
+        //     ImGui::Text("%s", pattern_name.c_str());
+        //     ImGui::PopID();
 
-            ++p_itr;
-        }
+        //     ++p_itr;
+        // }
     }
 }
 
@@ -149,7 +149,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
     if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
     {
-        auto [p_itr, p_end] = m_obj_db->get_patterns();
+        auto [p_itr, p_end] = m_obj_db->get_patterns_iterator();
         while (p_itr != p_end) {
             auto& p = *p_itr;
             const std::string pattern_name = m_obj_db->get_class_name(p.pattern_class);

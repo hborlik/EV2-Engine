@@ -20,7 +20,7 @@ namespace ev2::pcg {
 class SCWFCSolver {
 public:
     SCWFCSolver(SCWFC& scwfc_node, 
-                std::shared_ptr<ObjectMetadataDB> obj_db, 
+                std::shared_ptr<ObjectMetadataDB> obj_db,
                 std::random_device& rd,
                 std::shared_ptr<renderer::Drawable> unsolved_drawable);
 
@@ -28,11 +28,13 @@ public:
 
     void wfc_solve(int steps);
 
-    void node_check_and_update(wfc::DGraphNode* node);
+    void node_check_and_update(SCWFCGraphNode* s_node);
 
     bool can_continue() const noexcept;
 
     void set_seed_node(Ref<SCWFCGraphNode> node);
+
+    std::shared_ptr<ObjectMetadataDB> database() const noexcept {return obj_db;}
 
 private:
     SCWFC& scwfc_node;
