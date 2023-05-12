@@ -67,6 +67,19 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
             }
             ImGui::Indent(-10);
         }
+
+        // draw some lines to show adjacent nodes
+        ImDrawList* background = ImGui::GetBackgroundDrawList();
+        if (auto parent_node = node->get_parent().ref_cast<SCWFC>()) {
+            for (const auto adjacent : parent_node->get_graph()->adjacent_nodes(n)) {
+                SCWFCGraphNode* s_adjacent = dynamic_cast<SCWFCGraphNode*>(adjacent);
+                
+                glm::mat4 mat = m_editor->current_camera()->get_projection() * m_editor->current_camera()->get_view();
+                glm::vec2 p0 = m_editor->to_screen_point(mat, node->get_world_position());
+                glm::vec2 p1 = m_editor->to_screen_point(mat, s_adjacent->get_world_position());
+                background->AddLine(ImVec2{p0.x, p0.y}, ImVec2{p1.x, p1.y}, IM_COL32(0x40, 0x40, 0x40, 0xFF), 3.f);
+            }
+        }
     }
 }
 

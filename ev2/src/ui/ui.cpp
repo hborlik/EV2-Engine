@@ -1,5 +1,6 @@
 #include "ui/ui.hpp"
 
+#include "glm/fwd.hpp"
 #include "ui/imgui.hpp"
 #include "ui/imgui_internal.hpp"
 #include "renderer/camera.hpp"
@@ -76,6 +77,8 @@ void show_settings_window(bool* p_open) {
 }
 
 void Editor::show_editor(Node* scene, const Camera* camera) {
+
+    m_current_camera = camera;
 
     if (m_scene_editor_open)    show_scene_explorer(scene, &m_scene_editor_open, camera);
 
@@ -237,6 +240,8 @@ void Editor::show_node_editor_widget(Node* node) {
         }
         if (ImGui::BeginTabItem("Details"))
         {
+            glm::vec3 wpos = node->get_world_position();
+            ImGui::InputFloat3("World position", glm::value_ptr(wpos));
             ImGui::Text("Node type: %s", util::name_demangle(typeid(*node).name()).c_str());
             std::string uuid_text = node->uuid;
             ImGui::TextWrapped("UUID: %s", uuid_text.c_str());
@@ -271,6 +276,23 @@ std::shared_ptr<EditorTool> Editor::get_editor_tool(std::string_view name) {
         tool = itr->second;
     }
     return tool;
+}
+
+glm::vec2 Editor::to_screen_point(const glm::mat4& matMPV, const glm::vec3& p) {
+    ImGuiIO& io = ImGui::GetIO();
+    // ImVec2 position = ImVec2(context.mX, context.mY);
+    ImVec2 size = ImVec2(io.DisplaySize.x, io.DisplaySize.y);
+
+    glm::vec4 trans = matMPV * glm::vec4{p, 1.f};
+    trans *= 0.5f / trans.w;
+    trans += glm::vec4{0.5f, 0.5f, 0, 0};
+    trans.y = 1.f - trans.y;
+    trans.x *= size.x;
+    trans.y *= size.y;
+    // trans.x += position.x;
+    // trans.y += position.y;
+    return {trans.x, trans.y};
+
 }
 
 void Editor::show_scene_tree_widget(int id, Node* node) {

@@ -62,6 +62,10 @@ public:
     void add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool);
     std::shared_ptr<EditorTool> get_editor_tool(std::string_view name);
 
+    glm::vec2 to_screen_point(const glm::mat4& matMPV, const glm::vec3& p);
+
+    const Camera* current_camera() const {return m_current_camera;}
+
 private:
     void show_scene_tree_widget(int id, Node* node);
     void show_transform_editor(Node* node);
@@ -70,6 +74,7 @@ private:
 
 private:
     Ref<Node> m_selected_node;
+    const Camera* m_current_camera;
 
     bool m_scene_editor_open = false;
     bool m_show_settings = false;
