@@ -28,18 +28,21 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
     
     const float radius = 2.f;
     const float n_radius = radius * 4.f;
-    Ref<SCWFCGraphNode> nnode{};
+    std::vector<Ref<SCWFCGraphNode>> nnodes{};
     for (int i = 0; i < n; ++i) {
-        glm::vec3 offset = glm::vec3{0};
+        std::vector<glm::vec3> offsets{glm::vec3{0}};
 
         // set of required neighbor class ids for the propagating node
         // will be set of all possible patterns when node is null
-        std::unordered_set<int> valid_neighbors{};
+        std::unordered_set<int> new_domain{};
 
         // if spawning on an existing node
         if (node) {
             if (node->domain.size() < 1) // node should not have an empty domain
                 return {};
+            
+            offsets.clear();
+
             // since we are propagating from an existing node, spawn a
             // node that contains set of valid neighbors for that existing
             // node.
@@ -48,7 +51,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                 for (auto [itr, end] = wfc_solver->get_patterns(value); itr != end; ++itr) {
                     auto [id, p] = *itr;
                     // add all required classes
-                    valid_neighbors.insert(p.required_classes.begin(), p.required_classes.end());
+                    new_domain.insert(p.required_classes.begin(), p.required_classes.end());
                 }
             }
 
@@ -58,27 +61,29 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
             auto [obj_p, obj_e] = obj_db->objs_for_id(pattern);
             const auto& [id, obj] = *select_randomly(obj_p, obj_e, m_mt);
 
-            const OBB& obb = *select_randomly(obj.propagation_patterns.begin(), obj.propagation_patterns.end(), m_mt);
+            for (const auto& obb : obj.propagation_patterns) {
+                // values within 3 standard deviations account for 99.7% of samples
+                std::normal_distribution<float> dist_x{0, obb.half_extents.x / 3};
+                std::normal_distribution<float> dist_y{0, obb.half_extents.y / 3};
+                std::normal_distribution<float> dist_z{0, obb.half_extents.z / 3};
 
-            // values within 3 standard deviations account for 99.7% of samples
-            std::normal_distribution<float> dist_x{obb.center.x, obb.half_extents.x / 3};
-            std::normal_distribution<float> dist_y{obb.center.y, obb.half_extents.y / 3};
-            std::normal_distribution<float> dist_z{obb.center.z, obb.half_extents.z / 3};
+                glm::vec3 pos_in_obb {
+                    dist_x(m_mt),
+                    dist_y(m_mt),
+                    dist_z(m_mt)
+                };
 
-            glm::vec3 pos_in_obb {
-                dist_x(m_mt),
-                dist_y(m_mt),
-                dist_z(m_mt)
-            };
+                // try to place sphere center in the OBB
+                Sphere sph({}, n_radius);
+                sph.center = node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 1.f};
+                
+                glm::vec3 offset = sph.center;
+                offset += mass * scwfc_node.sphere_repulsion(sph);
 
-            // try to place sphere center in the OBB
-            Sphere sph({}, n_radius);
-            sph.center = node->get_linear_transform() * glm::vec4{pos_in_obb, 1.f};
-            
-            offset = sph.center;
-            offset += mass * scwfc_node.sphere_repulsion(sph);
+                offset.y = 0; // TODO placement rules
 
-            offset.y = 0; // TODO placement rules
+                offsets.push_back(offset);
+            }
 
         } else { // populate domain with all available patterns
             auto [p_itr, p_end] = obj_db->get_patterns_iterator();
@@ -86,22 +91,27 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
             std::transform(p_itr, p_end, dest.begin(),
                 [](auto &elem){ return elem.pattern_class; }
             );
-            valid_neighbors = {dest.begin(), dest.end()};
+            new_domain = {dest.begin(), dest.end()};
         }
 
-        nnode = scwfc_node.create_child_node<SCWFCGraphNode>("SGN " + std::to_string(scwfc_node.get_n_children()));
-        // populate domain of new node
-        nnode->domain = {valid_neighbors.begin(), valid_neighbors.end()};
-        nnode->set_position(offset);
+        for (auto& offset : offsets) {
+            auto nnode = scwfc_node.create_child_node<SCWFCGraphNode>("SGN " + std::to_string(scwfc_node.get_n_children()));
+            // populate domain of new node
+            nnode->domain = {new_domain.begin(), new_domain.end()};
+            nnode->set_position(offset);
+        
+            // attach new node to all nearby neighbors
+            // scwfc_node.update_all_adjacencies(nnode, n_radius);
 
-        // attach new node to all nearby neighbors
-        scwfc_node.update_all_adjacencies(nnode, n_radius);
+            // update node state, may be destroyed
+            node_check_and_update(nnode.get());
+            
+            if (!nnode->is_destroyed())
+                nnodes.push_back(nnode);
+        }
 
-        // update node state, may be destroyed
-        node_check_and_update(nnode.get());
-
-        if (i % brf == 0 && !nnode->is_destroyed())
-            node = nnode.get();
+        if (i % brf == 0)
+            node = select_randomly(nnodes.begin(), nnodes.end(), m_mt)->get();
     }
     return node->get_ref<SCWFCGraphNode>();
 }
@@ -124,14 +134,22 @@ void SCWFCSolver::wfc_solve(int steps) {
         auto& n = m_boundary.front();
         m_boundary.pop();
 
+        // solve node
         wfc_solver->step_wfc((wfc::DGraphNode*)n.get());
+        
         // add all adjacent nodes to the solver boundary
         auto adjacent = scwfc_node.get_graph()->adjacent_nodes(n.get());
-        std::for_each(adjacent.begin(), adjacent.end(), [this](auto* dgn) -> void {
-            auto* s_node = dynamic_cast<SCWFCGraphNode*>(dgn);
-            if (!s_node->is_finalized())
-                m_boundary.push(s_node->get_ref<SCWFCGraphNode>());
-        });
+        std::for_each(
+            adjacent.begin(), adjacent.end(), [this](auto* dgn) -> void {
+
+                auto s_node = Ref{dynamic_cast<SCWFCGraphNode*>(dgn)};
+                if (!s_node->is_finalized() &&
+                    m_discovered.find(s_node) == m_discovered.end()) {
+                    
+                    m_discovered.insert(s_node);
+                    m_boundary.push(s_node);
+                }
+            });
 
         node_check_and_update(n.get());
     }
@@ -184,10 +202,13 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
         const auto& aabb = model->bounding_box;
         const float scale = extent / glm::length(aabb.diagonal()); // scale uniformly
 
+        auto aabb_scaled = aabb.scale(glm::vec3{scale});
+
         s_node->set_model(model);
         s_node->set_scale(glm::vec3{scale});
         s_node->set_radius(aabb.min_diagonal() * scale / 2.f);
         s_node->rotate(glm::vec3{0, rotation_y, 0});
+        s_node->set_position(s_node->get_position() * glm::vec3{1, 0, 1} + glm::vec3{0, -aabb_scaled.pMin.y, 0});
         s_node->set_finalized();
 
         if (scwfc_node.intersects_any_solved_neighbor(Ref{ s_node })) {
@@ -210,8 +231,6 @@ bool SCWFCSolver::can_continue() const noexcept {
 }
 
 void SCWFCSolver::set_seed_node(Ref<SCWFCGraphNode> node) {
-    decltype(m_boundary) empty;
-    std::swap( m_boundary, empty );
     m_boundary.push(node);
 }
 

@@ -9,6 +9,7 @@
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
+#include <unordered_set>
 #include "evpch.hpp"
 
 #include "pcg/wfc.hpp"
@@ -36,6 +37,10 @@ public:
 
     std::shared_ptr<ObjectMetadataDB> database() const noexcept {return obj_db;}
 
+    auto get_boundary_size() const noexcept {return m_boundary.size();}
+
+    auto get_discovered_size() const noexcept {return m_discovered.size();}
+
 private:
     SCWFC& scwfc_node;
     std::mt19937 m_mt;
@@ -44,6 +49,7 @@ private:
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
     std::queue<Ref<SCWFCGraphNode>> m_boundary{};
+    std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
 };
 
 } // namespace ev2::pcg

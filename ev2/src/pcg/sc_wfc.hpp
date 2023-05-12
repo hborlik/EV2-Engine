@@ -33,7 +33,7 @@ public:
 
     void on_child_added(Ref<Node> child, int index) override;
 
-    void update_all_adjacencies(Ref<SCWFCGraphNode>& n, float radius);
+    void update_all_adjacencies(Ref<SCWFCGraphNode> n, float radius);
 
     glm::vec3 sphere_repulsion(const Sphere& sph) const;
 
@@ -64,23 +64,33 @@ public:
         VisualInstance::on_init();
 
         m_bounding_sphere = Sphere{get_world_position(), 1.f};
+        m_neighborhood_r = m_bounding_sphere.radius * 4.f;
     }
 
     void on_transform_changed(Ref<ev2::Node> origin) override {
         VisualInstance::on_transform_changed(origin);
 
         m_bounding_sphere.center = get_world_position();
+
+        if (auto parent = get_parent().ref_cast<SCWFC>(); parent) {
+            parent->update_all_adjacencies(this->get_ref<SCWFCGraphNode>(), m_neighborhood_r);
+        }
     }
 
     const Sphere& get_bounding_sphere() const noexcept {return m_bounding_sphere;}
 
     void set_radius(float r) noexcept {m_bounding_sphere.radius = r;}
+    void set_neighborhood_radius(float r) noexcept {m_neighborhood_r = r;}
+
+    float get_radius() noexcept {return m_bounding_sphere.radius;}
+    float get_neighborhood_radius() noexcept {return m_neighborhood_r;}
 
     bool is_finalized() const noexcept {return m_is_finalized;}
     void set_finalized() noexcept {m_is_finalized = true;}
 
 private:
     Sphere m_bounding_sphere{};
+    float m_neighborhood_r{};
     bool m_is_finalized = false;
 };
 

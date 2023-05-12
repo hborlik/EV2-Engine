@@ -32,18 +32,41 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
     SCWFCGraphNode* n = dynamic_cast<SCWFCGraphNode*>(node);
     auto* obj_db = m_scwfc_editor->get_object_db();
     if (n && obj_db) {
-        ImGui::Text("Domain");
-        // auto p_itr = n->domain.begin();
-        // while (p_itr != n->domain.end()) {
-        //     auto& p = **p_itr;
-        //     const std::string pattern_name = obj_db->get_class_name(p.pattern_class);
-        //     // need to push id to differentiate between different selections
-        //     ImGui::PushID(&p);
-        //     ImGui::Text("%s", pattern_name.c_str());
-        //     ImGui::PopID();
+        ImGui::Text("Radius: %f", n->get_radius());
+        ImGui::Separator();
 
-        //     ++p_itr;
-        // }
+        ImGui::Text("Neighborhood Radius: %f", n->get_neighborhood_radius());
+        ImGui::Separator();
+
+        ImVec4 color = n->is_finalized() ? ImVec4(255, 0, 0, 1) : ImVec4(0, 255, 0, 1);
+        constexpr const char* finalized_text[]{"Not ", ""};
+        ImGui::TextColored(color, "%sFinalized", finalized_text[n->is_finalized()]);
+
+        ImGui::Text("Domain:");
+        ImGui::Indent(10);
+        for (int p : n->domain) {
+            const std::string pattern_name = obj_db->get_class_name(p);
+            // need to push id to differentiate between different selections
+            ImGui::PushID(&p);
+            ImGui::Text("%d: \"%s\"", p, pattern_name.c_str());
+            ImGui::PopID();
+        }
+        ImGui::Indent(-10);
+        ImGui::Separator();
+
+        ImGui::Text("Adjacent Nodes");
+        if (auto s_node = node->get_parent().ref_cast<SCWFC>()) {
+            ImGui::Indent(10);
+            for (const auto adjacent : s_node->get_graph()->adjacent_nodes(n)) {
+                SCWFCGraphNode* s_adjacent = dynamic_cast<SCWFCGraphNode*>(adjacent);
+                // need to push id to differentiate between different selections
+                ImGui::PushID(adjacent);
+                if (ImGui::Selectable(s_adjacent->name.c_str()))
+                    m_editor->set_selected_node(s_adjacent);
+                ImGui::PopID();
+            }
+            ImGui::Indent(-10);
+        }
     }
 }
 
@@ -114,7 +137,6 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::InputInt("Steps", &steps);
         ImGui::SameLine();
         auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
-        // ImGui::BeginDisabled(m_internal->solver->next_node == nullptr);
         ImGui::BeginDisabled(m_scwfc_solver == nullptr || (selected_node == nullptr && !m_scwfc_solver->can_continue()));
         if (ImGui::Button("Solve")) {
             if (!m_scwfc_solver->can_continue())
@@ -122,6 +144,10 @@ void SCWFCEditor::show_editor_tool() {
             m_scwfc_solver->wfc_solve(steps);
         }
         ImGui::EndDisabled();
+        if (m_scwfc_solver) {
+            ImGui::Text("%lu boundary nodes", m_scwfc_solver->get_boundary_size());
+            ImGui::Text("%lu discovered nodes", m_scwfc_solver->get_discovered_size());
+        }
     }
     ImGui::EndDisabled();
 
@@ -588,6 +614,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         ImGuizmo::DrawGrid(glm::value_ptr(view), glm::value_ptr(projection),
                            glm::value_ptr(grid_mat), 10.f);
 
+        const glm::vec3 cube_half_extents{.5f};
         std::vector<glm::mat4> cube_matrix_vec{};
         if (model_valid) { // display cube for the model
             cube_matrix_vec.push_back(model_cube_mat);
@@ -597,7 +624,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
              obb_itr != end; ++obb_itr) {
                 OBB& obb = *obb_itr;
 
-                glm::mat4 model = obb.make_transform(glm::vec3{1.f});
+                glm::mat4 model = obb.make_transform(cube_half_extents);
                 cube_matrix_vec.push_back(model);
              }
 
@@ -609,12 +636,12 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         if (selected_propagation_pattern) {
             OBB& obb = *selected_propagation_pattern;
 
-            glm::mat4 model = obb.make_transform(glm::vec3{1.f});
+            glm::mat4 model = obb.make_transform(cube_half_extents);
             // glm::mat4 cube_mm = model * glm::scale(glm::mat4{1}, obb.half_extents * 2.f);
             std::array<float, 6> obb_bounds; // pMin (3), pMax (3)
             for (int i = 0; i < 3; ++i) {
-                obb_bounds[i]     = -.5;//-obb.half_extents[i];
-                obb_bounds[i+3]   = .5;//obb.half_extents[i];
+                obb_bounds[i]     = -cube_half_extents[i];//-obb.half_extents[i];
+                obb_bounds[i+3]   = cube_half_extents[i];//obb.half_extents[i];
             }
 
             ImGuizmo::Manipulate(glm::value_ptr(view),
@@ -623,7 +650,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
                                  glm::value_ptr(model), NULL, NULL, obb_bounds.data(), NULL);
             
             if (ImGuizmo::IsUsing())
-                obb = OBB{model, glm::vec3{1}};
+                obb = OBB{model, cube_half_extents};
         }
 
 
