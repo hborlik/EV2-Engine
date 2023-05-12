@@ -1,8 +1,9 @@
-#include <tree.h>
-#include <game.h>
+#include "tree.h"
 
-#include <skinning.hpp>
 #include <utility>
+
+#include "game.h"
+#include "skinning.hpp"
 #include "glm/fwd.hpp"
 
 /**

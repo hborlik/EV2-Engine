@@ -1,16 +1,15 @@
-#include <debug.h>
-#include <renderer/renderer.hpp>
-#include <resource.hpp>
-#include <physics.hpp>
-
-#include <ui/imgui.hpp>
-#include <ui/ui.hpp>
+#include "debug.h"
+#include "renderer/renderer.hpp"
+#include "resource.hpp"
+#include "physics.hpp"
+#include "ui/imgui.hpp"
+#include "ui/ui.hpp"
 
 void show_settings_editor_window(GameState* game) {
     ImGui::Begin("Settings");
     ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
     ImGui::Text("Time %.3f", game->time_day);
-    ImGui::DragFloat("Time Speed", &(game->time_speed), 0.01f, 0.05f, 5.0f, "%.3f", 1.0f);
+    ImGui::DragFloat("Time Speed", &(game->time_speed), 0.01f, 0.00f, 5.0f, "%.3f", 1.0f);
     ImGui::End();
 }
 

@@ -1,8 +1,8 @@
-#include <player.h>
+#include "player.h"
 
-#include <game.h>
-#include <tree.h>
-#include <debug.h>
+#include "game.h"
+#include "tree.h"
+#include "debug.h"
 
 void Player::on_process(float dt) {
     ev2::RigidBody::on_process(dt);

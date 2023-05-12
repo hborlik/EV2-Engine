@@ -7,14 +7,15 @@
 #ifndef PLANT_GAME_H
 #define PLANT_GAME_H
 
-#include <scene/node.hpp>
-#include <scene/scene_tree.hpp>
-#include <application.hpp>
-#include <resource.hpp>
-#include <physics.hpp>
-#include <player.h>
-#include <tree.h>
-#include <miniaudio.h>
+#include "scene/node.hpp"
+#include "scene/scene_tree.hpp"
+#include "application.hpp"
+#include "resource.hpp"
+#include "physics.hpp"
+#include "player.h"
+#include "tree.h"
+
+#include "miniaudio.h"
 
 using namespace ev2;
 
@@ -50,7 +51,7 @@ public:
 
     float time_accumulator = 0.0f;
     float time_day = 0.0f;
-    float time_speed = .3f;
+    float time_speed = .05f;
     const float DayLength = 60.0f;
 
     void update(float dt);

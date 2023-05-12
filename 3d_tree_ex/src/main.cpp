@@ -1,34 +1,33 @@
 
 #include <iostream>
 #include <filesystem>
-#include "scene/node.hpp"
 
-#include <tests.h>
-#include <tree.h>
 //#define DR_MP3_IMPLEMENTATION
 //#include "../extras/dr_mp3.h"   /* Enables MP3 decoding. */
 
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h> 
 
-#include <ev.hpp>
-#include <renderer/ev_gl.hpp>
-#include <window.hpp>
-#include <renderer/shader.hpp>
-#include <application.hpp>
-#include <renderer/camera.hpp>
-#include <window.hpp>
-#include <renderer/mesh.hpp>
-#include <resource.hpp>
-#include <physics.hpp>
-#include <scene/visual_nodes.hpp>
-#include <pcg/procedural_grid.hpp>
-#include <pcg/sc_wfc.hpp>
+#include "scene/node.hpp"
+#include "ev.hpp"
+#include "renderer/ev_gl.hpp"
+#include "window.hpp"
+#include "renderer/shader.hpp"
+#include "application.hpp"
+#include "renderer/camera.hpp"
+#include "window.hpp"
+#include "renderer/mesh.hpp"
+#include "resource.hpp"
+#include "physics.hpp"
+#include "scene/visual_nodes.hpp"
+#include "pcg/procedural_grid.hpp"
+#include "pcg/sc_wfc.hpp"
 #include "pcg/sc_wfc_editor.hpp"
-#include <debug.h>
-#include <game.h>
+#include "debug.h"
+#include "game.h"
+#include "tree.h"
 
-#include <ui/imgui.hpp>
+#include "ui/imgui.hpp"
 
 namespace fs = std::filesystem;
 ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -73,8 +72,8 @@ public:
         return cam_orbital;
     }
 
-    void on_render_ui() override {
-        Application::on_render_ui();
+    void on_draw_imgui() override {
+        Application::on_draw_imgui();
 
         if (show_debug) {
             show_settings_editor_window(game.get());
