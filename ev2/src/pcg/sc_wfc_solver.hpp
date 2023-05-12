@@ -10,6 +10,7 @@
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
 #include <unordered_set>
+#include "events/notifier.hpp"
 #include "evpch.hpp"
 
 #include "pcg/wfc.hpp"
@@ -40,6 +41,16 @@ public:
     auto get_boundary_size() const noexcept {return m_boundary.size();}
 
     auto get_discovered_size() const noexcept {return m_discovered.size();}
+
+    void notify_node_added(SCWFCGraphNode* node) {}
+
+    void notify_node_removed(SCWFCGraphNode* node) {
+        m_discovered.erase(node->get_ref<SCWFCGraphNode>());
+    }
+
+public:
+    DelegateListener<SCWFCGraphNode*> node_removed_listener{};
+    DelegateListener<SCWFCGraphNode*> node_added_listener{};
 
 private:
     SCWFC& scwfc_node;

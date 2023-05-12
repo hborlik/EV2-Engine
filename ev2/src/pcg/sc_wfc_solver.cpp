@@ -12,14 +12,20 @@
 
 namespace ev2::pcg {
 
-SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node, 
-                std::shared_ptr<ObjectMetadataDB> obj_db, 
-                std::random_device& rd,
-                std::shared_ptr<renderer::Drawable> unsolved_drawable)
-    : scwfc_node{scwfc_node},
+SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node,
+                         std::shared_ptr<ObjectMetadataDB> obj_db,
+                         std::random_device& rd,
+                         std::shared_ptr<renderer::Drawable> unsolved_drawable)
+    : node_removed_listener{decltype(node_added_listener)::delegate_t::create<
+          SCWFCSolver, &SCWFCSolver::notify_node_removed>(this)},
+      node_added_listener{decltype(node_added_listener)::delegate_t::create<
+          SCWFCSolver, &SCWFCSolver::notify_node_added>(this)},
+          
+      scwfc_node{scwfc_node},
       m_mt{rd()},
       obj_db{obj_db},
-      wfc_solver{std::make_unique<wfc::WFCSolver>(scwfc_node.get_graph(), obj_db->make_pattern_map(), m_mt)},
+      wfc_solver{std::make_unique<wfc::WFCSolver>(
+          scwfc_node.get_graph(), obj_db->make_pattern_map(), m_mt)},
       unsolved_drawable{unsolved_drawable} {}
 
 Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass) {
@@ -136,7 +142,7 @@ void SCWFCSolver::wfc_solve(int steps) {
 
         // solve node
         wfc_solver->step_wfc((wfc::DGraphNode*)n.get());
-        
+
         // add all adjacent nodes to the solver boundary
         auto adjacent = scwfc_node.get_graph()->adjacent_nodes(n.get());
         std::for_each(

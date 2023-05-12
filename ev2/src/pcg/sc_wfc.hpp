@@ -11,6 +11,7 @@
 
 #include "evpch.hpp"
 
+#include "events/notifier.hpp"
 #include "scene/node.hpp"
 #include "scene/visual_nodes.hpp"
 #include "geometry.hpp"
@@ -25,6 +26,10 @@ class SCWFC : public Node {
 public:
     explicit SCWFC(std::string name);
 
+    /**
+     * @brief delete all children nodes and clear WFC graph data
+     * 
+     */
     void reset();
 
     void on_init() override;
@@ -49,6 +54,10 @@ public:
     bool intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n);
 
     wfc::SparseGraph<wfc::DGraphNode>* get_graph();
+
+public:
+    Notifier<SCWFCGraphNode*> child_node_removed{};
+    Notifier<SCWFCGraphNode*> child_node_added{};
 
 private:
     friend class SCWFCEditor;

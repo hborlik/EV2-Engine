@@ -936,8 +936,12 @@ void SCWFCEditor::on_selected_node(Node* node) {
         if (n) {
             m_scwfc_node = n;
 
-            if (m_obj_db)
+            if (m_obj_db) {
                 m_scwfc_solver = std::make_unique<SCWFCSolver>(*m_scwfc_node, m_obj_db, m_rd, m_unsolved_drawable);
+                // attach notification events scene nodes being removed
+                m_scwfc_solver->node_added_listener.subscribe(&m_scwfc_node->child_node_added);
+                m_scwfc_solver->node_removed_listener.subscribe(&m_scwfc_node->child_node_removed);
+            }
         }
     }
 }

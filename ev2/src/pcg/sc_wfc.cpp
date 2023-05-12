@@ -32,12 +32,14 @@ void SCWFC::on_child_removed(Ref<Node> child) {
     if (auto n = child.ref_cast<SCWFCGraphNode>()) {
         // remove node from graph
         m_data->graph.remove_node(static_cast<wfc::DGraphNode*>(n.get()));
+        child_node_removed.notify(n.get());
     }
 }
 
 void SCWFC::on_child_added(Ref<Node> child, int index) {
     if (auto n = child.ref_cast<SCWFCGraphNode>()) {
         // update_all_adjacencies(n);
+        child_node_added.notify(n.get());
     }
 }
 

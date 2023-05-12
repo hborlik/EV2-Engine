@@ -243,6 +243,10 @@ public:
         return true;
     }
 
+    AABB scale(const glm::vec3& scale) const noexcept {
+        return {pMin * scale, pMax * scale};
+    }
+
 private:
 
     friend AABB operator*(const glm::mat4& tr, const AABB& aabb) noexcept {
@@ -439,20 +443,33 @@ struct OBB {
             rotation = glm::normalize(rotation);
         }
 
-    OBB(const glm::mat4& tr, const glm::vec3& extents)
+    /**
+     * @brief Construct a new OBB object from a transfom matrix and extents
+     * 
+     * @param tr transform
+     * @param half_extents local extents
+     */
+    OBB(const glm::mat4& tr, const glm::vec3& half_extents)
         : center{},
           rotation{},
           half_extents{} {
                         glm::vec3 skew;
+                        glm::vec3 scale;
                         glm::vec4 perspective;
-                        glm::decompose(tr, half_extents, rotation, center,
+                        glm::decompose(tr, scale, rotation, center,
                                     skew, perspective);
                         rotation = glm::normalize(rotation);
-                        half_extents *= .5f * extents.x;
+                        this->half_extents = half_extents * scale;
                        }
 
-    glm::mat4 make_transform(const glm::vec3& extents) const {
-        glm::mat4 scale = glm::scale(glm::mat4{1}, 2.f * half_extents / extents);
+    glm::mat4 get_transform() const {
+        glm::mat4 tr{rotation};
+        tr[3] = glm::vec4{center, 1.f};
+        return tr;
+    }
+
+    glm::mat4 make_transform(const glm::vec3& model_half_extents) const {
+        glm::mat4 scale = glm::scale(glm::mat4{1}, half_extents / model_half_extents);
         glm::mat4 rot{rotation};
         glm::mat4 translate = glm::translate(glm::mat4{1}, center);
 

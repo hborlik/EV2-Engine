@@ -1,6 +1,10 @@
+#include <memory>
 #include <reference_counted.hpp>
 #include <util.hpp>
 #include <renderer/buffer.hpp>
+
+#include "events/notifier.hpp"
+#include "delegate.hpp"
 
 #include <iostream>
 
@@ -50,10 +54,61 @@ void no_copyable() {
     // ev2::renderer::Buffer cbuf{std::move(buf)};
 }
 
+class PrintListener : public ev2::Listener<const int&> {
+public:
+    void update(const int& message) override {
+        std::cout << "Got message " << message << std::endl;
+    }
+
+    void unsubscribe(const ev2::INotifier<const int&>* notifier) override {
+        ev2::Listener<const int&>::unsubscribe(notifier);
+        std::cout << "unsubscribed" << std::endl;
+    }
+};
+
+void test_events() {
+    auto intNotifier = std::make_shared<ev2::Notifier<const int&>>();
+
+    PrintListener listener{};
+    listener.subscribe(intNotifier.get());
+
+    intNotifier->notify(5);
+
+    intNotifier.reset();
+
+    std::cout << "End " << __FUNCTION__ << std::endl;
+}
+
+void test_delegate() {
+    delegate<int(int, int)> del{};
+
+    auto fn = [](int a, int b) -> int {
+        return a + b;
+    };
+
+    del = decltype(del)::create(fn);
+
+    std::cout << del(2, 3) << std::endl;
+
+    struct S {
+        int foo(int a, int b) {
+            return a + b;
+        }
+    } s;
+
+    del = decltype(del)::create<S, &S::foo>(&s);
+
+    std::cout << del(2, 3) << std::endl;
+}
+
 int main() {
     ref_test0();
 
     no_copyable();
+
+    test_events();
+
+    test_delegate();
 
     return 0;
 }
