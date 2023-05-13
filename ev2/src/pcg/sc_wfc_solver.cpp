@@ -104,19 +104,21 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
             auto nnode = scwfc_node.create_child_node<SCWFCGraphNode>("SGN " + std::to_string(scwfc_node.get_n_children()));
             // populate domain of new node
             nnode->domain = {new_domain.begin(), new_domain.end()};
+            float en = wfc_solver->node_entropy(nnode.get());
+            nnode->set_radius(radius);
             nnode->set_position(offset);
         
             // attach new node to all nearby neighbors
             // scwfc_node.update_all_adjacencies(nnode, n_radius);
 
-            // update node state, may be destroyed
+            // update visual node state, may be destroyed
             node_check_and_update(nnode.get());
             
             if (!nnode->is_destroyed())
                 nnodes.push_back(nnode);
         }
 
-        if (i % brf == 0)
+        if (!nnodes.empty() && i % brf == 0)
             node = select_randomly(nnodes.begin(), nnodes.end(), m_mt)->get();
     }
     return node->get_ref<SCWFCGraphNode>();

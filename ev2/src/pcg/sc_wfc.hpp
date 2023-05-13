@@ -53,6 +53,8 @@ public:
      */
     bool intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n);
 
+    bool intersects_any(const Sphere& n);
+
     wfc::SparseGraph<wfc::DGraphNode>* get_graph();
 
 public:

@@ -36,7 +36,7 @@ public:
     virtual void on_window_size_change(int32_t width, int32_t height);
     virtual void on_drop_file(std::string_view path);
 
-    virtual void on_render_ui();
+    virtual void on_draw_imgui();
 
     Ref<Node> get_current_scene() const noexcept {return current_scene;}
 

@@ -6,6 +6,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
+
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
@@ -32,21 +33,24 @@ public:
 
     void node_check_and_update(SCWFCGraphNode* s_node);
 
+    glm::vec3 weighted_average_size(SCWFCGraphNode* s_node);
+
+
     bool can_continue() const noexcept;
 
     void set_seed_node(Ref<SCWFCGraphNode> node);
 
     std::shared_ptr<ObjectMetadataDB> database() const noexcept {return obj_db;}
 
-    auto get_boundary_size() const noexcept {return m_boundary.size();}
-
-    auto get_discovered_size() const noexcept {return m_discovered.size();}
-
     void notify_node_added(SCWFCGraphNode* node) {}
 
     void notify_node_removed(SCWFCGraphNode* node) {
         m_discovered.erase(node->get_ref<SCWFCGraphNode>());
     }
+
+    auto get_boundary_size() const noexcept {return m_boundary.size();}
+
+    auto get_discovered_size() const noexcept {return m_discovered.size();}
 
 public:
     DelegateListener<SCWFCGraphNode*> node_removed_listener{};

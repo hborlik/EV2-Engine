@@ -90,6 +90,19 @@ bool SCWFC::intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n) {
     return false;
 }
 
+bool SCWFC::intersects_any(const Sphere& n) {
+    for (auto& c : get_children()) {
+        auto sc_node = c.ref_cast<SCWFCGraphNode>();
+        if (sc_node) { // is it solved and non empty
+            const Sphere& bounds = sc_node->get_bounding_sphere();
+            if (intersect(bounds, n)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 wfc::SparseGraph<wfc::DGraphNode>* SCWFC::get_graph() {
     return &m_data->graph;
 }

@@ -278,12 +278,12 @@ std::shared_ptr<EditorTool> Editor::get_editor_tool(std::string_view name) {
     return tool;
 }
 
-glm::vec2 Editor::to_screen_point(const glm::mat4& matMPV, const glm::vec3& p) {
+glm::vec2 Editor::to_screen_point(const glm::mat4& matMVP, const glm::vec3& p) {
     ImGuiIO& io = ImGui::GetIO();
     // ImVec2 position = ImVec2(context.mX, context.mY);
     ImVec2 size = ImVec2(io.DisplaySize.x, io.DisplaySize.y);
 
-    glm::vec4 trans = matMPV * glm::vec4{p, 1.f};
+    glm::vec4 trans = matMVP * glm::vec4{p, 1.f};
     trans *= 0.5f / trans.w;
     trans += glm::vec4{0.5f, 0.5f, 0, 0};
     trans.y = 1.f - trans.y;

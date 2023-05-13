@@ -62,7 +62,7 @@ public:
     void add_custom_editor_tool(std::shared_ptr<EditorTool> editor_tool);
     std::shared_ptr<EditorTool> get_editor_tool(std::string_view name);
 
-    glm::vec2 to_screen_point(const glm::mat4& matMPV, const glm::vec3& p);
+    glm::vec2 to_screen_point(const glm::mat4& matMVP, const glm::vec3& p);
 
     const Camera* current_camera() const {return m_current_camera;}
 

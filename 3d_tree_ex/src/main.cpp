@@ -61,6 +61,8 @@ public:
     } m_camera_mode = CAM_MODE_ORBIT;
 
     ev2::Ref<ev2::CameraNode> getCameraNode() {
+        if (!show_debug)
+            return game->cam_first_person;
         switch(m_camera_mode) {
             case CAM_MODE_FLY:
                 return cam_fly;
@@ -79,13 +81,13 @@ public:
             show_settings_editor_window(game.get());
         }
         if (game->selected_tree_1) {
-            ImGui::SetNextWindowSize(ImVec2(window_width/5, window_height/5));
-            ImGui::SetNextWindowPos(ImVec2(window_width - window_width/5, 0));
+            ImGui::SetNextWindowSize(ImVec2(window_width/5.f, window_height/5.f));
+            ImGui::SetNextWindowPos(ImVec2(window_width - window_width/5.f, 0));
             show_tree_window(game.get(), game->selected_tree_1);
         }
         if (game->selected_tree_2) {
-            ImGui::SetNextWindowSize(ImVec2(window_width/5, window_height/5));
-            ImGui::SetNextWindowPos(ImVec2(window_width - window_width/5, window_height/5));
+            ImGui::SetNextWindowSize(ImVec2(window_width/5.f, window_height/5.f));
+            ImGui::SetNextWindowPos(ImVec2(window_width - window_width/5.f, window_height/5.f));
             show_tree_window(game.get(), game->selected_tree_2);
         }
 
@@ -103,7 +105,7 @@ public:
         // get_current_scene()->create_child_node<ev2::pcg::ProceduralGrid>("WFC Grid");
 
         auto scwfc = get_current_scene()->create_child_node<ev2::pcg::SCWFC>("SCWFC");
-        scwfc->set_position({0, 0.8f, 0});
+        scwfc->set_position({0, 0.042f, 0}); // y offset to align with ground plane
 
         game = std::make_unique<GameState>(this);
 

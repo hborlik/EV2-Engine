@@ -26,7 +26,7 @@ void Application::imgui() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    on_render_ui();
+    on_draw_imgui();
 
     // Rendering
     ImGui::Render();
@@ -99,7 +99,7 @@ void Application::on_drop_file(std::string_view path) {
 
 }
 
-void Application::on_render_ui() {
+void Application::on_draw_imgui() {
     if (show_debug)
         scene_editor.show_editor(current_scene.get(), &current_camera->get_camera());
 }

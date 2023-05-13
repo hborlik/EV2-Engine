@@ -45,6 +45,7 @@ public:
     virtual void notify() = 0;
 };
 
+// Default implementations for Notifier and listener
 
 template<typename T>
 class Notifier : public INotifier<T> {
@@ -119,6 +120,13 @@ private:
     INotifier<T>* m_subscribed{};
 };
 
+/**
+ * @brief Listener designed to work with delegates. Calls delegate
+ *  function when notified.
+ * 
+ * @tparam T 
+ * @tparam _Fn 
+ */
 template<typename T, typename _Fn = void(T)>
 class DelegateListener : public Listener<T> {
 public:

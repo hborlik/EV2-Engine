@@ -38,7 +38,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
         ImGui::Text("Neighborhood Radius: %f", n->get_neighborhood_radius());
         ImGui::Separator();
 
-        ImVec4 color = n->is_finalized() ? ImVec4(255, 0, 0, 1) : ImVec4(0, 255, 0, 1);
+        ImVec4 color = n->is_finalized() ? ImVec4(0, 255, 0, 1) : ImVec4(255, 0, 0, 1);
         constexpr const char* finalized_text[]{"Not ", ""};
         ImGui::TextColored(color, "%sFinalized", finalized_text[n->is_finalized()]);
 
@@ -55,6 +55,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
         ImGui::Separator();
 
         ImGui::Text("Adjacent Nodes");
+        SCWFCGraphNode* s_adjacent_hovered = nullptr;
         if (auto s_node = node->get_parent().ref_cast<SCWFC>()) {
             ImGui::Indent(10);
             for (const auto adjacent : s_node->get_graph()->adjacent_nodes(n)) {
@@ -63,6 +64,8 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
                 ImGui::PushID(adjacent);
                 if (ImGui::Selectable(s_adjacent->name.c_str()))
                     m_editor->set_selected_node(s_adjacent);
+                if (ImGui::IsItemHovered())
+                    s_adjacent_hovered = s_adjacent;
                 ImGui::PopID();
             }
             ImGui::Indent(-10);
@@ -73,11 +76,18 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
         if (auto parent_node = node->get_parent().ref_cast<SCWFC>()) {
             for (const auto adjacent : parent_node->get_graph()->adjacent_nodes(n)) {
                 SCWFCGraphNode* s_adjacent = dynamic_cast<SCWFCGraphNode*>(adjacent);
+
+                glm::mat4 mat = m_editor->current_camera()->get_projection() *
+                                m_editor->current_camera()->get_view();
                 
-                glm::mat4 mat = m_editor->current_camera()->get_projection() * m_editor->current_camera()->get_view();
                 glm::vec2 p0 = m_editor->to_screen_point(mat, node->get_world_position());
                 glm::vec2 p1 = m_editor->to_screen_point(mat, s_adjacent->get_world_position());
-                background->AddLine(ImVec2{p0.x, p0.y}, ImVec2{p1.x, p1.y}, IM_COL32(0x40, 0x40, 0x40, 0xFF), 3.f);
+                
+                uint32_t color = (s_adjacent_hovered == s_adjacent)
+                                     ? IM_COL32(0xAF, 0xBF, 0xBF, 0xFF)
+                                     : IM_COL32(0x50, 0x40, 0x40, 0xFF);
+                background->AddLine(ImVec2{p0.x, p0.y}, ImVec2{p1.x, p1.y},
+                                    color, 2.f);
             }
         }
     }

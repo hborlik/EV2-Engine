@@ -29,10 +29,14 @@ inline glm::vec2 uniform_disk(const glm::vec2& uv) {
     return {r * std::cos(th), r * std::sin(th)};
 }
 
-// from https://stackoverflow.com/questions/6942273/how-to-get-a-random-element-from-a-c-container
+// Random element from container
+// see https://stackoverflow.com/questions/6942273/how-to-get-a-random-element-from-a-c-container
 template<typename Iter, typename RandomGenerator>
 Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
-    std::uniform_int_distribution<> dis(0, std::distance(start, end) - 1);
+    auto dist = std::distance(start, end);
+    if (dist < 1)
+        return end;
+    std::uniform_int_distribution<> dis(0, dist - 1);
     std::advance(start, dis(g));
     return start;
 }
