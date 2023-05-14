@@ -155,6 +155,7 @@ void SCWFCEditor::show_editor_tool() {
         }
         if (ImGui::Button("Unsolved Node")) {
             auto nnode = m_scwfc_solver->spawn_unsolved_node();
+            m_editor->set_selected_node(nnode.get());
         }
         ImGui::EndDisabled();
         if (ImGui::Button("Reset")) {
