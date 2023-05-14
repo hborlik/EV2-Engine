@@ -88,11 +88,19 @@ struct Ref {
             _ref->decrement();
     }
 
-    T& operator*() const noexcept {
+    const T& operator*() const noexcept {
         return *this->operator->();
     }
 
-    T* operator->() const noexcept {
+    T& operator*() noexcept {
+        return *this->operator->();
+    }
+
+    const T* operator->() const noexcept {
+        return _ref;
+    }
+
+    T* operator->() noexcept {
         return _ref;
     }
 

@@ -15,7 +15,7 @@ namespace ev2 {
 
 void show_material_editor_window(bool* p_open) {
     ImGui::Begin("Material Editor", p_open);
-    for (const auto& [name, mat] : ev2::ResourceManager::get_singleton().get_materials()) {
+    for (auto [name, mat] : ev2::ResourceManager::get_singleton().get_materials()) {
         if (ImGui::CollapsingHeader(("Material " + mat->name + " " + name).c_str())) {
             
             if (ImGui::TreeNode("Color")) {

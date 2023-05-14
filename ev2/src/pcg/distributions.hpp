@@ -41,6 +41,12 @@ Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
     return start;
 }
 
+template<typename RandomGenerator>
+bool binomial_trial(float success, RandomGenerator& g) {
+    std::uniform_real_distribution<> dis{};
+    return dis(g) < success;
+}
+
 }
 
 #endif // EV2_PCG_DISTRIBUTIONS_HPP
