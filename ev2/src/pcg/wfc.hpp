@@ -732,6 +732,7 @@ template<typename T, typename = std::enable_if_t<std::is_base_of_v<DGraphNode, T
 class IWFCSolver {
 public:
     using entropy_callback_t = std::function<float(const T*, const T*)>;
+    using propagate_callback_t = std::function<void(T*)>;
 
 public:
     virtual ~IWFCSolver() = default;
@@ -745,6 +746,7 @@ public:
 
     virtual float node_entropy(const T* node) const = 0;
     virtual void set_entropy_func(const entropy_callback_t& callback) = 0;
+    virtual void set_propagate_callback_func(const propagate_callback_t& callback) = 0;
 };
 
 /**
@@ -792,6 +794,7 @@ public:
                 continue;
 
             if (observe(n) || f) { // only update neighbors if the domain changed
+                if (propagate_callback_func) propagate_callback_func(n);
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
                 std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
@@ -868,6 +871,10 @@ public:
         entropy_func = callback;
     }
 
+    void set_propagate_callback_func(const propagate_callback_t& callback) override {
+        propagate_callback_func = callback;
+    }
+
     float node_entropy(const DGraphNode* node) const override {
         float sum = 0;
         for (auto value : node->domain) {
@@ -903,6 +910,7 @@ private:
     Graph<DGraphNode>* graph = nullptr;
     DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
+    propagate_callback_t propagate_callback_func{};
     std::mt19937& gen;
     PatternMap m_patterns{};
 };
