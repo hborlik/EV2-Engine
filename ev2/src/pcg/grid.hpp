@@ -39,7 +39,7 @@ public:
      * 
      * @param patterns 
      */
-    void reset_domains(const std::vector<int>& patterns) {
+    void reset_domains(const std::vector<wfc::Val>& patterns) {
         for (int y = 0; y < height; ++y) {
             for(int x = 0; x < width; ++x) {
                 auto* n = at(x, y);
@@ -71,7 +71,7 @@ private:
             std::stringstream dstr;
             dstr << "[";
             for (const auto v : n->domain)
-                dstr << v << ",";
+                dstr << v.type << ",";
             dstr << "]";
             return dstr.str();
         };

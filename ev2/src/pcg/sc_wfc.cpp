@@ -24,6 +24,15 @@ void SCWFC::reset() {
     m_data = std::make_shared<Data>();
 }
 
+void SCWFC::remove_all_unsolved() {
+    for (auto c : get_children()) {
+        auto s_node = c.ref_cast<SCWFCGraphNode>();
+        if (s_node && !s_node->is_finalized()) {
+            c->destroy();
+        }
+    }
+}
+
 void SCWFC::on_init() {
     reset();
 }

@@ -45,7 +45,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ObjectData, name, asset_path, properties, pro
 
 namespace wfc {
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pattern, required_classes, pattern_class, weight)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Pattern, required_types, pattern_type, weight)
 
 } // namespace wfc
 

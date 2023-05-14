@@ -900,7 +900,7 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         if (ncomps > 4) {
             std::cerr << "Failed to load texture " + path << "invalid ncomps " << ncomps << std::endl;
             stbi_image_free(data);
-            throw std::runtime_error{"Failed to load texture " + path};
+            return {};
         }
         std::unique_ptr<Image> image = std::make_unique<Image>();
 
@@ -911,8 +911,8 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         // stbi_image_free(data);
         return image;
     } else {
-        std::cerr << "Failed to load texture " << path << std::endl;
-        throw std::runtime_error{"Failed to load texture " + path};
+        std::cerr << "Failed to load image " << path << std::endl;
+        return {};
     }
 }
 
@@ -925,7 +925,7 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         if (ncomps > 4) {
             std::cerr << "Failed to load texture " << path << "invalid ncomps " << ncomps << std::endl;
             stbi_image_free(data);
-            throw std::runtime_error{"Failed to load texture " + path};
+            return {};
         }
         std::unique_ptr<Image> image = std::make_unique<Image>();
 
@@ -936,8 +936,8 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         // stbi_image_free(data);
         return image;
     } else {
-        std::cerr << "Failed to load texture " << path << std::endl;
-        throw std::runtime_error{"Failed to load texture " + path};
+        std::cerr << "Failed to load image " << path << std::endl;
+        return {};
     }
 }
 

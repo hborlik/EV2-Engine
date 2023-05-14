@@ -44,11 +44,18 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
 
         ImGui::Text("Domain:");
         ImGui::Indent(10);
-        for (int p : n->domain) {
-            const std::string pattern_name = obj_db->get_class_name(p);
+        for (auto& val : n->domain) {
             // need to push id to differentiate between different selections
-            ImGui::PushID(&p);
-            ImGui::Text("%d: \"%s\"", p, pattern_name.c_str());
+            ImGui::PushID(std::hash<wfc::Val>()(val));
+
+            const wfc::Pattern* pattern = obj_db->get_pattern(val.value);\
+            if (pattern) {
+                const std::string pattern_name = obj_db->get_class_name(pattern->pattern_type);
+
+                ImGui::Text("Pattern %d for class \"%s\"", val.value, pattern_name.c_str());
+            } else {
+                ImGui::Text("Pattern %d for class \"%s\"", val.value, "Unknown");
+            }
             ImGui::PopID();
         }
         ImGui::Indent(-10);
@@ -141,10 +148,13 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::SliderFloat("Mass", &sc_mass, 0.01f, 1.f);\
 
         ImGui::BeginDisabled(m_scwfc_solver == nullptr);
-        if (ImGui::Button("Spawn")) {
+        if (ImGui::Button("Propogate")) {
             auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
             auto nnode = m_scwfc_solver->sc_propagate_from(selected_node, sc_steps, sc_brf, sc_mass);
             m_editor->set_selected_node(nnode.get());
+        }
+        if (ImGui::Button("Unsolved Node")) {
+            auto nnode = m_scwfc_solver->spawn_unsolved_node();
         }
         ImGui::EndDisabled();
         if (ImGui::Button("Reset")) {
@@ -152,6 +162,13 @@ void SCWFCEditor::show_editor_tool() {
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Clear Unsolved")) {
+            m_scwfc_node->remove_all_unsolved();
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Remove all unsolved children nodes");
         }
 
         ImGui::Separator();
@@ -191,7 +208,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             new_prop.pattern_class,
             {},
             new_prop.weight
-        });
+        }, m_obj_db->create_pattern_id());
     }
 
 
@@ -200,10 +217,10 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
     {
         auto [p_itr, p_end] = m_obj_db->get_patterns_iterator();
         while (p_itr != p_end) {
-            auto& p = *p_itr;
-            const std::string pattern_name = m_obj_db->get_class_name(p.pattern_class);
+            auto& [pattern_id, pattern] = *p_itr;
+            const std::string pattern_name = m_obj_db->get_class_name(pattern.pattern_type);
             // need to push id to differentiate between different selections
-            ImGui::PushID(&p);
+            ImGui::PushID(&pattern);
 
             ImGui::TableNextRow();
 
@@ -211,7 +228,7 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             ImGui::AlignTextToFramePadding();
 
             if (ImGui::IsPopupOpen("Add Requirement")) ImGui::SetNextItemOpen(true);
-            bool node_open = ImGui::TreeNode("Pattern", "Pattern \"%s\"", pattern_name.c_str());
+            bool node_open = ImGui::TreeNode("Pattern", "Pattern %d \"%s\"", pattern_id, pattern_name.c_str());
 
             ImGui::TableSetColumnIndex(1);
             ImGui::SetNextItemWidth(-FLT_MIN);
@@ -219,8 +236,8 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             if (ImGui::Button("Edit")) {
                 ImGui::OpenPopup("Edit Pattern");
                 prop = {
-                    .pattern_class = p.pattern_class,
-                    .weight = p.weight
+                    .pattern_class = pattern.pattern_type,
+                    .weight = pattern.weight
                 };
             }
             if (ImGui::IsItemHovered()) {
@@ -254,8 +271,8 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
 
             if (node_open) {
-                for (std::size_t rv_i = 0; rv_i < p.required_classes.size(); rv_i++) {
-                    const std::string req_pattern_name = m_obj_db->get_class_name(p.required_classes[rv_i]);
+                for (std::size_t rv_i = 0; rv_i < pattern.required_types.size(); rv_i++) {
+                    const std::string req_pattern_name = m_obj_db->get_class_name(pattern.required_types[rv_i]);
 
                     ImGui::PushID(rv_i);
                     // ImGui::SetNextItemWidth(-FLT_MIN);
@@ -269,14 +286,14 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
                     if (ImGui::BeginPopupContextItem()) {
                         ImGui::Text("\"%s\"!", req_pattern_name.c_str());
                         if (ImGui::Button("Remove Requirement")) {
-                            m_obj_db->pattern_erase_requirement(p_itr, p.required_classes.begin() + rv_i);
+                            m_obj_db->pattern_erase_requirement(p_itr, pattern.required_types.begin() + rv_i);
                             ImGui::CloseCurrentPopup();
                         }
                         ImGui::EndPopup();
                     }
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::Text("%s", m_obj_db->get_class_name(p.required_classes[rv_i]).c_str());
+                    ImGui::Text("%s", m_obj_db->get_class_name(pattern.required_types[rv_i]).c_str());
                     ImGui::NextColumn();
 
                     ImGui::PopID();
@@ -303,7 +320,7 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
         new_obj_class = {}; // reset to default
     }
     if (show_dbe_edit_object_class_popup("New Object Class", new_obj_class)) {
-        int new_id = m_obj_db->object_class_create_id();
+        int new_id = m_obj_db->create_class_id();
         m_obj_db->set_class_name(new_obj_class.name, new_id);
     }
 
@@ -311,7 +328,7 @@ void SCWFCEditor::db_editor_show_object_class_editor_widget() {
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
     if (ImGui::BeginTable("split", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
     {
-        for (auto& [object_class_id, object_class_name] : m_obj_db->get_classes()) {
+        for (auto& [object_class_id, object_class_name] : m_obj_db->get_class_names()) {
             // need to push id to differentiate between different selections
             ImGui::PushID(object_class_id);
 
@@ -529,8 +546,6 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
     // the following need to be reset when the popup is closed
     static OBB* selected_propagation_pattern = nullptr;
-    static bool model_valid = false;
-    static bool model_load_failed = false;
 
     ImGuiIO& io = ImGui::GetIO();
 
@@ -557,11 +572,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
         std::string spath{};
         if (m_file_dialog.show_file_dialog_modal("Select Asset Path", &spath)) {
-            prop.asset_path = spath;
-
-            // loaded_model = ResourceManager::get_singleton().get_model_relative_path(spath);
-            model_valid = false;
-            model_load_failed = false;
+            prop.set_asset_path(spath);
         }
 
         ImGui::InputFloat("Extent", &prop.extent);
@@ -577,17 +588,14 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
             ImGui::PopID();
         }
 
-        if (!model_valid && !model_load_failed) {
-            auto model = ResourceManager::get_singleton().get_model_relative_path(prop.asset_path);
-            model_valid = (bool)model;
-            model_load_failed = !model_valid;
-            // change model AABB points to array
-            if (model) {
-                model_aabb = model->bounding_box;
-                for (int i = 0; i < 3; ++i) {
-                    model_bounds[i]     = model->bounding_box.pMin[i];
-                    model_bounds[i+3]   = model->bounding_box.pMax[i];
-                }
+
+        auto model = prop.loaded_model;
+        // change model AABB points to array
+        if (model) {
+            model_aabb = model->bounding_box;
+            for (int i = 0; i < 3; ++i) {
+                model_bounds[i]     = model->bounding_box.pMin[i];
+                model_bounds[i+3]   = model->bounding_box.pMax[i];
             }
         }
 
@@ -639,7 +647,7 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
         const glm::vec3 cube_half_extents{.5f};
         std::vector<glm::mat4> cube_matrix_vec{};
-        if (model_valid) { // display cube for the model
+        if (model) { // display cube for the model
             cube_matrix_vec.push_back(model_cube_mat);
         }
         for (auto obb_itr = prop.propagation_patterns.begin(),
@@ -777,8 +785,6 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
         ImGui::BeginDisabled(!prop.is_valid());
         if (ImGui::Button("Save", ImVec2(120, 0))) {
             saved = true;
-            model_valid = false;
-            model_load_failed = false;
             selected_propagation_pattern = nullptr;
             ImGui::CloseCurrentPopup();
         }
@@ -788,8 +794,6 @@ bool SCWFCEditor::show_dbe_edit_object_data_popup(std::string_view name, ObjectD
 
         ImGui::SameLine();
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-            model_valid = false;
-            model_load_failed = false;
             selected_propagation_pattern = nullptr;
             ImGui::CloseCurrentPopup();
         }
@@ -810,7 +814,7 @@ bool SCWFCEditor::show_class_select_popup(
         ImGui::TextWrapped("Select Object Class");
         ImGui::Separator();
 
-        auto class_names = m_obj_db->get_classes();
+        auto class_names = m_obj_db->get_class_names();
         float child_height =
             ImGui::GetTextLineHeightWithSpacing() *
             (std::min<float>(class_names.size(), 5) + .25f);
@@ -936,8 +940,8 @@ void SCWFCEditor::load_default_obj_db() {
     m_obj_db->set_class_name("Class 10", 10);
     m_obj_db->set_class_name("Class 11", 11);
 
-    m_obj_db->add_pattern(PA);
-    m_obj_db->add_pattern(PB);
+    m_obj_db->add_pattern(PA, m_obj_db->create_pattern_id());
+    m_obj_db->add_pattern(PB, m_obj_db->create_pattern_id());
 }
 
 void SCWFCEditor::load_obj_db(std::string_view path) {

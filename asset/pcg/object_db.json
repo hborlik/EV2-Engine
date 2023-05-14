@@ -1,1 +1,18 @@
-{"m_obj_data":[],"m_object_classes":[[11,"Class 11"],[10,"Class 10"]],"patterns":[{"cell_value":{"val":10},"required_values":[{"val":11},{"val":11}],"weight":1.0},{"cell_value":{"val":11},"required_values":[{"val":10}],"weight":1.0}]}
+{
+    "object_classes": {
+        "A": 1
+    },
+    "object_data": {},
+    "patterns": [
+        [
+            1,
+            {
+                "pattern_class": 1,
+                "required_classes": [
+                    1
+                ],
+                "weight": 1.0
+            }
+        ]
+    ]
+}

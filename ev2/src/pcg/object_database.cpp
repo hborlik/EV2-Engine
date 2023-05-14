@@ -1,7 +1,10 @@
 #include "object_database.hpp"
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -11,14 +14,14 @@
 
 namespace ev2::pcg {
 
-void ObjectMetadataDB::set_class_name(std::string_view name, int id) {
-    max_id = std::max(max_id, id);
-    m_object_classes.insert_or_assign(id, name.data());
+void ObjectMetadataDB::set_class_name(std::string_view name, int class_id) {
+    max_class_id = std::max(max_class_id, class_id);
+    m_object_classes.insert_or_assign(class_id, name.data());
 }
 
-std::string ObjectMetadataDB::get_class_name(int id) const {
+std::string ObjectMetadataDB::get_class_name(int class_id) const {
     std::string val{};
-    if (auto itr = m_object_classes.find(id); itr != m_object_classes.end()) {
+    if (auto itr = m_object_classes.find(class_id); itr != m_object_classes.end()) {
         val = itr->second;
     }
     return val;
@@ -55,6 +58,7 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
         for (auto& [class_name, obj_vec] : object_data) {
             if (!class_name.empty())
                 for (auto& obj : obj_vec) {
+                    obj.set_asset_path(obj.asset_path); // try loading asset path
                     db->m_obj_data.insert(std::make_pair(
                         object_classes.at(class_name), obj));
                 }
@@ -62,9 +66,9 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
 
         db->refresh_class_id_pattern_map();
 
-        db->check_max_id();
-    } catch (const json::exception& error) {
-        Engine::log("Failed to load " + std::string{path.data()} + ": " + error.what());
+        db->check_max_ids();
+    } catch (const std::exception& error) {
+        Engine::log_t<ObjectMetadataDB>("Failed to load " + std::string{path.data()} + ": " + error.what());
     }
 
     return db;
@@ -95,7 +99,7 @@ void ObjectMetadataDB::write_database(std::string_view path) {
     ostr.close();
 }
 
-std::vector<std::pair<int, std::string>> ObjectMetadataDB::get_classes() const {
+std::vector<std::pair<int, std::string>> ObjectMetadataDB::get_class_names() const {
     return {m_object_classes.begin(), m_object_classes.end()};
 }
 

@@ -152,7 +152,7 @@
                 "axis_settings": {
                     "v": [
                         1,
-                        1,
+                        0,
                         1
                     ]
                 },
@@ -333,6 +333,42 @@
         ],
         "Tree Forest Dark": [
             {
+                "asset_path": "asset/models/Oak Tree/oakTree.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 5.0,
+                "name": "Oak Tree",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            10.0,
+                            1.0,
+                            10.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            },
+            {
                 "asset_path": "asset/models/Autumn Tree/Autumn Tree.obj",
                 "axis_settings": {
                     "v": [
@@ -409,49 +445,64 @@
         ]
     },
     "patterns": [
-        {
-            "pattern_class": 10,
-            "required_classes": [
-                11,
-                12
-            ],
-            "weight": 0.10000000149011612
-        },
-        {
-            "pattern_class": 11,
-            "required_classes": [
-                10
-            ],
-            "weight": 1.0
-        },
-        {
-            "pattern_class": 12,
-            "required_classes": [
-                10,
-                10
-            ],
-            "weight": 0.5
-        },
-        {
-            "pattern_class": 13,
-            "required_classes": [
-                14,
-                14,
-                14,
-                14,
-                14
-            ],
-            "weight": 0.20000000298023224
-        },
-        {
-            "pattern_class": 14,
-            "required_classes": [
-                14,
-                14,
-                14,
-                14
-            ],
-            "weight": 0.20000000298023224
-        }
+        [
+            1,
+            {
+                "pattern_type": 10,
+                "required_types": [
+                    11,
+                    12
+                ],
+                "weight": 0.10000000149011612
+            }
+        ],
+        [
+            2,
+            {
+                "pattern_type": 11,
+                "required_types": [
+                    10
+                ],
+                "weight": 1.0
+            }
+        ],
+        [
+            3,
+            {
+                "pattern_type": 12,
+                "required_types": [
+                    10,
+                    10
+                ],
+                "weight": 0.5
+            }
+        ],
+        [
+            4,
+            {
+                "pattern_type": 13,
+                "required_types": [
+                    14,
+                    14,
+                    14,
+                    14,
+                    14
+                ],
+                "weight": 0.20000000298023224
+            }
+        ],
+        [
+            5,
+            {
+                "pattern_type": 14,
+                "required_types": [
+                    14,
+                    14,
+                    14,
+                    14
+                ],
+                "weight": 0.20000000298023224
+            }
+        ]
     ]
 }

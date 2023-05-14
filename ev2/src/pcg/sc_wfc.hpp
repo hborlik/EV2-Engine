@@ -32,6 +32,12 @@ public:
      */
     void reset();
 
+    /**
+     * @brief delete all children nodes that are not solved
+     * 
+     */
+    void remove_all_unsolved();
+
     void on_init() override;
 
     void on_child_removed(Ref<Node> child) override;

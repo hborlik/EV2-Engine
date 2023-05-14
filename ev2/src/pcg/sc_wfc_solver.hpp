@@ -29,12 +29,23 @@ public:
 
     Ref<SCWFCGraphNode> sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
 
+    Ref<SCWFCGraphNode> spawn_unsolved_node();
+
+    /**
+     * @brief Create a domain from a set of class ids. 
+     *      This will create a set of wfc::Vals with patterns that are used for given
+     *      class_id s
+     * 
+     * @param class_ids 
+     * @return std::unordered_set<wfc::Val> 
+     */
+    std::unordered_set<wfc::Val> domain_from_class_ids(const std::unordered_set<int>& class_ids);
+
     void wfc_solve(int steps);
 
     void node_check_and_update(SCWFCGraphNode* s_node);
 
-    glm::vec3 weighted_average_size(SCWFCGraphNode* s_node);
-
+    glm::vec3 weighted_average_diagonal(SCWFCGraphNode* s_node);
 
     bool can_continue() const noexcept;
 

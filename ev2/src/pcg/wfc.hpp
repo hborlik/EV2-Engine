@@ -42,6 +42,16 @@ struct coord {
     }
 };
 
+struct Val {
+    int type = 0;
+    int value = 0;
+
+private:
+    friend bool operator==(const Val& a, const Val& b) noexcept {
+        return a.type == b.type && a.value == b.value;
+    }
+};
+
 } // namespace pcg
 
 namespace std {
@@ -50,7 +60,7 @@ template<>
 struct hash<wfc::coord>
 {
     size_t operator()(const wfc::coord& k) const {
-        // from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+        // see https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
         using std::size_t;
         using std::hash;
         using std::string;
@@ -65,11 +75,24 @@ struct hash<wfc::coord>
     }
 };
 
+template<>
+struct hash<wfc::Val>
+{
+    size_t operator()(const wfc::Val& k) const {
+        using std::size_t;
+        using std::hash;
+
+        return ((hash<int>()(k.type)
+                ^ (hash<int>()(k.value) << 1)) >> 1);
+    }
+};
+
 } // namespace std
 
 namespace wfc {
 
 class Pattern;
+
 
 class GraphNode {
 public:
@@ -91,9 +114,11 @@ class DGraphNode : public GraphNode {
 public:
     DGraphNode(const std::string& identifier, int node_id) : GraphNode{identifier, node_id} {}
 
-    void set_value(int v) noexcept;
+    void set_value(const Val& v) noexcept {
+        domain = {v};
+    }
     
-    std::vector<int> domain{};      // valid patterns for this node
+    std::vector<Val> domain{};      // valid patterns for this node
 };
 
 template<typename T,
@@ -679,26 +704,26 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
 class Pattern {
   public:
     Pattern() = default;
-    explicit Pattern(int pattern_class) noexcept : pattern_class{pattern_class} {}
+    explicit Pattern(int pattern_class) noexcept : pattern_type{pattern_class} {}
 
     Pattern(int pattern_class, std::initializer_list<int> l,
             float weight = 1.f) noexcept
-        : required_classes{l}, pattern_class{pattern_class}, weight{weight} {}
+        : required_types{l}, pattern_type{pattern_class}, weight{weight} {}
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
-    std::vector<int> required_classes{};
-    int pattern_class{-1};
+    std::vector<int> required_types{};
+    int pattern_type{-1};
     float weight = 1.f; // relative probabilistic weight on this pattern
 };
 
-using PatternMap = std::unordered_multimap<int, Pattern>;
+using PatternMap = std::unordered_map<int, Pattern>;
 
 inline PatternMap make_pattern_map(std::initializer_list<Pattern> patterns) {
     PatternMap pm{};
     pm.reserve(patterns.size());
     for (auto itr = patterns.begin(), end = patterns.end(); itr != end; ++itr) {
-        pm.insert(std::make_pair(itr->pattern_class, *itr));
+        pm.insert(std::make_pair(itr->pattern_type, *itr));
     }
     return pm;
 }
@@ -743,8 +768,8 @@ public:
 
     bool can_continue() const noexcept override {return next_node != nullptr;}
 
-    auto get_patterns(int class_value) const {
-        return m_patterns.equal_range(class_value);
+    auto get_pattern(int pattern_id) const {
+        return m_patterns.find(pattern_id);
     }
 
     /**
@@ -801,11 +826,12 @@ public:
             // for every pattern for this class id, check if it has a valid neighborhood
             // for each valid pattern id, push that class id (only once) to the new domain
             bool value_kept = false;
-            for (auto [itr, end] = get_patterns(value); itr != end; ++itr) {
+            auto itr = m_patterns.find(value.value);
+            auto end = m_patterns.end();
+            if (itr != end) {
                 if (itr->second.valid(graph->adjacent_nodes(node))) {
                     new_domain.push_back(value);
                     value_kept = true; // a pattern for this class id was still valid
-                    break; // only add one of this value
                 }
             }
             changed |= !value_kept; // if the class id was not kept, set changed flag
@@ -830,7 +856,7 @@ public:
             return;
         } else {
             // weighted random selection of available domain values
-            node->set_value(weighted_pick(node));
+            node->set_value(weighted_pick_domain(node));
         }
     }
 
@@ -845,8 +871,10 @@ public:
     float node_entropy(const DGraphNode* node) const override {
         float sum = 0;
         for (auto value : node->domain) {
-            for (auto [itr, end] = get_patterns(value); itr != end; ++itr)
+            auto end = m_patterns.end();
+            if (auto itr = m_patterns.find(value.value); itr != end) {
                 sum += itr->second.weight;
+            }
         }
         return sum;
     }
@@ -857,12 +885,14 @@ public:
      * @param gen 
      * @return int value picked
      */
-    int weighted_pick(DGraphNode* node) const {
+    Val weighted_pick_domain(DGraphNode* node) const {
         std::vector<float> weights(node->domain.size());
-        std::transform(node->domain.begin(), node->domain.end(), weights.begin(), [this](int value) -> auto {
-            auto [itr, end] = get_patterns(value);
+        std::transform(node->domain.begin(), node->domain.end(), weights.begin(), [this](const wfc::Val& value) -> auto {
             float total_class_weight = 0.f;
-            std::for_each(itr, end, [&total_class_weight](auto& p) -> void {total_class_weight += p.second.weight;});
+            auto end = m_patterns.end();
+            if (auto itr = m_patterns.find(value.value); itr != end) {
+                total_class_weight += itr->second.weight;
+            }
             return total_class_weight;
         });
         std::discrete_distribution<int> dist(weights.begin(), weights.end());

@@ -37,16 +37,12 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
     return max_flow;
 }
 
-void DGraphNode::set_value(int v) noexcept {
-    domain = {v};
-}
-
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
      * if all requirements are satisfied, return true
      * */
-    if (required_classes.size() == 0)
+    if (required_types.size() == 0)
         return true;
 
     if (neighborhood.size() == 0)
@@ -60,7 +56,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     std::vector<ValueAndNode> required{};       // required values and associated node in flow graph
 
     // extra two capacity for source and sink
-    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_classes.size() + 2, true };
+    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_types.size() + 2, true };
 
     /* construct flow graph */
 
@@ -72,7 +68,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
-    for (auto& rv : required_classes) {
+    for (auto& rv : required_types) {
         auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv), ++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
@@ -90,7 +86,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
         for (auto val : node->domain) {
             neigh_values.emplace_back(ValueAndNode{
-                .v = val,
+                .v = val.type, // requirements are only for type, not value
                 .p = domain_node.get()
             });
         }
@@ -133,7 +129,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     float flow = ford_fulkerson(dg, source.get(), sink.get(), &dg);
 
     // check that all requirements are met
-    if (flow != required_classes.size())
+    if (flow != required_types.size())
         return false;
 
     return true;
