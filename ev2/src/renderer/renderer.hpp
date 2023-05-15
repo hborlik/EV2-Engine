@@ -7,6 +7,7 @@
 #ifndef EV2_RENDERER_H
 #define EV2_RENDERER_H
 
+#include <memory>
 #include "evpch.hpp"
 
 #include "singleton.hpp"
@@ -15,7 +16,6 @@
 #include "renderer/texture.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/material.hpp"
-#include "renderer/debug_renderer.hpp"
 #include "renderer/render_state.hpp"
 
 #include "geometry.hpp"
@@ -146,7 +146,7 @@ struct Drawable {
 
     Drawable(VertexBuffer &&vb,
              std::vector<Primitive> primitives,
-             std::vector<Ref<Material>> materials,
+             std::vector<std::shared_ptr<Material>> materials,
              AABB bounding_box,
              Sphere bounding_sphere,
              FrustumCull frustum_cull,
@@ -164,7 +164,7 @@ struct Drawable {
 
     VertexBuffer                vertex_buffer;
     std::vector<Primitive>      primitives;
-    std::vector<Ref<Material>>  materials;
+    std::vector<std::shared_ptr<Material>>  materials;
 
     AABB            bounding_box{};
     Sphere          bounding_sphere{};
@@ -181,7 +181,7 @@ struct ModelInstance {
             glDeleteVertexArrays(1, &gl_vao);
     }
 
-    void set_material_override(Ref<Material> material);
+    void set_material_override(std::shared_ptr<Material> material);
 
     void set_drawable(std::shared_ptr<Drawable> drawable);
 
@@ -193,14 +193,14 @@ private:
 
     ModelInstance() = default;
 
-    Ref<Material>               material_override{};
+    std::shared_ptr<Material>               material_override{};
 
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
     GLuint                      gl_vao = 0;
 };
 
-using ModelInstancePtr = std::unique_ptr<ModelInstance, void (*)(ModelInstance*)>;
+using ModelInstancePtr = std::shared_ptr<ModelInstance>;
 
 
 struct InstancedDrawable {
@@ -230,7 +230,7 @@ private:
     GLuint                      gl_vao = 0;
 };
 
-using InstancedDrawablePtr = std::unique_ptr<InstancedDrawable, void (*)(InstancedDrawable*)>;
+using InstancedDrawablePtr = std::shared_ptr<InstancedDrawable>;
 
 class RenderPass {
 public:
@@ -265,7 +265,7 @@ public:
 
     void init();
 
-    Ref<Material> create_material();
+    std::shared_ptr<Material> create_material();
 
     LID create_point_light();
     LID create_directional_light();

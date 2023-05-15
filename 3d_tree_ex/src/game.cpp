@@ -207,7 +207,7 @@ void GameState::update(float dt) {
 
 void GameState::spawn_tree(const glm::vec3& position, float rotation, const std::map<std::string, float>& params, int iterations, 
                                  glm::vec3 color_0, glm::vec3 color_1, float starting_growth, float adjusted_leaf_scale, 
-                                 ev2::Ref<ev2::renderer::Material> new_leaf_material, 
+                                 std::shared_ptr<ev2::renderer::Material> new_leaf_material, 
                                  float fruit_spawn_rate, bool breedable) {
     int unique_id = (int)randomFloatTo(9999999);
     std::string unique_hit_tag = std::string("Tree_root_") + std::to_string(unique_id);
@@ -371,7 +371,7 @@ void GameState::spawn_cross(const glm::vec3& position, float rotation, int itera
         std::string leaf_mat = std::to_string(selected_tree_1->plantInfo.ID + selected_tree_2->plantInfo.ID).append("leaf_material");
         std::string fruit_mat = std::to_string(selected_tree_1->plantInfo.ID + selected_tree_2->plantInfo.ID).append("fruit_material");
 
-        ev2::Ref<ev2::renderer::Material> new_leaf_material = ResourceManager::get_singleton().get_material(leaf_mat);
+        std::shared_ptr<ev2::renderer::Material> new_leaf_material = ResourceManager::get_singleton().get_material(leaf_mat);
 
 
         new_leaf_material->diffuse        = (selected_tree_1->leaf_material->diffuse + selected_tree_2->leaf_material->diffuse)/randomFloatRange(1.5f, 2.5f);

@@ -26,14 +26,14 @@ public:
     glm::vec3 sunset_color{253/255.0f, 94/255.0, 83/255.0};
     glm::vec3 night_ambient{0.13, 0.16, 0.21};
 
-    ev2::Ref<ev2::renderer::Material> tree_bark;
-    ev2::Ref<ev2::renderer::Material> highlight_material;
+    std::shared_ptr<ev2::renderer::Material> tree_bark;
+    std::shared_ptr<ev2::renderer::Material> highlight_material;
 
-    ev2::Ref<ev2::renderer::Material> default_fruit_material;
-    ev2::Ref<ev2::renderer::Material> default_leaf_material;
+    std::shared_ptr<ev2::renderer::Material> default_fruit_material;
+    std::shared_ptr<ev2::renderer::Material> default_leaf_material;
 
-    ev2::Ref<ev2::renderer::Material> leaf_material;
-    ev2::Ref<ev2::renderer::Material> fruit_material;
+    std::shared_ptr<ev2::renderer::Material> leaf_material;
+    std::shared_ptr<ev2::renderer::Material> fruit_material;
 
     ev2::Ref<ev2::CameraNode> cam_first_person{};
     ev2::Ref<ev2::VisualInstance> marker{};
@@ -58,7 +58,7 @@ public:
 
     void spawn_tree(const glm::vec3& position, float rotation, const std::map<std::string, float>& params, 
                         int iterations, glm::vec3 color_0, glm::vec3 color_1, float starting_growth, float adjusted_leaf_scale, 
-                        ev2::Ref<ev2::renderer::Material> new_leaf_material, 
+                        std::shared_ptr<ev2::renderer::Material> new_leaf_material, 
                         float fruit_spawn_rate, bool breedable);
     void spawn_mountain_tree(const glm::vec3& position, float range_extent, int iterations);
     void spawn_random_tree(const glm::vec3& position, float range_extent, int iterations, float starting_growth);

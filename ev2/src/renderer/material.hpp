@@ -16,7 +16,7 @@
 
 namespace ev2::renderer {
 
-struct Material : public Object {
+struct Material {
     std::string name = "default";
 
     glm::vec3 diffuse   = {1.00f,0.10f,0.85f};
@@ -44,7 +44,7 @@ struct Material : public Object {
     Material() = default;
     Material(std::string name) : name{std::move(name)} {}
 
-    virtual ~Material();
+    virtual ~Material() = default;
 
     Material(const Material&) = delete;
     Material& operator=(const Material&) = delete;

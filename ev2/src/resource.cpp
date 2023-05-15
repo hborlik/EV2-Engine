@@ -640,7 +640,7 @@ std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_ma
         };
     }
     // get materials information
-    std::vector<Ref<renderer::Material>> ev_mat;
+    std::vector<std::shared_ptr<renderer::Material>> ev_mat;
     if (load_materials)
         for (auto& mat : materials) {
             ev_mat.push_back(mat.create_renderer_material());
@@ -658,7 +658,7 @@ std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_ma
     );
 }
 
-Ref<renderer::Material> MaterialData::create_renderer_material() const {
+std::shared_ptr<renderer::Material> MaterialData::create_renderer_material() const {
     auto mat = renderer::Renderer::get_singleton().create_material();
     mat->name           = name;
     mat->diffuse        = diffuse;
@@ -777,8 +777,8 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
     }
 }
 
-Ref<renderer::Material> ResourceManager::get_material(const std::string& name) {
-    Ref<renderer::Material> mat = nullptr;
+std::shared_ptr<renderer::Material> ResourceManager::get_material(const std::string& name) {
+    std::shared_ptr<renderer::Material> mat = nullptr;
     auto itr = materials.find(name);
     if (itr == materials.end()) {
         mat = renderer::Renderer::get_singleton().create_material();

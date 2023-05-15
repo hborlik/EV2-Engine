@@ -43,7 +43,7 @@ struct PNVertex {
 class TreeNode : public ev2::VisualInstance {
 public:
     explicit TreeNode(class GameState* game, const std::string& name, bool has_leafs = false, int u_id = -1,
-                     ev2::Ref<ev2::renderer::Material> leaf_material = nullptr);
+                     std::shared_ptr<ev2::renderer::Material> leaf_material = nullptr);
 
     void on_init() override;
     void on_destroy() override;
@@ -51,7 +51,7 @@ public:
     void generate(int iterations);
     void setParams(const std::map<std::string, float>& paramsNew, int iterations, float growth);
     std::map<std::string, float> getParams() {return params;}
-    ev2::Ref<ev2::renderer::Material> leaf_material;
+    std::shared_ptr<ev2::renderer::Material> leaf_material;
     
     bool breedable = true;
     float growth_current = 0;

@@ -52,7 +52,7 @@ struct MaterialData {
     std::shared_ptr<ImageResource> alpha_tex;               // map_d
     std::shared_ptr<ImageResource> reflection_tex;          // refl
 
-    Ref<renderer::Material> create_renderer_material() const;
+    std::shared_ptr<renderer::Material> create_renderer_material() const;
 };
 
 struct DrawObject {
@@ -121,7 +121,7 @@ public:
 
     // Ref<GLTFScene> loadGLTF(const std::filesystem::path& filename, bool normalize = false);
 
-    Ref<renderer::Material> get_material(const std::string& name);
+    std::shared_ptr<renderer::Material> get_material(const std::string& name);
 
     const auto& get_materials() const {return materials;}
 
@@ -130,7 +130,7 @@ private:
 
     std::unordered_map<std::string, std::weak_ptr<renderer::Drawable>> model_lookup;
 
-    std::unordered_map<std::string, Ref<renderer::Material>> materials;
+    std::unordered_map<std::string, std::shared_ptr<renderer::Material>> materials;
 
     std::unordered_map<std::string, std::shared_ptr<ImageResource>> images;
 };

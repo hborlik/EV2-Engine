@@ -3,6 +3,7 @@
 
 
 #include "renderer/ev_gl.hpp"
+#include "renderer/material.hpp"
 #include "resource.hpp"
 #include "engine.hpp"
 
@@ -20,7 +21,7 @@ struct PointLight {
     float radius;
 };
 
-void ModelInstance::set_material_override(Ref<Material> material) {
+void ModelInstance::set_material_override(std::shared_ptr<Material> material) {
     if (!material) {
         material_override = nullptr;
         return;
@@ -503,17 +504,23 @@ void Renderer::load_ssao_uniforms() {
     glProgramUniform1ui(ssao_program.program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
-Ref<Material> Renderer::create_material() {
+std::shared_ptr<Material> Renderer::create_material() {
+
+    constexpr auto mat_deleter = [](Material* mat) -> void {
+        renderer::Renderer::get_singleton().destroy_material(mat);
+    };
+
     int32_t new_mat_slot = alloc_material_slot();
     if (new_mat_slot >= 0) {
         int32_t id = next_material_id++;
-        Ref<Material> new_material = make_referenced<Material>();
+        auto new_material =
+            std::shared_ptr<Material>(new Material{}, mat_deleter);
         materials[id] = new_material.get();
         new_material->material_id = id;
         new_material->material_slot = new_mat_slot;
         return new_material;
     }
-    return nullptr;
+    return {};
 }
 
 int32_t Renderer::alloc_material_slot() {

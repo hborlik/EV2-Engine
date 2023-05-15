@@ -161,7 +161,7 @@ struct P_3 : public MonopodialProduction {
 
 }
 
-TreeNode::TreeNode(GameState* game, const std::string& name, bool has_leafs, int u_id, ev2::Ref<ev2::renderer::Material> leaf_material) : 
+TreeNode::TreeNode(GameState* game, const std::string& name, bool has_leafs, int u_id, std::shared_ptr<ev2::renderer::Material> leaf_material) : 
     ev2::VisualInstance{name}, 
     game{game}, 
     has_leafs{has_leafs}, 
@@ -204,7 +204,7 @@ void TreeNode::on_init() {
     tree_geometry = std::make_shared<ev2::renderer::Drawable>(
         ev2::renderer::VertexBuffer::vbInitArrayVertexSpecIndexed({}, {}, buffer_layout),
         std::vector<ev2::renderer::Primitive>{},
-        std::vector<ev2::Ref<ev2::renderer::Material>>{},
+        std::vector<std::shared_ptr<ev2::renderer::Material>>{},
         AABB{},
         Sphere{glm::vec3{0.f}, 1.f}, // TODO: make sphere correct
         renderer::FrustumCull::Sphere,

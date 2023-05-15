@@ -26,7 +26,7 @@ public:
     void pre_render() override;
 
     void set_model(std::shared_ptr<renderer::Drawable> model);
-    void set_material_override(Ref<renderer::Material> material_override);
+    void set_material_override(std::shared_ptr<renderer::Material> material_override);
 
 private:
     std::shared_ptr<renderer::ModelInstance> iid = nullptr;
@@ -41,7 +41,7 @@ public:
     void pre_render() override;
     void on_transform_changed(Ref<Node> origin) override;
 
-    void set_material_override(Ref<renderer::Material> material_override);
+    void set_material_override(std::shared_ptr<renderer::Material> material_override);
 
     void set_instance_transforms(std::vector<glm::mat4> tr);
 

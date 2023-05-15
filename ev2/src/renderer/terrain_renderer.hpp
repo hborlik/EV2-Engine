@@ -48,7 +48,7 @@ private:
     std::unique_ptr<Image> m_heightmap;
     glm::mat4 m_model;
 
-    Ref<Material> m_terrain_mat;
+    std::shared_ptr<Material> m_terrain_mat;
 };
 
 } // namespace ev2::renderer
