@@ -829,13 +829,9 @@ public:
             // for every pattern for this class id, check if it has a valid neighborhood
             // for each valid pattern id, push that class id (only once) to the new domain
             bool value_kept = false;
-            auto itr = m_patterns.find(value.value);
-            auto end = m_patterns.end();
-            if (itr != end) {
-                if (itr->second.valid(graph->adjacent_nodes(node))) {
-                    new_domain.push_back(value);
-                    value_kept = true; // a pattern for this class id was still valid
-                }
+            if (valid(value, node)) { // node pointer used to find adjacent nodes, validity determined based on value
+                new_domain.push_back(value);
+                value_kept = true; // a pattern for this class id was still valid
             }
             changed |= !value_kept; // if the class id was not kept, set changed flag
         }
@@ -904,6 +900,13 @@ public:
         });
         std::discrete_distribution<int> dist(weights.begin(), weights.end());
         return node->domain.at(dist(gen));
+    }
+
+    bool valid(const wfc::Val& value, const DGraphNode* node) {
+        auto neighborhood = graph->adjacent_nodes(node);
+        auto itr = m_patterns.find(value.value);
+        auto end = m_patterns.end();
+        return (itr != end && itr->second.valid(neighborhood));
     }
 
 private:

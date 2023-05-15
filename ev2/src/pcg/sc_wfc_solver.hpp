@@ -27,7 +27,15 @@ public:
                 std::random_device& rd,
                 std::shared_ptr<renderer::Drawable> unsolved_drawable);
 
-    Ref<SCWFCGraphNode> sc_propagate_from(SCWFCGraphNode* node, int n, int brf, float mass);
+    void sc_propagate(int n, int brf, float mass);
+
+    Ref<SCWFCGraphNode> sc_propagate_from(SCWFCGraphNode* node, int n, float repulsion);
+
+    void wfc_solve(int steps);
+
+    void reevaluate_validity();
+
+    void node_check_and_update(SCWFCGraphNode* s_node);
 
     Ref<SCWFCGraphNode> spawn_unsolved_node();
 
@@ -40,10 +48,6 @@ public:
      * @return std::unordered_set<wfc::Val> 
      */
     std::unordered_set<wfc::Val> domain_from_class_ids(const std::unordered_set<int>& class_ids);
-
-    void wfc_solve(int steps);
-
-    void node_check_and_update(SCWFCGraphNode* s_node);
 
     glm::vec3 weighted_average_diagonal(SCWFCGraphNode* s_node);
 
@@ -75,6 +79,7 @@ private:
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
     std::queue<Ref<SCWFCGraphNode>> m_boundary{};
+    std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};
     std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
 };
 
