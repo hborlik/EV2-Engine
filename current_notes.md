@@ -117,3 +117,15 @@ The user can pick which parts / aspects (?) of the output they want to keep.
 Things that have already been done:
     Rendering/shadows/scene graph.
     Shader preprocessing, Shader queries, Material management,
+
+
+### Evaluation
+compare against uniform random placement
+Get stuff placed on terrain.
+Fix terrain shading
+
+
+# Notes for things that need to change in Engine
+
+The Rendering Context. Window operations need to be placed into a class.
+Not sure if the context should be static.
