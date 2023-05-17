@@ -114,6 +114,20 @@ GameState::GameState(Application* app) : app{app} {
     ground_plane->add_child(g_node);
     ground_plane->set_position(glm::vec3{0, 0, 0});
 
+    // demo sphere
+    // auto sphere = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "sphere.obj");
+    // auto w_node = app->get_current_scene()->create_child_node<ev2::VisualInstance>("Sphere");
+    // w_node->set_position(glm::vec3{0, 0.43, -20});
+    // w_node->set_scale(glm::vec3{0.2});
+    // w_node->set_model(sphere);
+    // auto sphrmat = ResourceManager::get_singleton().get_material(fruit_mat);
+    // sphrmat->diffuse = glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
+    // sphrmat->sheen = 0.1f;
+    // sphrmat->roughness = 0.1f;
+    // sphrmat->clearcoat = 0.2f;
+    // sphrmat->metallic = 0.1f;
+    // w_node->set_material_override(sphrmat);
+
     ground_plane->get_body()->setType(reactphysics3d::BodyType::STATIC);
     auto& material = ground_plane->get_collider(0)->getMaterial();
     material.setBounciness(0.01f);
@@ -127,7 +141,6 @@ GameState::GameState(Application* app) : app{app} {
     //     m->sheen = 0.77f;
     // }
 
-    auto sphere = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "sphere.obj");
     // auto wagon = ev2::ResourceManager::get_singleton().get_model( fs::path("models") / "Wagon.obj");
 
     marker = app->get_current_scene()->create_child_node<ev2::VisualInstance>("marker");
@@ -199,8 +212,8 @@ void GameState::update(float dt) {
     float sun_brightness = std::pow(std::max<float>(sin(sun_rads), 0), 0.33);
     float sun_scatter = .1f * std::pow(std::max<float>(cos(2 * sun_rads),0), 5);
 
-    sun_light->set_color(glm::vec3{5, 5, 5} * sun_brightness + sunset_color * sun_scatter);
-    sun_light->set_ambient(glm::vec3{0.05, 0.05, 0.05} * sun_brightness + sunset_color * sun_scatter + (1 - sun_brightness) * night_ambient * .4f);
+    sun_light->set_color(glm::vec3{1, 1, 1} * sun_brightness + sunset_color * sun_scatter);
+    sun_light->set_ambient(glm::vec3{.5} * sun_brightness + sunset_color * sun_scatter + (1 - sun_brightness) * night_ambient * .4f);
 
     sun_light->set_position(glm::rotate(glm::identity<glm::quat>(), -sun_rads, glm::vec3(1, 0, 0)) * glm::vec3{0, 0, 100});
 }

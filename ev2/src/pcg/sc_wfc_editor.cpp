@@ -276,8 +276,9 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
 
             ImGui::SameLine();
+            bool delete_pattern = false;
             if (ImGui::Button("Delete")) {
-                p_itr = m_obj_db->pattern_erase(p_itr);
+                delete_pattern = true;
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Delete Pattern \"%s\"", pattern_name.c_str());
@@ -315,7 +316,10 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
 
             ImGui::PopID();
-            ++p_itr;
+            if (delete_pattern)
+                p_itr = m_obj_db->pattern_erase(p_itr);
+            else
+                ++p_itr;
         }
         ImGui::EndTable();
     }
