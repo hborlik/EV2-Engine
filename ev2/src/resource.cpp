@@ -1,6 +1,7 @@
 #include "resource.hpp"
 
 #include "renderer/buffer.hpp"
+#include "renderer/ev_gl.hpp"
 #include "renderer/renderer.hpp"
 #include "engine.hpp"
 
@@ -721,7 +722,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model_relative_path(con
     }
 }
 
-std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem::path& filename, bool ignore_asset_path) {
+std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem::path& filename, bool ignore_asset_path, bool is_srgb) {
     auto itr = images.find(filename.generic_string());
     if (itr != images.end()) { // already loaded
         return itr->second;
@@ -748,11 +749,11 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
                 pixel_format = gl::PixelFormat::RG;
                 break;
             case 3:
-                internal_format = gl::TextureInternalFormat::RGB;
+                internal_format = is_srgb ? gl::TextureInternalFormat::SRGB8 : gl::TextureInternalFormat::RGB;
                 pixel_format = gl::PixelFormat::RGB;
                 break;
             case 4:
-                internal_format = gl::TextureInternalFormat::RGBA;
+                internal_format = is_srgb ? gl::TextureInternalFormat::SRGB8_ALPHA8 : gl::TextureInternalFormat::RGBA;
                 pixel_format = gl::PixelFormat::RGBA;
                 break;
             default:
@@ -819,7 +820,7 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
                     mat.ambient_tex            = rm->get_image((base_dir / m.ambient_texname).generic_string(), true);
                 
                 if (!m.diffuse_texname.empty())
-                    mat.diffuse_tex            = rm->get_image((base_dir / m.diffuse_texname).generic_string(), true);
+                    mat.diffuse_tex            = rm->get_image((base_dir / m.diffuse_texname).generic_string(), true, true);
                 
                 if (!m.specular_texname.empty())
                     mat.specular_tex           = rm->get_image((base_dir / m.specular_texname).generic_string(), true);
@@ -907,8 +908,6 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 1, data);
 
-        // std::cout << "Loaded texture " << path << std::endl;
-        // stbi_image_free(data);
         return image;
     } else {
         std::cerr << "Failed to load image " << path << std::endl;
@@ -932,8 +931,6 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 2, (uint8_t*)data);
 
-        // std::cout << "Loaded texture " << path << std::endl;
-        // stbi_image_free(data);
         return image;
     } else {
         std::cerr << "Failed to load image " << path << std::endl;

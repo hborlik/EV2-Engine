@@ -1,5 +1,6 @@
 #include <renderer/terrain_renderer.hpp>
 
+#include "glm/geometric.hpp"
 #include "renderer/ev_gl.hpp"
 #include "renderer/buffer.hpp"
 #include "renderer/camera.hpp"
@@ -982,6 +983,7 @@ bool LoadTerrainVariables(const Camera& m_camera, glm::mat4* m_model)
     static bool first = true;
     struct PerFrameVariables {
         glm::mat4 model,                // 16
+                  modelGMatrix,     // 16
                   modelView,            // 16
                   view,                 // 16
                   camera,               // 16
@@ -1008,14 +1010,17 @@ bool LoadTerrainVariables(const Camera& m_camera, glm::mat4* m_model)
     glm::mat4 viewInv = m_camera.get_view_inv();
     glm::mat4 view = m_camera.get_view();
 
-    glm::mat4 model = glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
+    glm::mat4 rotationOnly = glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
+    glm::mat4 model = 
+            glm::translate(glm::identity<glm::mat4>(), glm::vec3(-width / 2.0f, zMin, +height / 2.0f))
             * glm::scale(glm::identity<glm::mat4>(), glm::vec3(scale))
-            * glm::rotate(glm::identity<glm::mat4>(), -(float)M_PI / 2.0f, glm::vec3(1, 0, 0));
+            * rotationOnly;
     if (m_model)
         *m_model = model;
 
-    // set transformations (column-major)
+    // set transformations
     variables.model = model;
+    variables.modelGMatrix = glm::transpose(glm::inverse(glm::scale(glm::mat4{1}, glm::normalize(scale)) * rotationOnly));
     //variables.normal = dja::transpose(dja::inverse(variables.model));
     variables.view = view;
     variables.camera = viewInv;
@@ -1299,6 +1304,10 @@ void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& p
     bool v = true;
 
     m_terrain_mat = Renderer::get_singleton().create_material();
+    m_terrain_mat->specular = 0.f;
+    m_terrain_mat->metallic = 0.01f;
+    m_terrain_mat->roughness = 0.4f;
+    m_terrain_mat->diffuse = glm::vec3{};
 
     if (v) v &= load_textures();
     if (v) v &= load_buffers(state);
@@ -1311,11 +1320,11 @@ void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& p
 }
 
 bool TerrainRenderer::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
-    GLuint matid = 0;
+    GLuint mat_slot = 0;
     if (m_terrain_mat->get_material_id() >= 0)
-        matid = m_terrain_mat->get_material_id();
+        mat_slot = m_terrain_mat->get_material_slot();
 
-    return LoadPrograms(state, pre, matid);
+    return LoadPrograms(state, pre, mat_slot);
 }
 
 bool TerrainRenderer::load_queries() {

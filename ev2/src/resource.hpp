@@ -117,7 +117,7 @@ public:
      */
     std::shared_ptr<renderer::Drawable> get_model_relative_path(const std::filesystem::path& filename, bool cache = true, bool load_materials = true);
 
-    std::shared_ptr<ImageResource> get_image(const std::filesystem::path& filename, bool ignore_asset_path = false);
+    std::shared_ptr<ImageResource> get_image(const std::filesystem::path& filename, bool ignore_asset_path = false, bool is_srgb = false);
 
     // Ref<GLTFScene> loadGLTF(const std::filesystem::path& filename, bool normalize = false);
 
