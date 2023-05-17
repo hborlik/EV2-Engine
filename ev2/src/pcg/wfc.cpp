@@ -1,4 +1,5 @@
 #include <pcg/wfc.hpp>
+#include <unordered_map>
 
 namespace wfc {
 
@@ -37,6 +38,8 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
     return max_flow;
 }
 
+// whoops
+#if 0
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
@@ -134,5 +137,28 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
 
     return true;
 }
+
+#else
+
+bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
+    std::unordered_multiset<int> requirements{required_types.begin(), required_types.end()};
+    std::vector<int> available_values{};
+
+    for (const auto& n : neighborhood) {
+        for (const auto& v : n->domain) {
+            available_values.push_back(v.type);
+        }
+    }
+
+    for (auto v : available_values) {
+        auto itr = requirements.find(v);
+        if (itr != requirements.end())
+            requirements.erase(itr);
+    }
+
+    return requirements.empty();
+}
+
+#endif
 
 }

@@ -1,10 +1,15 @@
+#include <algorithm>
 #include <memory>
 #include <iostream>
 #include <random>
 #include <set>
+#include <string>
+#include <vector>
 
-#include <pcg/wfc.hpp>
-#include <pcg/grid.hpp>
+#include "pcg/wfc.hpp"
+#include "pcg/grid.hpp"
+
+#include "pcg/distributions.hpp"
 
 using namespace std;
 using namespace wfc;
@@ -515,19 +520,19 @@ void test_pattern_validity0() {
     unique_ptr<DGraphNode> n_d = make_unique<DGraphNode>("D", 40);
 
     DGraphNode *a = n_a.get();
-    a->domain.push_back(&p1);
-    a->domain.push_back(&p2);
-    a->domain.push_back(&p3);
+    a->domain.push_back(Val{p1.pattern_type, 0});
+    a->domain.push_back(Val{p2.pattern_type, 0});
+    a->domain.push_back(Val{p3.pattern_type, 0});
 
     DGraphNode *b = n_b.get();
-    b->domain.push_back(&p1);
-    b->domain.push_back(&p2);
-    b->domain.push_back(&p3);
+    b->domain.push_back(Val{p1.pattern_type, 0});
+    b->domain.push_back(Val{p2.pattern_type, 0});
+    b->domain.push_back(Val{p3.pattern_type, 0});
 
     DGraphNode *c = n_c.get();
-    c->domain.push_back(&p1);
-    c->domain.push_back(&p2);
-    c->domain.push_back(&p3);
+    c->domain.push_back(Val{p1.pattern_type, 0});
+    c->domain.push_back(Val{p2.pattern_type, 0});
+    c->domain.push_back(Val{p3.pattern_type, 0});
 
     std::vector<DGraphNode*> neighborhood{a, b, c};
 
@@ -558,17 +563,17 @@ void test_pattern_validity1() {
     unique_ptr<DGraphNode> n_d = make_unique<DGraphNode>("D", 40);
 
     DGraphNode *a = n_a.get();
-    a->domain.push_back(&p1);
+    a->domain.push_back(Val{p1.pattern_type, 0});
 
     DGraphNode *b = n_b.get();
-    b->domain.push_back(&p2);
+    b->domain.push_back(Val{p2.pattern_type, 0});
 
     DGraphNode *c = n_c.get();
-    c->domain.push_back(&p3);
+    c->domain.push_back(Val{p3.pattern_type, 0});
 
     DGraphNode *d = n_d.get();
-    d->domain.push_back(&p4);
-    d->domain.push_back(&p2);
+    d->domain.push_back(Val{p4.pattern_type, 0});
+    d->domain.push_back(Val{p2.pattern_type, 0});
 
     std::vector<DGraphNode*> neighborhood{a, b, c, d};
 
@@ -590,19 +595,48 @@ void test_pattern_validity2() {
     unique_ptr<DGraphNode> n_c = make_unique<DGraphNode>("C", 30);
 
     DGraphNode *a = n_a.get();
-    a->domain.push_back(&PB);
+    a->domain.push_back(Val{PB.pattern_type, 0});
 
     DGraphNode *b = n_b.get();
-    b->domain.push_back(&p_center);
-    b->domain.push_back(&PB);
+    b->domain.push_back(Val{p_center.pattern_type, 0});
+    b->domain.push_back(Val{PB.pattern_type, 0});
 
     DGraphNode *c = n_c.get();
-    c->domain.push_back(&p_center);
-    c->domain.push_back(&PB);
+    c->domain.push_back(Val{p_center.pattern_type, 0});
+    c->domain.push_back(Val{PB.pattern_type, 0});
 
     std::vector<DGraphNode*> neighborhood{a, b, c};
 
     assert(p_center.valid(neighborhood));
+}
+
+void test_pattern_validity3() {
+    std::cout << __FUNCTION__ << std::endl;
+
+    // values
+    int v0{10};
+    int v1{11};
+
+    Pattern p_center{v0, {v1, v1, v1, v1}};
+
+    unique_ptr<DGraphNode> n_a = make_unique<DGraphNode>("A", 10);
+    unique_ptr<DGraphNode> n_b = make_unique<DGraphNode>("B", 20);
+    unique_ptr<DGraphNode> n_c = make_unique<DGraphNode>("C", 30);
+
+    DGraphNode *a = n_a.get();
+    a->domain.push_back(Val{v1, 0});
+
+    DGraphNode *b = n_b.get();
+    b->domain.push_back(Val{v0, 0});
+    b->domain.push_back(Val{v1, 0});
+
+    DGraphNode *c = n_c.get();
+    c->domain.push_back(Val{v0, 0});
+    c->domain.push_back(Val{v1, 0});
+
+    std::vector<DGraphNode*> neighborhood{a, b, c};
+
+    assert(!p_center.valid(neighborhood));
 }
 
 void wfc_solver_grid0() {
@@ -614,9 +648,9 @@ void wfc_solver_grid0() {
     Pattern PA{10, {11, 11}};
     Pattern PB{11, {10}};
 
-    std::vector<const Pattern*> patterns{&PA, &PB};
+    std::vector<Val> values{Val{PA.pattern_type, 0}, Val{PB.pattern_type, 0}};
 
-    ngrid.reset_domains(patterns);
+    ngrid.reset_domains(values);
 
     std::cout << to_string(ngrid) << std::endl;
 
@@ -625,7 +659,7 @@ void wfc_solver_grid0() {
     std::random_device rd{};
     std::mt19937 gen{rd()};
 
-    WFCSolver solver{&ngrid.get_graph(), &gen};
+    WFCSolver solver{&ngrid.get_graph(), make_pattern_map({PA, PB}), gen};
 
     DGraphNode* next = ngrid.at(0, 0);
 
@@ -640,6 +674,66 @@ void wfc_solver_grid0() {
 
         std::cout << to_string(ngrid) << std::endl;
     }
+}
+
+void perf_validity(int n_nodes, int n_domains, int n_requirements) {
+    // std::cout << __FUNCTION__ << std::endl;
+
+    std::random_device rd{};
+    std::mt19937 gen{rd()};
+
+    // values
+    std::vector<int> types(n_domains);
+    for (int i = 0; i < n_domains; ++i)
+        types[i] = i+1;
+
+    std::vector<Val> values(types.size());
+    std::transform(types.begin(), types.end(), values.begin(),
+                   [](int type) -> Val {
+                       return Val{type, 0};
+                   });
+
+    auto randomize_domain = [&values, &gen](DGraphNode* node,
+                                            int domain_size) -> void {
+        for (int i = 0; i < domain_size; ++i) {
+            node->domain.push_back(
+                *ev2::pcg::select_randomly(values.begin(), values.end(), gen));
+        }
+    };
+
+    std::vector<unique_ptr<DGraphNode>> nodes{};
+
+    for (int i = 0; i < n_nodes; ++i) {
+        auto node = make_unique<DGraphNode>("A"+std::to_string(i), 10+i);
+        randomize_domain(node.get(), n_domains);
+        nodes.push_back(std::move(node));
+    }
+
+    std::vector<DGraphNode*> neighborhood(nodes.size());
+    std::transform(nodes.begin(), nodes.end(), neighborhood.begin(), [](auto& nptr){
+        return nptr.get();
+    });
+
+    std::vector<int> requirements{};
+    for (int i = 0; i < n_requirements; ++i) {
+        requirements.push_back(
+            *ev2::pcg::select_randomly(types.begin(), types.end(), gen));
+    }
+
+    Pattern p_center{0, requirements}; // type not important for this test
+
+    using clock = std::chrono::system_clock;
+    using sec = std::chrono::duration<double>;
+    // for milliseconds, use 
+    using ms = std::chrono::duration<double, std::milli>;
+
+    const auto before = clock::now();
+
+    p_center.valid(neighborhood);
+
+    const ms duration = clock::now() - before;
+
+    std::cout << duration.count() << " ms" << std::endl;
 }
 
 int main() {
@@ -671,9 +765,15 @@ int main() {
     test_pattern_validity0();
     test_pattern_validity1();
     test_pattern_validity2();
+    test_pattern_validity3();
 
     // wfc
     wfc_solver_grid0();
+
+    for (int i = 0; i < 20; ++i) {
+        cout << "perf " << i*100 << " ";
+        perf_validity(100*i, 100*i, 100*i);
+    }
 
     cout << "Done" << endl;
 

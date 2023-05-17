@@ -709,6 +709,9 @@ class Pattern {
     Pattern(int pattern_class, std::initializer_list<int> l,
             float weight = 1.f) noexcept
         : required_types{l}, pattern_type{pattern_class}, weight{weight} {}
+    Pattern(int pattern_class, const std::vector<int>& l,
+            float weight = 1.f) noexcept
+        : required_types{l}, pattern_type{pattern_class}, weight{weight} {}
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
