@@ -28,7 +28,7 @@ std::string ObjectMetadataDB::get_class_name(int class_id) const {
 }
 
 template<typename K, typename V>
-std::unordered_map<V, K> inverse_map(std::unordered_map<K, V> &map)
+std::unordered_map<V, K> inverse_map(const std::unordered_map<K, V> &map)
 {
     std::unordered_map<V, K> inv;
     std::for_each(map.begin(), map.end(),
@@ -74,7 +74,7 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
     return db;
 }
 
-void ObjectMetadataDB::write_database(std::string_view path) {
+void ObjectMetadataDB::write_database(std::string_view path) const {
     using json = nlohmann::json;
 
     std::unordered_map<std::string, int> object_classes = inverse_map(m_object_classes);
