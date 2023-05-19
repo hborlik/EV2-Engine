@@ -19,11 +19,20 @@ void SceneTree::node_renamed(Node *p_node) {
     assert(p_node);
 }
 
+void SceneTree::queue_destroy(Ref<Node> node) {
+    m_destroy_queue.push(node);
+}
+
 void SceneTree::update(float dt) {
     if (!current_scene->m_is_ready) {
         current_scene->node_propagate_ready();
     }
     current_scene->node_propagate_update(dt);
+
+    while(!m_destroy_queue.empty()) {
+        m_destroy_queue.front()->internal_destroy();
+        m_destroy_queue.pop();
+    }
 }
 
 void SceneTree::update_pre_render() {

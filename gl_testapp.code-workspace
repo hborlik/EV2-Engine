@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
+		"clangd.arguments": ["--header-insertion=never"],
 		"doxdocgen.generic.authorName": "Hunter Borlik",
 		"doxdocgen.generic.authorEmail": "",
 		"doxdocgen.file.copyrightTag": [

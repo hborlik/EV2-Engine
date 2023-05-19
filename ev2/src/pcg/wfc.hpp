@@ -7,10 +7,9 @@
 #ifndef WFC_H
 #define WFC_H
 
-#include <algorithm>
-#include <initializer_list>
-#include <utility>
+
 #include "evpch.hpp"
+
 
 namespace wfc {
 
@@ -715,6 +714,8 @@ class Pattern {
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
 
+    bool valid_approx(const std::vector<DGraphNode *> &neighborhood) const;
+
     std::vector<int> required_types{};
     int pattern_type{-1};
     float weight = 1.f; // relative probabilistic weight on this pattern
@@ -750,6 +751,11 @@ public:
     virtual void set_propagate_callback_func(const propagate_callback_t& callback) = 0;
 };
 
+enum class SolverValidMode {
+    Correct = 0,
+    Approximate
+};
+
 /**
  * @brief WFC has two stages. 
  *      1. collapse a node to force it to have a single value
@@ -758,9 +764,13 @@ public:
  */
 class WFCSolver : public IWFCSolver<DGraphNode> {
 public:
-    WFCSolver(Graph<DGraphNode>* graph, PatternMap patterns,
-            std::mt19937& gen)
-        : graph{graph}, gen{gen}, m_patterns{std::move(patterns)} {}
+ WFCSolver(Graph<DGraphNode>* graph, PatternMap patterns, std::mt19937& gen,
+           bool constraint_prop_solved, SolverValidMode mode)
+     : graph{graph},
+       gen{gen},
+       m_patterns{std::move(patterns)},
+       m_constraint_prop_solved{constraint_prop_solved},
+       m_validity_mode{mode} {}
 
     void step_wfc(DGraphNode* node) override {
         observe(node);
@@ -779,24 +789,29 @@ public:
     void propagate(DGraphNode* node) override {
         assert(node != nullptr);
         std::queue<DGraphNode*> propagation_stack;
+        std::unordered_set<DGraphNode*> visited_set;
         propagation_stack.push(node);
+        visited_set.insert(node);
         bool f = true; // force propagation on the first node
 
         while (!propagation_stack.empty()) {
             DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
 
-            // if (n->domain.size() <= 1 && !f) // skip solved nodes
-            //     continue;
+            if (!m_constraint_prop_solved && n->domain.size() <= 1 && !f) // skip solved nodes
+                continue;
 
-            if (update_domain(n) || f) { // only update neighbors if the domain changed
+            if (f || update_domain(n)) { // only update neighbors if the domain changed
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
                 std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
-                    
-                    propagation_stack.push(neighbor);
+
+                    auto itr = visited_set.insert(neighbor);
+                    if (itr.second) { // was inserted
+                        propagation_stack.push(neighbor);
+                    }
                 }
 
                 if (propagate_callback_func) propagate_callback_func(n);
@@ -840,6 +855,8 @@ public:
 
         // weighted random selection of available domain values
         node->set_value(weighted_pick_domain(node));
+
+        if (propagate_callback_func) propagate_callback_func(node);
     }
 
     void set_entropy_func(const entropy_callback_t& callback) override {
@@ -890,7 +907,18 @@ public:
         auto neighborhood = graph->adjacent_nodes(node);
         auto itr = m_patterns.find(value.value);
         auto end = m_patterns.end();
-        return (itr != end && itr->second.valid(neighborhood));
+        bool validity = false;
+        if (itr != end) {
+            switch(m_validity_mode) {
+                case SolverValidMode::Correct:
+                    validity = itr->second.valid(neighborhood);
+                break;
+                case SolverValidMode::Approximate:
+                    validity = itr->second.valid_approx(neighborhood);
+                break;
+            }
+        }
+        return validity;
     }
 
 private:
@@ -899,6 +927,9 @@ private:
     propagate_callback_t propagate_callback_func{};
     std::mt19937& gen;
     PatternMap m_patterns{};
+
+    bool m_constraint_prop_solved = true;
+    SolverValidMode m_validity_mode = SolverValidMode::Correct;
 };
 
 } // namespace pcg

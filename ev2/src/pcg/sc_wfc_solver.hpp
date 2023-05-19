@@ -10,24 +10,48 @@
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
-#include <functional>
-#include <queue>
-#include <unordered_set>
-#include "events/notifier.hpp"
 #include "evpch.hpp"
 
+#include "events/notifier.hpp"
 #include "pcg/wfc.hpp"
 #include "sc_wfc.hpp"
 #include "object_database.hpp"
 
 namespace ev2::pcg {
 
+enum class NewDomainMode {
+    Full = 0,
+    Dependent
+};
+
+enum class RefreshNeighborhoodRadius {
+    Never = 0,
+    Always
+};
+
+enum class DiscoveryMode {
+    EntropyOrder = 0,
+    DiscoveryOrder
+};
+
+struct SCWFCSolverArgs {
+    NewDomainMode domain_mode = NewDomainMode::Full;
+    wfc::SolverValidMode validity_mode = wfc::SolverValidMode::Correct;
+    DiscoveryMode solving_order = DiscoveryMode::DiscoveryOrder;
+    
+    RefreshNeighborhoodRadius node_neighborhood = RefreshNeighborhoodRadius::Never;
+
+    float neighbor_radius_fac = 3.f;
+    bool allow_revisit_node = false;
+};
+
 class SCWFCSolver {
 public:
     SCWFCSolver(SCWFC& scwfc_node, 
                 std::shared_ptr<ObjectMetadataDB> obj_db,
                 std::random_device& rd,
-                std::shared_ptr<renderer::Drawable> unsolved_drawable);
+                std::shared_ptr<renderer::Drawable> unsolved_drawable,
+                const SCWFCSolverArgs& args);
 
     void sc_propagate(int n, int brf, float mass);
 
@@ -93,11 +117,12 @@ private:
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
-    std::priority_queue<Ref<SCWFCGraphNode>, std::vector<Ref<SCWFCGraphNode>>, LessThanByEntropy> m_boundary;
+    // std::priority_queue<Ref<SCWFCGraphNode>, std::vector<Ref<SCWFCGraphNode>>, LessThanByEntropy> m_boundary;
+    std::queue<Ref<SCWFCGraphNode>> m_boundary;
     std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};
     std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
 
-    float m_neighbor_radius_fac = 3.f;
+    SCWFCSolverArgs m_args{};
 };
 
 } // namespace ev2::pcg

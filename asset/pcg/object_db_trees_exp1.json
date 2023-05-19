@@ -1,0 +1,396 @@
+{
+    "object_classes": {
+        "Fallen Tree": 13,
+        "Shrub": 11,
+        "Tree Forest Dark": 14,
+        "Tree2": 15
+    },
+    "object_data": {
+        "Fallen Tree": [
+            {
+                "asset_path": "asset/models/Fallen Tree/Fallen Tree.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 3.0,
+                "name": "Fallen Tree",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            -0.5815825462341309,
+                            0.0,
+                            -1.3590545654296875,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            12.111671447753906,
+                            1.0,
+                            12.301338195800781
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            }
+        ],
+        "Shrub": [
+            {
+                "asset_path": "asset/models/Large Shrub/shrub3.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 2.0,
+                "name": "Shrub",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            -3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            3.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            -3.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            3.0,
+                            0.0,
+                            3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            3.0,
+                            0.0,
+                            -3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            -3.0,
+                            0.0,
+                            3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    },
+                    {
+                        "center": [
+                            -3.0,
+                            0.0,
+                            -3.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            }
+        ],
+        "Tree Forest Dark": [
+            {
+                "asset_path": "asset/models/Autumn Tree/Autumn Tree.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 5.0,
+                "name": "Autum Tree",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            10.0,
+                            0.49600985646247864,
+                            10.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            },
+            {
+                "asset_path": "asset/models/Oak Tree/oakTree.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 5.0,
+                "name": "Oak Tree",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            10.0,
+                            1.0,
+                            10.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            }
+        ],
+        "Tree2": [
+            {
+                "asset_path": "asset/models/Acacia Tree/acaciaTree.obj",
+                "axis_settings": {
+                    "v": [
+                        1,
+                        0,
+                        1
+                    ]
+                },
+                "extent": 10.0,
+                "name": "Acacia Tree",
+                "propagation_patterns": [
+                    {
+                        "center": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "half_extents": [
+                            20.0,
+                            1.0,
+                            20.0
+                        ],
+                        "rotation": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    }
+                ],
+                "properties": {}
+            }
+        ]
+    },
+    "patterns": [
+        [
+            1,
+            {
+                "pattern_type": 11,
+                "required_types": [
+                    11,
+                    11,
+                    11,
+                    11
+                ],
+                "weight": 1.0
+            }
+        ],
+        [
+            5,
+            {
+                "pattern_type": 14,
+                "required_types": [
+                    14,
+                    14,
+                    14,
+                    14
+                ],
+                "weight": 0.5
+            }
+        ],
+        [
+            4,
+            {
+                "pattern_type": 13,
+                "required_types": [
+                    14,
+                    14,
+                    14,
+                    14
+                ],
+                "weight": 0.05000000074505806
+            }
+        ],
+        [
+            2,
+            {
+                "pattern_type": 15,
+                "required_types": [
+                    15
+                ],
+                "weight": 0.05000000074505806
+            }
+        ]
+    ]
+}

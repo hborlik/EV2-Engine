@@ -28,6 +28,16 @@ void Node::remove_child(Ref<Node> node) {
 }
 
 void Node::destroy() {
+    if (m_is_destroyed_queued)
+        return;
+
+    m_is_destroyed_queued = true;
+
+    if (scene_tree)
+        scene_tree->queue_destroy(this->get_ref<Node>());
+}
+
+void Node::internal_destroy() {
     if (m_is_destroyed)
         return;
 

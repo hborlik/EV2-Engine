@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <queue>
 
 #include "reference_counted.hpp"
 #include "scene/node.hpp"
@@ -38,9 +39,13 @@ private:
     void node_removed(Node *p_node);
     void node_renamed(Node *p_node);
 
+    void queue_destroy(Ref<Node> node);
+
 private:
     Ref<Node> current_scene = nullptr;
     int node_count = 0;
+
+    std::queue<Ref<Node>> m_destroy_queue{};
 };
 
 }

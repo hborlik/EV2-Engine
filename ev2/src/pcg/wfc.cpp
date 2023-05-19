@@ -38,7 +38,6 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
     return max_flow;
 }
 
-#if 1
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
@@ -137,9 +136,8 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     return true;
 }
 
-#else
 
-bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
+bool Pattern::valid_approx(const std::vector<DGraphNode*>& neighborhood) const {
     std::unordered_multiset<int> requirements{required_types.begin(), required_types.end()};
     std::vector<int> available_values{};
 
@@ -158,6 +156,6 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     return requirements.empty();
 }
 
-#endif
+
 
 }
