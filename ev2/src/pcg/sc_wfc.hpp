@@ -44,7 +44,7 @@ public:
 
     void on_child_added(Ref<Node> child, int index) override;
 
-    void update_all_adjacencies(Ref<SCWFCGraphNode> n, float radius);
+    void update_all_adjacencies(Ref<SCWFCGraphNode> n);
 
     glm::vec3 sphere_repulsion(const Sphere& sph) const;
 
@@ -81,7 +81,7 @@ public:
         VisualInstance::on_init();
 
         m_bounding_sphere = Sphere{get_world_position(), 1.f};
-        m_neighborhood_r = m_bounding_sphere.radius * 4.f;
+        m_neighborhood_r = m_bounding_sphere.radius;
     }
 
     void on_transform_changed(Ref<ev2::Node> origin) override {
@@ -90,7 +90,7 @@ public:
         m_bounding_sphere.center = get_world_position();
 
         if (auto parent = get_parent().ref_cast<SCWFC>(); parent) {
-            parent->update_all_adjacencies(this->get_ref<SCWFCGraphNode>(), m_neighborhood_r);
+            parent->update_all_adjacencies(this->get_ref<SCWFCGraphNode>());
         }
     }
 
@@ -103,12 +103,21 @@ public:
     float get_neighborhood_radius() noexcept {return m_neighborhood_r;}
 
     bool is_finalized() const noexcept {return m_is_finalized;}
+    bool is_solved() const noexcept {return m_is_solved;}
+
+    /**
+     * @brief Set node as finalized, this will lock the node from any further changes
+     *          by the solver
+     * 
+     */
     void set_finalized() noexcept {m_is_finalized = true;}
+    void set_solved() noexcept {m_is_solved = true;}
 
 private:
     Sphere m_bounding_sphere{};
     float m_neighborhood_r{};
     bool m_is_finalized = false;
+    bool m_is_solved = false;
 };
 
 class SCWFCAttractorNode : public VisualInstance {

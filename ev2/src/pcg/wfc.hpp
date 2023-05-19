@@ -740,12 +740,10 @@ public:
 public:
     virtual ~IWFCSolver() = default;
 
-    virtual T* step_wfc(T* node) = 0;
-    virtual bool can_continue() const noexcept = 0;
-
-    virtual T* propagate(T* node) = 0;
-    virtual bool observe(T* node) = 0;
-    virtual void collapse(T* node) = 0;
+    virtual void step_wfc(T* node) = 0;
+    virtual void propagate(T* node) = 0;
+    virtual bool update_domain(T* node) = 0;
+    virtual void observe(T* node) = 0;
 
     virtual float node_entropy(const T* node) const = 0;
     virtual void set_entropy_func(const entropy_callback_t& callback) = 0;
@@ -764,14 +762,10 @@ public:
             std::mt19937& gen)
         : graph{graph}, gen{gen}, m_patterns{std::move(patterns)} {}
 
-    DGraphNode* step_wfc(DGraphNode* node) override {
-        DGraphNode* solved_node = node ? node : next_node;
-        collapse(solved_node);
-        next_node = propagate(solved_node);
-        return solved_node;
+    void step_wfc(DGraphNode* node) override {
+        observe(node);
+        propagate(node);
     }
-
-    bool can_continue() const noexcept override {return next_node != nullptr;}
 
     auto get_pattern(int pattern_id) const {
         return m_patterns.find(pattern_id);
@@ -782,41 +776,32 @@ public:
      *
      * @param node
      */
-    DGraphNode* propagate(DGraphNode* node) override {
+    void propagate(DGraphNode* node) override {
         assert(node != nullptr);
         std::queue<DGraphNode*> propagation_stack;
         propagation_stack.push(node);
-        DGraphNode* min_e = nullptr;
-        float entropy = 0.f;
         bool f = true; // force propagation on the first node
+
         while (!propagation_stack.empty()) {
             DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
 
-            if (n->domain.size() <= 1 && !f) // skip solved nodes
-                continue;
+            // if (n->domain.size() <= 1 && !f) // skip solved nodes
+            //     continue;
 
-            if (observe(n) || f) { // only update neighbors if the domain changed
-                if (propagate_callback_func) propagate_callback_func(n);
+            if (update_domain(n) || f) { // only update neighbors if the domain changed
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
                 std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
-                    // if (neighbor->domain.size() > 1)
-                        propagation_stack.push(neighbor);
+                    
+                    propagation_stack.push(neighbor);
                 }
-            }
-            
-            if (float en = entropy_func ? entropy_func(node, n) : node_entropy(n);
-                n != node && 
-                (!min_e || en < entropy)) {
-                
-                min_e = n;
-                entropy = en;
+
+                if (propagate_callback_func) propagate_callback_func(n);
             }
         }
-        return min_e;
     }
 
     /**
@@ -824,7 +809,7 @@ public:
      *
      * @param node
      */
-    bool observe(DGraphNode* node) override {
+    bool update_domain(DGraphNode* node) override {
         assert(node != nullptr);
         bool changed = false;
         decltype(node->domain) new_domain{};
@@ -847,23 +832,14 @@ public:
      *
      * @param node
      */
-    void collapse(DGraphNode* node) override {
+    void observe(DGraphNode* node) override {
         assert(node != nullptr);
         
-        if (node->domain.size() == 0)
+        if (node->domain.size() <= 1)
             return;
 
-        if (node->domain.size() == 1) {
-            node->set_value(node->domain[0]);
-            return;
-        } else {
-            // weighted random selection of available domain values
-            node->set_value(weighted_pick_domain(node));
-        }
-    }
-
-    void set_next_node(DGraphNode* next) {
-        next_node = next;
+        // weighted random selection of available domain values
+        node->set_value(weighted_pick_domain(node));
     }
 
     void set_entropy_func(const entropy_callback_t& callback) override {
@@ -876,6 +852,8 @@ public:
 
     float node_entropy(const DGraphNode* node) const override {
         float sum = 0;
+        if (node->domain.size() == 1)
+            return 0;
         for (auto value : node->domain) {
             auto end = m_patterns.end();
             if (auto itr = m_patterns.find(value.value); itr != end) {
@@ -892,6 +870,9 @@ public:
      * @return int value picked
      */
     Val weighted_pick_domain(DGraphNode* node) const {
+        if (node->domain.size() == 1)
+            return node->domain[0];
+        
         std::vector<float> weights(node->domain.size());
         std::transform(node->domain.begin(), node->domain.end(), weights.begin(), [this](const wfc::Val& value) -> auto {
             float total_class_weight = 0.f;
@@ -914,7 +895,6 @@ public:
 
 private:
     Graph<DGraphNode>* graph = nullptr;
-    DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
     propagate_callback_t propagate_callback_func{};
     std::mt19937& gen;

@@ -27,7 +27,7 @@ void SCWFC::reset() {
 void SCWFC::remove_all_unsolved() {
     for (auto c : get_children()) {
         auto s_node = c.ref_cast<SCWFCGraphNode>();
-        if (s_node && !s_node->is_finalized()) {
+        if (s_node && s_node->domain.size() > 1) {
             c->destroy();
         }
     }
@@ -52,9 +52,9 @@ void SCWFC::on_child_added(Ref<Node> child, int index) {
     }
 }
 
-void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode> n, float radius) {
+void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode> n) {
     Sphere s = n->get_bounding_sphere();
-    s.radius = radius;
+    s.radius = n->get_neighborhood_radius();
     for (auto& c : get_children()) {
         auto c_wfc_node = c.ref_cast<SCWFCGraphNode>();
         if (c_wfc_node && c_wfc_node != n) {
@@ -89,7 +89,7 @@ bool SCWFC::intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n) {
     // for every node that has been added as an adjacent one
     for (auto& node : m_data->graph.adjacent_nodes(n.get())) {
         auto sc_node = dynamic_cast<SCWFCGraphNode*>(node);
-        if (sc_node && sc_node->domain.size() == 1) { // is it solved and non empty
+        if (sc_node && sc_node->is_solved()) { // is it solved
             const Sphere& bounds = sc_node->get_bounding_sphere();
             if (intersect(bounds, n->get_bounding_sphere())) {
                 return true;
@@ -102,7 +102,7 @@ bool SCWFC::intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n) {
 bool SCWFC::intersects_any(const Sphere& n) {
     for (auto& c : get_children()) {
         auto sc_node = c.ref_cast<SCWFCGraphNode>();
-        if (sc_node) { // is it solved and non empty
+        if (sc_node) {
             const Sphere& bounds = sc_node->get_bounding_sphere();
             if (intersect(bounds, n)) {
                 return true;

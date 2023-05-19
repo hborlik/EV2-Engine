@@ -30,7 +30,8 @@ SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node,
       obj_db{obj_db},
       wfc_solver{std::make_unique<wfc::WFCSolver>(
           scwfc_node.get_graph(), obj_db->make_pattern_map(), m_mt)},
-      unsolved_drawable{unsolved_drawable} {}
+      unsolved_drawable{unsolved_drawable},
+      m_boundary{LessThanByEntropy{wfc_solver.get()}} {}
 
 void SCWFCSolver::sc_propagate(int n, int brf, float repulsion) {
     // spawn seed node if empty
@@ -73,7 +74,6 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
     );
     const std::unordered_set<int> all_class_ids = {dest.begin(), dest.end()};
     
-    const float radius = 2.f;
     std::vector<Ref<SCWFCGraphNode>> nnodes{};
 
     // Entry for each spawned node that will be spawned
@@ -158,6 +158,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
             final_pos.y = 0; // TODO placement rules
 
             nnode->set_radius(en_radius);
+            nnode->set_neighborhood_radius(en_radius * m_neighbor_radius_fac);
             nnode->set_position(final_pos);
             if (node)
                 nnode->set_rotation(node->get_rotation());
@@ -201,7 +202,7 @@ void SCWFCSolver::wfc_solve(int steps) {
     for (int cnt = 0; cnt < steps;) {
         if (m_boundary.size() < 1)
             break;
-        auto n = m_boundary.front();
+        auto n = m_boundary.top();
         m_boundary.pop();
 
         if (n->is_destroyed()) // m_boundary will contain destroyed nodes
@@ -233,7 +234,7 @@ void SCWFCSolver::reevaluate_validity() {
     // note that m_discovered is modified when node is deleted
     for (auto itr = m_discovered.begin(); itr != m_discovered.end();) {
         auto s_node = *(itr++);
-        if (s_node && s_node->is_finalized() && !wfc_solver->valid(s_node->domain[0], s_node.get())) {
+        if (s_node && !s_node->is_finalized() && !wfc_solver->valid(s_node->domain[0], s_node.get())) {
             s_node->destroy();
         }
     }
@@ -242,7 +243,10 @@ void SCWFCSolver::reevaluate_validity() {
 void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
     assert(s_node);
 
-    if (s_node->is_finalized()) // node is already solved and complete
+    if (s_node->is_finalized()) // node is marked as locked by user
+        return;
+
+    if (s_node->is_destroyed()) // node is already destroyed
         return;
 
     auto model = unsolved_drawable;
@@ -284,14 +288,16 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
                 // rescale the object so that it fits withing the extent
                 const auto aabb_scaled = obj->get_scaled_bounding_box();
                 const float scale = obj->get_model_scale(); // scale uniformly
+                const float radius = aabb_scaled.min_diagonal() / 2.f;
 
 
                 s_node->set_model(model);
                 s_node->set_scale(glm::vec3{scale});
-                s_node->set_radius(aabb_scaled.min_diagonal() / 2.f);
+                s_node->set_radius(radius);
+                s_node->set_neighborhood_radius(radius * m_neighbor_radius_fac);
                 s_node->rotate(glm::vec3{0, rotation_y, 0});
                 s_node->set_position(s_node->get_position() * glm::vec3{1, 0, 1} + glm::vec3{0, -aabb_scaled.pMin.y, 0});
-                s_node->set_finalized();
+                s_node->set_solved();
 
                 if (scwfc_node.intersects_any_solved_neighbor(Ref{ s_node })) {
                     // remove nodes whose final bounding volume intersects solved nodes
@@ -306,10 +312,12 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
                             .radius};  // default to the same size
         const auto& aabb = model->bounding_box;
         const float scale = extent / glm::length(aabb.diagonal()); // scale uniformly
+        float radius = aabb.min_diagonal() * scale / 2.f;
 
         s_node->set_model(model);
         s_node->set_scale(glm::vec3{scale});
-        s_node->set_radius(aabb.min_diagonal() * scale / 2.f);
+        s_node->set_radius(radius);
+        s_node->set_neighborhood_radius(radius * m_neighbor_radius_fac);
     }
 }
 
@@ -331,6 +339,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::spawn_unsolved_node() {
 
     float en_radius = wfc_solver->node_entropy(nnode.get()) + glm::length(weighted_average_diagonal(nnode.get())) / 2.f;
     nnode->set_radius(en_radius);
+    nnode->set_neighborhood_radius(en_radius * m_neighbor_radius_fac);
 
     node_check_and_update(nnode.get());
 

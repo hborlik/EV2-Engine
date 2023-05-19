@@ -1,6 +1,7 @@
 #include "ui/ui.hpp"
 
 #include "glm/fwd.hpp"
+#include "scene/node.hpp"
 #include "ui/imgui.hpp"
 #include "ui/imgui_internal.hpp"
 #include "renderer/camera.hpp"
@@ -135,6 +136,8 @@ void Editor::show_scene_explorer(Node* scene, bool* p_open, const Camera* camera
     //     ImGuiWindowFlags_NoSavedSettings |
     //     ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration;
     if (m_selected_node) {
+        if (m_selected_node->is_destroyed())
+            select_node(scene->get_ref<Node>());
         
         // ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, io.DisplaySize.y), ImGuiCond_Always);
         // ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);

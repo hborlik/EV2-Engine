@@ -10,6 +10,8 @@
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
+#include <functional>
+#include <queue>
 #include <unordered_set>
 #include "events/notifier.hpp"
 #include "evpch.hpp"
@@ -67,6 +69,19 @@ public:
 
     auto get_discovered_size() const noexcept {return m_discovered.size();}
 
+private:
+    struct LessThanByEntropy {
+        LessThanByEntropy(wfc::WFCSolver* solver) : wfc_solver{solver} {}
+
+        bool operator()(const Ref<SCWFCGraphNode>& lhs, const Ref<SCWFCGraphNode>& rhs) const
+        {
+            // low to high values
+            return wfc_solver->node_entropy(lhs.get()) > wfc_solver->node_entropy(rhs.get());
+        }
+
+        wfc::WFCSolver* wfc_solver;
+    };
+
 public:
     DelegateListener<SCWFCGraphNode*> node_removed_listener{};
     DelegateListener<SCWFCGraphNode*> node_added_listener{};
@@ -78,9 +93,11 @@ private:
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
-    std::queue<Ref<SCWFCGraphNode>> m_boundary{};
+    std::priority_queue<Ref<SCWFCGraphNode>, std::vector<Ref<SCWFCGraphNode>>, LessThanByEntropy> m_boundary;
     std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};
     std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
+
+    float m_neighbor_radius_fac = 3.f;
 };
 
 } // namespace ev2::pcg

@@ -83,7 +83,9 @@ void ObjectMetadataDB::write_database(std::string_view path) const {
     std::unordered_map<std::string, std::vector<ObjectData>> object_data;
     std::for_each(m_obj_data.begin(), m_obj_data.end(),
                 [this, &object_data] (const auto &p) {
-                    object_data[m_object_classes[p.first]].push_back(p.second);
+                    auto itr = m_object_classes.find(p.first);
+                    if (itr != m_object_classes.end())
+                        object_data[itr->second].push_back(p.second);
                 });
 
     json j = json{{"object_data", object_data},

@@ -38,8 +38,7 @@ float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, c
     return max_flow;
 }
 
-// whoops
-#if 0
+#if 1
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
