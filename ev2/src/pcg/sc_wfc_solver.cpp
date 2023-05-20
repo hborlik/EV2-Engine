@@ -16,25 +16,96 @@
 
 namespace ev2::pcg {
 
+struct SCWFCSolver::BoundaryQueueEntropy : public SCWFCSolver::BoundaryQueue {
+
+    BoundaryQueueEntropy(wfc::WFCSolver* solver) : m_boundary{LessThanByEntropy{solver}} {
+
+    }
+
+    void push(Ref<SCWFCGraphNode> node) override {
+        m_boundary.push(node);
+    }
+
+    Ref<SCWFCGraphNode> pop_top() override {
+        auto top = m_boundary.top();
+        m_boundary.pop();
+        return top;
+    }
+
+    std::size_t size() override {
+        return m_boundary.size();
+    }
+
+    std::priority_queue<Ref<SCWFCGraphNode>, std::vector<Ref<SCWFCGraphNode>>, LessThanByEntropy> m_boundary;
+};
+
+struct SCWFCSolver::BoundaryQueueFIFO : public SCWFCSolver::BoundaryQueue {
+
+    void push(Ref<SCWFCGraphNode> node) override {
+        m_boundary.push(node);
+    }
+
+    Ref<SCWFCGraphNode> pop_top() override {
+        auto top = m_boundary.front();
+        m_boundary.pop();
+        return top;
+    }
+
+    std::size_t size() override {
+        return m_boundary.size();
+    }
+
+    std::queue<Ref<SCWFCGraphNode>> m_boundary;
+};
+
 SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node,
                          std::shared_ptr<ObjectMetadataDB> obj_db,
-                         std::random_device& rd,
+                         std::unique_ptr<std::mt19937> mt,
                          std::shared_ptr<renderer::Drawable> unsolved_drawable,
-                         const SCWFCSolverArgs& args)
+                         const SCWFCSolverArgs& args,
+                         std::unique_ptr<SCWFCSolver::BoundaryQueue> boundary_queue,
+                         std::unique_ptr<wfc::WFCSolver> wfc_solver)
     : node_removed_listener{decltype(node_added_listener)::delegate_t::create<
           SCWFCSolver, &SCWFCSolver::notify_node_removed>(this)},
       node_added_listener{decltype(node_added_listener)::delegate_t::create<
           SCWFCSolver, &SCWFCSolver::notify_node_added>(this)},
           
       scwfc_node{scwfc_node},
-      m_mt{rd()},
+      m_mt{std::move(mt)},
       obj_db{obj_db},
-      wfc_solver{std::make_unique<wfc::WFCSolver>(
-          scwfc_node.get_graph(), obj_db->make_pattern_map(), m_mt, args.allow_revisit_node, args.validity_mode)},
+      wfc_solver{std::move(wfc_solver)},
       unsolved_drawable{unsolved_drawable},
-    //   m_boundary{LessThanByEntropy{wfc_solver.get()}}
+      m_boundary{std::move(boundary_queue)},
       m_args{args}
        {}
+
+std::unique_ptr<SCWFCSolver> SCWFCSolver::make_solver(
+    SCWFC& scwfc_node, std::shared_ptr<ObjectMetadataDB> obj_db,
+    std::random_device& rd,
+    std::shared_ptr<renderer::Drawable> unsolved_drawable,
+    const SCWFCSolverArgs& args) {
+
+    
+    std::unique_ptr<BoundaryQueue> boundary_queue;
+    auto mt = std::make_unique<std::mt19937>(rd());
+    auto wfc_solver = std::make_unique<wfc::WFCSolver>(
+        scwfc_node.get_graph(), obj_db->make_pattern_map(), *mt.get(),
+        args.allow_revisit_node, args.validity_mode);
+
+    switch (args.solving_order) {
+        case DiscoveryMode::EntropyOrder:
+            boundary_queue =
+                std::make_unique<BoundaryQueueEntropy>(wfc_solver.get());
+            break;
+        case DiscoveryMode::DiscoveryOrder:
+            boundary_queue = std::make_unique<BoundaryQueueFIFO>();
+            break;
+    }
+
+    return std::unique_ptr<SCWFCSolver>{new SCWFCSolver{
+        scwfc_node, obj_db, std::move(mt), unsolved_drawable, args,
+        std::move(boundary_queue), std::move(wfc_solver)}};
+}
 
 void SCWFCSolver::sc_propagate(int n, int brf, float repulsion) {
     // spawn seed node if empty
@@ -105,7 +176,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                     break;
                     
                     case NewDomainMode::Dependent:
-                        if (wfc_solver->valid(domain_val, node) && binomial_trial(success, m_mt)) {
+                        if (wfc_solver->valid(domain_val, node) && binomial_trial(success, *m_mt.get())) {
                         // add all required classes
                         sp.domain_class_ids.insert(pattern->required_types.begin(), pattern->required_types.end());
                         } else {
@@ -119,21 +190,21 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 
                 // random trials for placements
                 for (int i = 0; i < 20; ++i) {
-                    const auto& [id, obj] = *select_randomly(obj_p, obj_e, m_mt);
+                    const auto& [id, obj] = *select_randomly(obj_p, obj_e, *m_mt.get());
                     const auto n_props = obj.propagation_patterns.size();
-                    if (!binomial_trial(success / n_props, m_mt))
+                    if (!binomial_trial(success / n_props, *m_mt.get()))
                         continue;
 
-                    const auto& obb = *select_randomly(obj.propagation_patterns.begin(), obj.propagation_patterns.end(), m_mt);
+                    const auto& obb = *select_randomly(obj.propagation_patterns.begin(), obj.propagation_patterns.end(), *m_mt.get());
                     // values within 3 standard deviations account for 99.7% of samples
                     std::normal_distribution<float> dist_x{0, obb.half_extents.x / 3};
                     std::normal_distribution<float> dist_y{0, obb.half_extents.y / 3};
                     std::normal_distribution<float> dist_z{0, obb.half_extents.z / 3};
 
                     glm::vec3 pos_in_obb {
-                        dist_x(m_mt),
-                        dist_y(m_mt),
-                        dist_z(m_mt)
+                        dist_x(*m_mt.get()),
+                        dist_y(*m_mt.get()),
+                        dist_z(*m_mt.get())
                     };
 
                     sp.positions.push_back(node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 1.f});
@@ -185,7 +256,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
     }
 
     if (!nnodes.empty())
-        node = select_randomly(nnodes.begin(), nnodes.end(), m_mt)->get();
+        node = select_randomly(nnodes.begin(), nnodes.end(), *m_mt.get())->get();
 
     return node->get_ref<SCWFCGraphNode>();
 }
@@ -210,10 +281,9 @@ void SCWFCSolver::wfc_solve(int steps) {
     // wfc_solver->set_entropy_func(entropy_func);
     wfc_solver->set_propagate_callback_func(propagate_update);
     for (int cnt = 0; cnt < steps;) {
-        if (m_boundary.size() < 1)
+        if (m_boundary->size() < 1)
             break;
-        auto n = m_boundary.front();
-        m_boundary.pop();
+        auto n = m_boundary->pop_top();
 
         if (n->is_destroyed()) // m_boundary will contain destroyed nodes
             continue;
@@ -226,7 +296,7 @@ void SCWFCSolver::wfc_solve(int steps) {
                 auto s_node = Ref{dynamic_cast<SCWFCGraphNode*>(dgn)};
                 const bool not_found = m_discovered.find(s_node) == m_discovered.end();
                 if (not_found) {
-                    m_boundary.push(s_node);
+                    m_boundary->push(s_node);
                     m_discovered.insert(s_node);
                 }
             });
@@ -275,7 +345,7 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
             const ObjectData* obj{};
             if (auto [itr, end] = obj_db->objs_for_id(pattern->pattern_type);
                 itr != end) {
-                auto& [id, obj_data] = *select_randomly(itr, end, m_mt);
+                auto& [id, obj_data] = *select_randomly(itr, end, *m_mt.get());
                 auto m = obj_data.loaded_model;
                 if (m) {
                     model = m;
@@ -415,12 +485,16 @@ glm::vec3 SCWFCSolver::weighted_average_diagonal(SCWFCGraphNode* s_node) {
 }
 
 bool SCWFCSolver::can_continue() const noexcept {
-    return !m_boundary.empty();
+    return !(m_boundary->size() == 0);
 }
 
 void SCWFCSolver::set_seed_node(Ref<SCWFCGraphNode> node) {
-    m_boundary.push(node);
+    m_boundary->push(node);
 }
+
+std::size_t SCWFCSolver::get_boundary_size() const noexcept {return m_boundary->size();}
+
+std::size_t SCWFCSolver::get_discovered_size() const noexcept {return m_discovered.size();}
 
 
 } // ev2::pcg
@@ -462,7 +536,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
             wfc::Val domain_val = wfc_solver->weighted_pick_domain(node);
             if (auto pattern = obj_db->get_pattern(domain_val.value); pattern != nullptr) { // pattern_id is valid
                 auto [obj_p, obj_e] = obj_db->objs_for_id(pattern->pattern_type);
-                const auto& [id, obj] = *select_randomly(obj_p, obj_e, m_mt);
+                const auto& [id, obj] = *select_randomly(obj_p, obj_e, *m_mt.get());
 
                 for (const auto& obb : obj.propagation_patterns) {
                     // values within 3 standard deviations account for 99.7% of samples
@@ -471,9 +545,9 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                     std::normal_distribution<float> dist_z{0, obb.half_extents.z / 3};
 
                     glm::vec3 pos_in_obb {
-                        dist_x(m_mt),
-                        dist_y(m_mt),
-                        dist_z(m_mt)
+                        dist_x(*m_mt.get()),
+                        dist_y(*m_mt.get()),
+                        dist_z(*m_mt.get())
                     };
                     glm::vec3 offset = node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 1.f};
                     offsets.push_back(offset);
@@ -518,7 +592,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
         }
 
         if (!nnodes.empty() && i % brf == 0)
-            node = select_randomly(nnodes.begin(), nnodes.end(), m_mt)->get();
+            node = select_randomly(nnodes.begin(), nnodes.end(), *m_mt.get())->get();
     }
     return node->get_ref<SCWFCGraphNode>();
 }

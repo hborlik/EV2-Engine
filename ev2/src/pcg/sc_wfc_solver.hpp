@@ -46,12 +46,30 @@ struct SCWFCSolverArgs {
 };
 
 class SCWFCSolver {
-public:
-    SCWFCSolver(SCWFC& scwfc_node, 
+private:
+    struct BoundaryQueue  {
+        virtual ~BoundaryQueue() = default;
+        virtual void push(Ref<SCWFCGraphNode> node) = 0;
+        virtual Ref<SCWFCGraphNode> pop_top() = 0;
+        virtual std::size_t size() = 0;
+    };
+    struct BoundaryQueueFIFO;
+    struct BoundaryQueueEntropy;
+
+    SCWFCSolver(SCWFC& scwfc_node,
                 std::shared_ptr<ObjectMetadataDB> obj_db,
-                std::random_device& rd,
+                std::unique_ptr<std::mt19937> mt,
                 std::shared_ptr<renderer::Drawable> unsolved_drawable,
-                const SCWFCSolverArgs& args);
+                const SCWFCSolverArgs& args,
+                std::unique_ptr<SCWFCSolver::BoundaryQueue> boundary_queue,
+                std::unique_ptr<wfc::WFCSolver> wfc_solver);
+
+public:
+    static std::unique_ptr<SCWFCSolver> make_solver(
+        SCWFC& scwfc_node, std::shared_ptr<ObjectMetadataDB> obj_db,
+        std::random_device& rd,
+        std::shared_ptr<renderer::Drawable> unsolved_drawable,
+        const SCWFCSolverArgs& args);
 
     void sc_propagate(int n, int brf, float mass);
 
@@ -89,9 +107,8 @@ public:
         m_discovered.erase(node->get_ref<SCWFCGraphNode>());
     }
 
-    auto get_boundary_size() const noexcept {return m_boundary.size();}
-
-    auto get_discovered_size() const noexcept {return m_discovered.size();}
+    std::size_t get_boundary_size() const noexcept;
+    std::size_t get_discovered_size() const noexcept;
 
 private:
     struct LessThanByEntropy {
@@ -112,13 +129,12 @@ public:
 
 private:
     SCWFC& scwfc_node;
-    std::mt19937 m_mt;
+    std::unique_ptr<std::mt19937> m_mt;
     std::shared_ptr<ObjectMetadataDB> obj_db;
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
-    // std::priority_queue<Ref<SCWFCGraphNode>, std::vector<Ref<SCWFCGraphNode>>, LessThanByEntropy> m_boundary;
-    std::queue<Ref<SCWFCGraphNode>> m_boundary;
+    std::unique_ptr<BoundaryQueue> m_boundary;
     std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};
     std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
 

@@ -151,6 +151,11 @@ void SCWFCEditor::show_editor_tool() {
             reset_solver();
         }
 
+        constexpr const char* DiscoveryMode[] = {"EntropyOrder", "DiscoveryOrder"};
+        if (ImGui::Combo("Solving Order", (int*)&m_solver_args.solving_order, DiscoveryMode, IM_ARRAYSIZE(DiscoveryMode))) {
+            reset_solver();
+        }
+
         constexpr const char* ValidityModes[] = {"Correct", "Approximate"};
         if (ImGui::Combo("Solver Validity Mode", (int*)&m_solver_args.validity_mode, ValidityModes, IM_ARRAYSIZE(ValidityModes))) {
             reset_solver();
@@ -1015,7 +1020,7 @@ void SCWFCEditor::on_selected_node(Node* node) {
 
 void SCWFCEditor::reset_solver() {
     if (m_obj_db) {
-        m_scwfc_solver = std::make_unique<SCWFCSolver>(*m_scwfc_node, m_obj_db, m_rd, m_unsolved_drawable, m_solver_args);
+        m_scwfc_solver = SCWFCSolver::make_solver(*m_scwfc_node, m_obj_db, m_rd, m_unsolved_drawable, m_solver_args);
         // attach notification events scene nodes being removed
         m_scwfc_solver->node_added_listener.subscribe(&m_scwfc_node->child_node_added);
         m_scwfc_solver->node_removed_listener.subscribe(&m_scwfc_node->child_node_removed);
