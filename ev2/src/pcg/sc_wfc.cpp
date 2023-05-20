@@ -75,11 +75,11 @@ glm::vec3 SCWFC::sphere_repulsion(const Sphere& sph) const {
         auto graph_node = c.ref_cast<SCWFCGraphNode>();
         if (graph_node) {
             const Sphere& bounds = graph_node->get_bounding_sphere();
-            if (intersect(bounds, sph)) {
+            // if (intersect(bounds, sph)) {
                 glm::vec3 c2c = bounds.center - sph.center;
                 float r2 = glm::dot(c2c, c2c);
                 net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / r2;
-            }
+            // }
         }
     }
     return net;
