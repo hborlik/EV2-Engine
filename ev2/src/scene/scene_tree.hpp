@@ -12,7 +12,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <queue>
 
 #include "reference_counted.hpp"
 #include "scene/node.hpp"
@@ -25,6 +24,7 @@ class Node;
 class SceneTree {
 public:
     SceneTree() = default;
+    ~SceneTree();
 
     void update(float dt);
     void update_pre_render();

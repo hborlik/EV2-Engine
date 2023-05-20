@@ -4,6 +4,15 @@
 
 namespace ev2 {
 
+SceneTree::~SceneTree() {
+    current_scene->destroy();
+
+    while(!m_destroy_queue.empty()) {
+        m_destroy_queue.front()->internal_destroy();
+        m_destroy_queue.pop();
+    }
+}
+
 void SceneTree::node_added(Node* p_node) {
     assert(p_node);
     p_node->scene_tree = this;

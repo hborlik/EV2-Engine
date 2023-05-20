@@ -63,6 +63,7 @@ struct VertexBufferLayout {
     }
 
     VertexBufferLayout& finalize() {
+        assert(!finalized());
         uint32_t total_size = 0;
         for (auto& l : attributes) {
             l.offset = total_size;

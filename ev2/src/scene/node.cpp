@@ -35,6 +35,10 @@ void Node::destroy() {
 
     if (scene_tree)
         scene_tree->queue_destroy(this->get_ref<Node>());
+
+    for (auto& c : children) {
+        c->destroy();
+    }
 }
 
 void Node::internal_destroy() {
@@ -46,7 +50,7 @@ void Node::internal_destroy() {
     // fast remove and destroy all children
     for (auto& c : children) {
         c->remove_from_parent(); // prevent child from calling remove_child and invalidating children list
-        c->destroy();
+        c->internal_destroy();
     }
     children = {};
 
