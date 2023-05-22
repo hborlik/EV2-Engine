@@ -1176,6 +1176,22 @@ void Renderer::render(const Camera &camera) {
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
 
+
+    // g_buffer.bind();
+    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // // GL_CHECKED_CALL(glNamedFramebufferReadBuffer(g_buffer.get_handle(), (GLenum)gl::FBOAttachment::COLOR4));
+    // glReadBuffer((GLenum)gl::FBOAttachment::COLOR3);
+    // unsigned char data[4] = {};
+    // GL_CHECKED_CALL(glReadnPixels(width/2, height/2, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_BYTE, sizeof(data), data));
+    // g_buffer.unbind();
+
+    // std::cout << "size: " << (sizeof(data)) << " Center ID: ";
+    // for (int i = 0; i < sizeof(data)/sizeof(data[0]); ++i) {
+    //     std::cout << (int)data[i] << ", ";
+    // } 
+    // std::cout << "\n";
+
+
     // std::cout << "render() elapsed time: " << elapsed_seconds.count() << "s\n";
 }
 

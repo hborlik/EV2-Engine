@@ -130,6 +130,10 @@ struct MaterialData {
     }
 };
 
+struct Pickable {
+
+};
+
 // instance drawable primitive setup
 
 struct Primitive {
