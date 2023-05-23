@@ -10,19 +10,22 @@
 
 #include <chrono>
 #include <ostream>
+#include <iostream>
 #include <iomanip>
 
 
 class Timer {
 public:
-    Timer(std::string_view name) :
+    Timer(std::string_view name, bool print = true) :
         m_name{name.data()},
-        m_timer_start{std::chrono::system_clock::now()} {}
+        m_timer_start{std::chrono::system_clock::now()},
+        m_print{print} {}
 
     ~Timer() {
         if (!m_stopped) {
             stop();
-            std::cout << to_string(*this) << std::endl;
+            if (m_print)
+                std::cout << to_string(*this) << std::endl;
         }
     }
 
@@ -54,6 +57,7 @@ private:
     const char* m_name;
     std::chrono::time_point<std::chrono::system_clock> m_timer_start, m_timer_stop;
     bool m_stopped = false;
+    const bool m_print = true;
 };
 
 #endif // TIMER_HPP

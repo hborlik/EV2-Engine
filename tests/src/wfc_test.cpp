@@ -755,43 +755,43 @@ struct PerfExp {
     const int n_samples = 5;
 
     const int n_trials = 3;
-    const int n_step = 5;
-    const int n_initial = 1;
+    const int n_step = 100; // varying A
+    const int n_initial = 100;
 
     const int d_trials = 1000;
-    const int d_step = 5;
+    const int d_step = 5; // varying D
     const int d_initial = 1;
 
     const int r_trials = 1;
-    const int r_step = 0;
+    const int r_step = 0; // fixed R
     const int r_initial = 20;
 };
 
-PerfExp varying_nodes_domain{};
+PerfExp validity_timing_AD{};
 
-PerfExp varying_nodes_req {
-    5,
+PerfExp validity_timing_AR {
+    5, 
     3,
-    5,
+    5, // varying A
     1,
     1,
-    0,
+    0, // fixed D
     10,
     1000,
-    5,
+    5, // varying R
     1
 };
 
-PerfExp varying_domain_req {
+PerfExp validity_timing_DR_1 {
     5,
-    1,
-    0,
+    1, 
+    0, // fixed A
     500,
     3,
-    100,
+    100, // varying D
     1,
     1000,
-    1,
+    1, // varying R
     1
 };
 
@@ -892,13 +892,13 @@ int main(int argc, const char** argv) {
         return 0;
     switch (argv[1][0]) {
         case '1':
-            perf_exp(varying_nodes_domain);
+            perf_exp(validity_timing_AD);
             break;
         case '2':
-            perf_exp(varying_nodes_req);
+            perf_exp(validity_timing_AR);
             break;
         case '3':
-            perf_exp(varying_domain_req);
+            perf_exp(validity_timing_DR_1);
             break;
         default:
             break;

@@ -13,6 +13,7 @@
 #include "pcg/distributions.hpp"
 #include "pcg/object_database.hpp"
 #include "scene/node.hpp"
+#include "timer.hpp"
 
 namespace ev2::pcg {
 
@@ -281,6 +282,7 @@ void SCWFCSolver::wfc_solve(int steps) {
     // wfc_solver->set_entropy_func(entropy_func);
     wfc_solver->set_propagate_callback_func(propagate_update);
     for (int cnt = 0; cnt < steps;) {
+        // Timer timer{"wfc_solve", false};
         if (m_boundary->size() < 1)
             break;
         auto n = m_boundary->pop_top();
@@ -290,6 +292,8 @@ void SCWFCSolver::wfc_solve(int steps) {
 
         // add all adjacent nodes to the solver boundary
         auto adjacent = scwfc_node.get_graph()->adjacent_nodes(n.get());
+        // int domain_size = n->domain.size();
+        // int adjacent_size = adjacent.size();
         std::for_each(
             adjacent.begin(), adjacent.end(), [this](auto* dgn) -> void {
 
@@ -307,6 +311,9 @@ void SCWFCSolver::wfc_solve(int steps) {
 
         // node_check_and_update(n.get());
         ++cnt;
+
+        // timer.stop();
+        // std::cout << domain_size << "\t" << adjacent_size << "\t" << timer.elapsed_ms() << "\n";
     }
 }
 
