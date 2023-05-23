@@ -8,8 +8,14 @@
 
 #include "pcg/wfc.hpp"
 #include "pcg/grid.hpp"
+#include "timer.hpp"
 
 #include "pcg/distributions.hpp"
+
+// #define ENABLE_TESTS
+#define ENABLE_PERF
+
+#define assert_throws(fn, exception) {bool threw = false; try{fn;} catch (exception& e) {threw = true;} assert(threw);}
 
 using namespace std;
 using namespace wfc;
@@ -23,6 +29,10 @@ void sparse_test_empty() {
     unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
 
     assert(s.adjacent(n_a.get(), n_b.get()) == 0.f);
+    assert(s.adjacent_nodes(n_a.get()) == std::vector<GraphNode*>{});
+    assert(s.get_n_nodes() == 0);
+
+    s.remove_node(n_a.get());
 }
 
 
@@ -35,6 +45,11 @@ void dense_test_empty() {
     unique_ptr<GraphNode> n_b = make_unique<GraphNode>("B", 2);
 
     assert(s.adjacent(n_a.get(), n_b.get()) == 0.f);
+    assert(s.adjacent_nodes(n_a.get()) == std::vector<GraphNode*>{});
+    assert(s.get_n_nodes() == 0);
+
+
+    assert_throws(s.remove_node(n_a.get()), std::runtime_error);
 }
 
 void adjacent_abc(Graph<GraphNode>* s) {
@@ -122,6 +137,8 @@ void add_remove_abcd(SparseGraph<GraphNode>* s) {
 
     assert(s->adjacent(d, a) == 0.f);
     assert(s->adjacent(a, d) == 0.f);
+
+    assert(s->get_n_nodes() == 3);
 
     std::cout << *s << std::endl;
 }
@@ -639,6 +656,7 @@ void test_pattern_validity3() {
     assert(!p_center.valid(neighborhood));
 }
 
+#if 0
 void wfc_solver_grid0() {
     ev2::pcg::NodeGrid ngrid{3, 3};
     std::cout << ngrid.get_graph() << std::endl;
@@ -675,9 +693,12 @@ void wfc_solver_grid0() {
         std::cout << to_string(ngrid) << std::endl;
     }
 }
+#endif
 
-void perf_validity(int n_nodes, int n_domains, int n_requirements) {
+float perf_validity(int n_nodes, int n_domains, int n_requirements) {
     // std::cout << __FUNCTION__ << std::endl;
+
+    assert(n_domains > 0);
 
     std::random_device rd{};
     std::mt19937 gen{rd()};
@@ -722,21 +743,114 @@ void perf_validity(int n_nodes, int n_domains, int n_requirements) {
 
     Pattern p_center{0, requirements}; // type not important for this test
 
-    using clock = std::chrono::system_clock;
-    using sec = std::chrono::duration<double>;
-    // for milliseconds, use 
-    using ms = std::chrono::duration<double, std::milli>;
-
-    const auto before = clock::now();
+    Timer timer{"p_center.valid"};
 
     p_center.valid(neighborhood);
-
-    const ms duration = clock::now() - before;
-
-    std::cout << duration.count() << " ms" << std::endl;
+    
+    timer.stop();
+    return timer.elapsed_ms();
 }
 
-int main() {
+struct PerfExp {
+    const int n_samples = 5;
+
+    const int n_trials = 3;
+    const int n_step = 5;
+    const int n_initial = 1;
+
+    const int d_trials = 1000;
+    const int d_step = 5;
+    const int d_initial = 1;
+
+    const int r_trials = 1;
+    const int r_step = 0;
+    const int r_initial = 20;
+};
+
+PerfExp varying_nodes_domain{};
+
+PerfExp varying_nodes_req {
+    5,
+    3,
+    5,
+    1,
+    1,
+    0,
+    10,
+    1000,
+    5,
+    1
+};
+
+PerfExp varying_domain_req {
+    5,
+    1,
+    0,
+    500,
+    3,
+    100,
+    1,
+    1000,
+    1,
+    1
+};
+
+void progress(float progress) {
+    // see https://stackoverflow.com/questions/14539867/how-to-display-a-progress-indicator-in-pure-c-c-cout-printf
+    if (progress < 1.0) {
+        int barWidth = 50;
+
+        std::clog << "[";
+        int pos = barWidth * progress;
+        for (int i = 0; i < barWidth; ++i) {
+            if (i < pos) std::clog << "=";
+            else if (i == pos) std::clog << ">";
+            else std::clog << " ";
+        }
+        std::clog << "] " << int(progress * 100.0) << " %\r";
+        std::clog.flush();
+    } else {
+        std::clog << std::endl;
+    }
+}
+
+void perf_exp(const PerfExp& exp) {
+
+    const int n_samples = exp.n_samples;
+    const int n_trials = exp.n_trials;
+    const int n_step = exp.n_step;
+    const int n_initial = exp.n_initial;
+    const int d_trials = exp.d_trials;
+    const int d_step = exp.d_step;
+    const int d_initial = exp.d_initial;
+    const int r_trials = exp.r_trials;
+    const int r_step = exp.r_step;
+    const int r_initial = exp.r_initial;
+    const int total = n_samples*n_trials*d_trials*r_trials;
+    int cnt = 0;
+
+    std::cout << "NReq" << "\t" << "NNode" << "\t" << "NDomain" << "\t" << "Time(ms)" << "\n";
+    for (int sample2 = 0; sample2 < n_samples; ++sample2)
+        for (int n = 0; n < n_trials; ++n)
+            for (int d = 0; d < d_trials; ++d)
+                for (int r = 0; r < r_trials; ++r) {
+
+                    progress(float(cnt++)/total);
+
+                    const int n_nodes = n_step*n + n_initial;
+                    const int n_domains =  d_step*d + d_initial;
+                    const int n_req = r_step*r + r_initial;
+
+                    float t = perf_validity(n_nodes, n_domains, n_req);
+                    std::cout << n_req << "\t" << n_nodes << "\t" << n_domains << "\t" << t << std::endl;
+                }
+
+    progress(1.0f);
+
+}
+
+int main(int argc, const char** argv) {
+#ifdef ENABLE_TESTS
     sparse_test_empty();
     sparse_test_add();
     sparse_test_remove();
@@ -768,14 +882,29 @@ int main() {
     test_pattern_validity3();
 
     // wfc
-    wfc_solver_grid0();
+    // wfc_solver_grid0();
 
-    for (int i = 0; i < 20; ++i) {
-        cout << "perf " << i*100 << " ";
-        perf_validity(100*i, 100*i, 100*i);
+    cout << "Tests Done" << endl;
+#endif // ENABLE_TESTS
+
+#ifdef ENABLE_PERF
+    if (argc < 2)
+        return 0;
+    switch (argv[1][0]) {
+        case '1':
+            perf_exp(varying_nodes_domain);
+            break;
+        case '2':
+            perf_exp(varying_nodes_req);
+            break;
+        case '3':
+            perf_exp(varying_domain_req);
+            break;
+        default:
+            break;
     }
-
-    cout << "Done" << endl;
+#endif // ENABLE_PERF
+    
 
     return 0;
 }

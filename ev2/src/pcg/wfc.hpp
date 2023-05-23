@@ -92,10 +92,21 @@ namespace wfc {
 
 class Pattern;
 
+class Node {
+public:
+    Node(int node_id): node_id{ node_id } {
+        assert(node_id != -1);
+    }
+
+    virtual ~Node() = default;
+
+    const int               node_id = -1;
+};
+
 
 class GraphNode {
 public:
-    GraphNode(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
+    GraphNode(std::string_view identifier, int node_id): node_id{ node_id }, identifier{identifier.data()} {
         assert(node_id != -1);
     }
 
@@ -121,7 +132,7 @@ public:
 };
 
 template<typename T,
-    typename = std::enable_if_t<std::is_base_of_v<GraphNode, T>>>
+    typename = std::enable_if_t<std::is_base_of_v<GraphNode, T> || std::is_base_of_v<Node, T>>>
 class Graph {
 public:
     virtual ~Graph() {}
@@ -213,23 +224,15 @@ public:
             std::swap(a, b);
         }
 
-        coord c{ a_i->mat_coord, b_i->mat_coord };
+        // takes care of directed vs undirected graphs
+        if (!add_i_edge_sam(a_i, b_i, v))
+            return;
 
-        if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
-            return; // already added
-
-        if (!m_is_directed && c.x == c.y)
-            return; // no self loops (diagonals)
-        
         // build adjacency information
         a_i->adjacent_nodes.push_back(b);
         if (!m_is_directed)
             b_i->adjacent_nodes.push_back(a);
 
-        auto& sam = sparse_adjacency_map[c];
-        sam.i_nodeA = a_i;
-        sam.i_nodeB = b_i;
-        sam.w = v;
     }
 
     void remove_edge(T* a, T* b) override {
@@ -241,8 +244,9 @@ public:
         if (!(a_i && b_i))
             return;
 
-        // no distinction between directed and undirected graphs here 
-        remove_i_edge_sam(a_i, b_i);
+        // takes care of directed vs undirected graphs
+        if (!remove_i_edge_sam(a_i, b_i))
+            return;
 
         // erase element from adjacency lists
         auto& vec = a_i->adjacent_nodes;
@@ -306,11 +310,10 @@ public:
 
     std::vector<T*> adjacent_nodes(const T* a) const override {
         assert(a != nullptr);
-        std::vector<T*> output{};
         const internal_node* a_i = get_i_node(a);
 
         if (a_i == nullptr)
-            return output;
+            return {};
 
         return a_i->adjacent_nodes;
     }
@@ -319,11 +322,48 @@ public:
 
     int get_n_nodes() const noexcept override { return node_map.size(); }
 
+    /**
+     * @brief Make map of <node_id -> bool> for use in marking visitation
+     * 
+     * @return std::unordered_map<int, bool> 
+     */
     std::unordered_map<int, bool> make_visited_map() const override {
         std::unordered_map<int, bool> out(get_n_nodes());
         for (const auto& [k, _] : node_map)
             out.insert({ k, false });
         return out;
+    }
+
+    bool bfs(internal_node* a_ind, internal_node* b_ind, std::unordered_map<int, internal_node*>& parent) const {
+        assert(a_ind && b_ind);
+        parent.clear();
+
+        auto visited = make_visited_map();
+
+        std::queue<internal_node*> q{};
+        q.push(a_ind);
+        visited[a_ind->node->node_id] = true;
+
+        while (!q.empty()) {
+            internal_node* u_ind = q.front();
+            q.pop();
+            // visit n, for each adjacent node
+            for (auto v_ind : u_ind->adjacent_nodes) {
+                internal_node* v_ind_i = get_i_node(v_ind);
+                // if this node has not been visited and adjacent (from u to v)
+                if (!visited[v_ind] && adjacent_sam(u_ind, v_ind_i) > 0.f) {
+                    q.push(v_ind);
+                    visited[v_ind] = true;
+                    parent[v_ind] = u_ind; // v was reached from u
+
+                    if (v_ind == b_ind) {
+                        // found target, starting from target, record all parents into path
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 private:
@@ -362,6 +402,46 @@ private:
         return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_i_node(node));
     }
 
+    float adjacent_sam(internal_node* a_i, internal_node* b_i) const {
+        if (a_i == nullptr || b_i == nullptr)
+            return 0.f;
+
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
+            std::swap(a_i, b_i);
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        if (!m_is_directed && c.x == c.y)
+            return 0.f; // no self loops (diagonals)
+
+        auto itr = sparse_adjacency_map.find(c);
+        if (itr != sparse_adjacency_map.end())
+            return itr->second.w;
+        return 0.f;
+    }
+
+    bool add_i_edge_sam(internal_node* a_i, internal_node* b_i, float w) {
+        // enforce populating only the upper triangular matrix
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
+            std::swap(a_i, b_i);
+        }
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
+            return false; // already added
+
+        if (!m_is_directed && c.x == c.y)
+            return false; // no self loops (diagonals)
+        
+        auto& sam = sparse_adjacency_map[c];
+        sam.i_nodeA = a_i;
+        sam.i_nodeB = b_i;
+        sam.w = w;
+
+        return true;
+    }
+
     bool remove_i_edge_sam(internal_node* a_i, internal_node* b_i) {
         // enforce populating only the upper triangular matrix
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
@@ -389,12 +469,12 @@ private:
 
         std::vector<T*> node_order{};
         for (auto& [i, i_node] : graph.node_map) {
-            out << std::setw(10) << i_node.node->identifier;
+            out << std::setw(10) << i_node.node->node_id;
             node_order.push_back(i_node.node);
         }
         out << "\n" << std::setprecision(5);
         for (auto& [i, i_node] : graph.node_map) {
-            out << std::setw(10) << i_node.node->identifier;
+            out << std::setw(10) << i_node.node->node_id;
             
             // print row of adjacencies for this node
             for (auto j_node : node_order) {
@@ -665,11 +745,11 @@ private:
             out << "_From column_ \n";
         out << std::setw(10) << "_";
         for (int j = 0; j < graph.get_n_nodes(); ++j) {
-            out << std::setw(10) << graph.m_nodes[j]->identifier;
+            out << std::setw(10) << graph.m_nodes[j]->node_id;
         }
         out << "\n" << std::setprecision(5);
         for (int i = 0; i < graph.get_n_nodes(); ++i) {
-            out << std::setw(10) << graph.m_nodes[i]->identifier;
+            out << std::setw(10) << graph.m_nodes[i]->node_id;
             for (int j = 0; j < graph.get_n_nodes(); ++j)
                 out << std::setw(10) << graph.adjacent(i, j);
             out << "\n";
@@ -694,7 +774,43 @@ private:
  * @param residual_graph optional residual graph output
  * @return int max flow
  */
-float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph);
+// float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph);
+
+template<typename T>
+float ford_fulkerson(const DenseGraph<T>& dg, const T* source, const T* sink, DenseGraph<T>* residual_graph) {
+    // based on https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
+    assert(source && sink);
+
+    DenseGraph<T> residual = dg;
+
+    float max_flow = 0.f;
+
+    int s_ind = residual.get_node_index(source);
+    int t_ind = residual.get_node_index(sink);
+
+    std::vector<int> parent;
+    while (residual.bfs(s_ind, t_ind, parent)) {
+        // find the minimum residual capacity along the 
+        // path in residual graph
+        float path_flow = INFINITY;
+        for (int v = t_ind; v != s_ind; v = parent[v]) {
+            int u = parent[v];
+            path_flow = std::min(path_flow, residual.adjacent(u, v));
+        }
+
+        // update residual capacities on the path edges
+        for (int v = t_ind; v != s_ind; v = parent[v]) {
+            int u = parent[v];
+            residual.adjacent(u, v) -= path_flow;
+            residual.adjacent(v, u) += path_flow;
+        }
+
+        max_flow += path_flow;
+    }
+    if (residual_graph)
+        *residual_graph = residual;
+    return max_flow;
+}
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output

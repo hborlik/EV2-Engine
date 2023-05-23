@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <cstddef>
-#include <pcg/sc_wfc.hpp>
+
+#include "pcg/sc_wfc.hpp"
+#include "timer.hpp"
 
 namespace ev2::pcg {
 
@@ -53,6 +55,7 @@ void SCWFC::on_child_added(Ref<Node> child, int index) {
 }
 
 void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode> n) {
+    // Timer timer{__FUNCTION__};
     Sphere s = n->get_bounding_sphere();
     s.radius = n->get_neighborhood_radius();
     for (auto& c : get_children()) {
@@ -67,6 +70,8 @@ void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode> n) {
             }
         }
     }
+    // timer.stop();
+    // std::cout << get_n_children() << "\t" << timer.elapsed_ms() << "ms" << "\n";
 }
 
 glm::vec3 SCWFC::sphere_repulsion(const Sphere& sph) const {

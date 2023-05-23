@@ -3,41 +3,6 @@
 
 namespace wfc {
 
-float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph) {
-    // based on https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
-    assert(source && sink);
-
-    DenseGraph<GraphNode> residual = dg;
-
-    float max_flow = 0.f;
-
-    int s_ind = residual.get_node_index(source);
-    int t_ind = residual.get_node_index(sink);
-
-    std::vector<int> parent;
-    while (residual.bfs(s_ind, t_ind, parent)) {
-        // find the minimum residual capacity along the 
-        // path in residual graph
-        float path_flow = INFINITY;
-        for (int v = t_ind; v != s_ind; v = parent[v]) {
-            int u = parent[v];
-            path_flow = std::min(path_flow, residual.adjacent(u, v));
-        }
-
-        // update residual capacities on the path edges
-        for (int v = t_ind; v != s_ind; v = parent[v]) {
-            int u = parent[v];
-            residual.adjacent(u, v) -= path_flow;
-            residual.adjacent(v, u) += path_flow;
-        }
-
-        max_flow += path_flow;
-    }
-    if (residual_graph)
-        *residual_graph = residual;
-    return max_flow;
-}
-
 bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     /* matching problem (edges are between required values and neighbors with that value in domain)
      * map required values one-to-one (perfect matching) with available neighbors
@@ -49,28 +14,37 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
     if (neighborhood.size() == 0)
         return false;
 
+    // can't satisfy requirements
+    if (required_types.size() > neighborhood.size())
+        return false;
+
+    using GN = Node;
+
     struct ValueAndNode {
         int v;
-        GraphNode* p;
+        GN* p;
     };
     std::vector<ValueAndNode> neigh_values{};   // values in neighborhood with associated node in flow graph
     std::vector<ValueAndNode> required{};       // required values and associated node in flow graph
 
+    neigh_values.reserve(neighborhood.size());
+    required.reserve(required_types.size());
+
     // extra two capacity for source and sink
-    DenseGraph<GraphNode> dg{ (int)neighborhood.size() + (int)required_types.size() + 2, true };
+    DenseGraph<GN> dg{ (int)neighborhood.size() + (int)required_types.size() + 2, true };
 
     /* construct flow graph */
 
     // node references
-    auto source = std::make_unique<GraphNode>("source", 2);
-    auto sink = std::make_unique<GraphNode>("sink", 3);
-    std::vector<std::unique_ptr<GraphNode>> req_nodes{};
-    std::vector<std::unique_ptr<GraphNode>> neigh_nodes{};
+    auto source = std::make_unique<GN>(2);
+    auto sink = std::make_unique<GN>(3);
+    std::vector<std::unique_ptr<GN>> req_nodes{};
+    std::vector<std::unique_ptr<GN>> neigh_nodes{};
     
     // for each required value, create a node in flow graph and connect it to source
     int id = 4;
     for (auto& rv : required_types) {
-        auto req_node = std::make_unique<GraphNode>("req:" + std::to_string(rv), ++id);
+        auto req_node = std::make_unique<GN>(++id);
         dg.add_edge(source.get(), req_node.get(), 1.f);
         required.push_back(ValueAndNode{
             .v = rv,
@@ -83,7 +57,7 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
 
     // for each neighbor, create a node in flow graph and connect it to sink
     for (const auto& node : neighborhood) {
-        auto domain_node = std::make_unique<GraphNode>(node->identifier, ++id);
+        auto domain_node = std::make_unique<GN>(++id);
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
         for (auto val : node->domain) {
             neigh_values.emplace_back(ValueAndNode{
