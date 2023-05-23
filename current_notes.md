@@ -1,5 +1,24 @@
 ## Thesis Notes
 
+- [x] split introduction into its own chapter.
+
+- [ ] Figures for CSP background
+
+- [ ] Introductory paragraphs at each Section that talks about what is in each section. And refer to other sections for where additional information is for background
+
+- [ ] Introduction talking more about the game engine work that was done "game engine" or "system" "rendering system"
+
+- [ ] Why game engine -> customize and control.
+    - Scenes are informed/assisted by the game engine.
+    
+- [ ] Figure 4.3 circle(or highlight) the node being solved for.
+
+- [ ] Rendering -> system overview, maybe move it to after backgound?
+
+- [ ] Performance: capture how long the sphere intersection takes:
+    - time -> write n spheres + time taken to perf file while i use the program. 
+    - graph.
+
 ### Schedule
 
 2.  Jan 20 : *Scene representation* Need to load from very simple format to enable procedural generation.
