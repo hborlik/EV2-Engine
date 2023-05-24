@@ -55,7 +55,7 @@ void SCWFC::on_child_added(Ref<Node> child, int index) {
 }
 
 void SCWFC::update_all_adjacencies(Ref<SCWFCGraphNode> n) {
-    // Timer timer{__FUNCTION__};
+    // Timer timer{__FUNCTION__, false};
     Sphere s = n->get_bounding_sphere();
     s.radius = n->get_neighborhood_radius();
     for (auto& c : get_children()) {
