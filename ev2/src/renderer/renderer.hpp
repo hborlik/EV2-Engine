@@ -298,6 +298,8 @@ public:
 
     int get_n_pointlights() const {return point_lights.size();}
 
+    void set_recording(bool enable) { m_recording_id_frames = enable;}
+
     // ======================
 
     float get_ssao_radius() const {return ssao_radius;}
@@ -360,7 +362,10 @@ public:
     bool pause_cull = false;
     bool culling_enabled = true;
 
+
 private:
+    bool m_recording_id_frames = false;
+    std::future<void> m_id_frame_save_async{};
 
     Frustum cull_frustum{};
 

@@ -1,6 +1,4 @@
 #include "renderer/renderer.hpp"
-#include <memory>
-
 
 #include "renderer/ev_gl.hpp"
 #include "resource.hpp"
@@ -159,7 +157,8 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
 }
 
 Renderer::~Renderer() {
-
+    if (m_id_frame_save_async.valid())
+        m_id_frame_save_async.wait();
 }
 
 void Renderer::init() {
@@ -1176,14 +1175,36 @@ void Renderer::render(const Camera &camera) {
     end = std::chrono::system_clock::now();
     std::chrono::duration<double> elapsed_seconds = end - start;
 
+    glFlush();
+    glFinish();
+    
+    if (!m_id_frame_save_async.valid() && m_recording_id_frames) {
+        // get image data from OpenGL
+        // have to do it on this thread
+        g_buffer.bind();
+        glReadBuffer((GLenum)gl::FBOAttachment::COLOR3);
+        Image image{(int)width, (int)height, 1, 1};
+        GL_CHECKED_CALL(glReadnPixels(0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
+        g_buffer.unbind();
 
-    // g_buffer.bind();
-    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // // GL_CHECKED_CALL(glNamedFramebufferReadBuffer(g_buffer.get_handle(), (GLenum)gl::FBOAttachment::COLOR4));
-    // glReadBuffer((GLenum)gl::FBOAttachment::COLOR3);
-    // unsigned char data[4] = {};
-    // GL_CHECKED_CALL(glReadnPixels(width/2, height/2, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_BYTE, sizeof(data), data));
-    // g_buffer.unbind();
+        // prepare and start file writing task
+        auto save_task = [](Image image) {
+            static int frame_num = 0;
+            image.write(fs::path{"570_data"} / ("frame_" + std::to_string(frame_num++) + ".png"));
+        };
+
+        m_id_frame_save_async = std::async(std::launch::async, save_task, std::move(image));
+    }
+
+    if (m_id_frame_save_async.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) {
+        try {
+            m_id_frame_save_async.get();
+            Engine::log_t<Renderer>("Frame Saved");
+        } catch (std::exception& e) {
+            Engine::log_t<Renderer>(e.what());
+        }
+    }
+
 
     // std::cout << "size: " << (sizeof(data)) << " Center ID: ";
     // for (int i = 0; i < sizeof(data)/sizeof(data[0]); ++i) {

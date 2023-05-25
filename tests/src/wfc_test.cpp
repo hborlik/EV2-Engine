@@ -745,7 +745,8 @@ float perf_validity(int n_nodes, int n_domains, int n_requirements) {
 
     Timer timer{"p_center.valid"};
 
-    p_center.valid(neighborhood);
+    // p_center.valid(neighborhood);
+    p_center.valid_approx(neighborhood);
     
     timer.stop();
     return timer.elapsed_ms();

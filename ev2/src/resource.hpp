@@ -17,7 +17,7 @@
 #include "renderer/renderer.hpp"
 #include "renderer/texture.hpp"
 #include "renderer/material.hpp"
-#include "image.hpp"
+#include "io/image.hpp"
 #include "gltf.hpp"
 
 namespace ev2 {

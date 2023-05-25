@@ -40,7 +40,7 @@ template<typename T>
 struct Ref {
 
     template<typename _Yp, typename _Res = void>
-	using _Assignable = typename
+    using _Assignable = typename
         std::enable_if<std::is_convertible<_Yp*, T*>::value, _Res>::type;
 
     Ref() noexcept = default;
@@ -118,40 +118,40 @@ struct Ref {
     void clear();
 
     Ref<T>& operator=(const Ref<T>& o) noexcept
-	{
+    {
         if (_ref)
             _ref->decrement();
         _ref = o._ref;
         if (_ref)
             _ref->increment();
         return *this;
-	}
+    }
 
     template<typename _Yp>
-	_Assignable<_Yp, Ref<T>&>
-	operator=(const Ref<_Yp>& o) noexcept
-	{
+    _Assignable<_Yp, Ref<T>&>
+    operator=(const Ref<_Yp>& o) noexcept
+    {
         if (_ref)
             _ref->decrement();
         _ref = o._ref;
         if (_ref)
             _ref->increment();
         return *this;
-	}
+    }
 
     Ref<T>& operator=(Ref<T>&& __r) noexcept
-	{
+    {
         Ref(std::move(__r)).swap(*this);
         return *this;
-	}
+    }
 
     template<typename _Yp>
-	_Assignable<_Yp, Ref<T>&>
-	operator=(Ref<_Yp>&& __r) noexcept
-	{
+    _Assignable<_Yp, Ref<T>&>
+    operator=(Ref<_Yp>&& __r) noexcept
+    {
         Ref(std::move(__r)).swap(*this);
         return *this;
-	}
+    }
 
     operator bool() const noexcept {
         return _ref != nullptr;

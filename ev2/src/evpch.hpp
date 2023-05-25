@@ -8,6 +8,7 @@
 #include <iostream>
 #include <algorithm>
 #include <filesystem>
+#include <future>
 #include <random>
 #include <functional>
 #include <iomanip>

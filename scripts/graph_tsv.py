@@ -38,7 +38,8 @@ def AD_plot():
 
 def DR_plot():
     title = 'Requirements Size vs Validity Check Time(ms) with 500 Neighbors'
-    filename = 'turnin_images/thesis_may2023/performance/validity_timing_DR_1.tsv'
+    # filename = 'turnin_images/thesis_may2023/performance/validity_timing_DR_1.tsv'
+    filename = 'validity_timing_DR_approx.tsv'
     xlabel = 'Requirements Size'
     ylabel = '(ms)'
 
@@ -112,6 +113,6 @@ def update_all_adjacency_plot():
     plt.show()
 
 # AD_plot()
-# DR_plot()
+DR_plot()
 # GWFC_plot()
-update_all_adjacency_plot()
+# update_all_adjacency_plot()

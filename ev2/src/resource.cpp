@@ -905,9 +905,9 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         }
         std::unique_ptr<Image> image = std::make_unique<Image>();
 
-        // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 1, data);
-
+        
+        stbi_image_free(data);
         return image;
     } else {
         std::cerr << "Failed to load image " << path << std::endl;
@@ -928,9 +928,9 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         }
         std::unique_ptr<Image> image = std::make_unique<Image>();
 
-        // allow image to keep the memory (will free)
         image->set_image(w, h, ncomps, 2, (uint8_t*)data);
 
+        stbi_image_free(data);
         return image;
     } else {
         std::cerr << "Failed to load image " << path << std::endl;

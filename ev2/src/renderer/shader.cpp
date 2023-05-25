@@ -18,27 +18,27 @@ namespace ev2::renderer {
 
 // overload stream operator
 std::ostream& operator<<(std::ostream& os, const Program& input) {
-    os << "=== ShaderProgram: " << input.ProgramName << " ===" << std::endl;
+    os << "=== ShaderProgram: " << input.ProgramName << " ===" << "\n";
     // for(auto& v : input.attachedShaders) {
-    //     os << v.second->shaderPath() << std::endl;
+    //     os << v.second->shaderPath() << "\n";
     // }
-    os << "Program inputs: (name, location)" << std::endl;
+    os << "Program inputs: (name, location)" << "\n";
     for(const auto& [name, desc] : input.inputs) {
-        os << "    - " << name << ", " << desc.Location << std::endl;
+        os << "    - " << name << ", " << desc.Location << "\n";
     }
-    os << "Program uniforms: (name, location)" << std::endl;
+    os << "Program uniforms: (name, location)" << "\n";
     for(const auto& [name, desc] : input.uniforms) {
-        os << "    - " << name << ", " << desc.Location << std::endl;
+        os << "    - " << name << ", " << desc.Location << "\n";
     }
-    os << "Program uniform blocks:" << std::endl;
+    os << "Program uniform blocks:" << "\n";
     for(const auto& [name, desc] : input.uniformBlocks) {
-        os << "    UB: " << name << " at " << desc.location_index << " size: " << desc.block_size << " bytes" << std::endl;
+        os << "    UB: " << name << " at " << desc.location_index << " size: " << desc.block_size << " bytes" << "\n";
         for(const auto& [l_name, l_desc] : desc.layout_map) {
-            os << "       U: " << l_name << " offset " << desc.layouts[l_desc].Offset << " len " << desc.layouts[l_desc].ArraySize << " stride " << desc.layouts[l_desc].ArrayStride << std::endl;
+            os << "       U: " << l_name << " offset " << desc.layouts[l_desc].Offset << " len " << desc.layouts[l_desc].ArraySize << " stride " << desc.layouts[l_desc].ArrayStride << "\n";
         }
     }
-    os << "    shader " << (input.isLinked() ? "linked" : "not linked") << std::endl;
-    os << "=== ShaderProgram ===" << std::endl;
+    os << "    shader " << (input.isLinked() ? "linked" : "not linked") << "\n";
+    os << "=== ShaderProgram ===" << "\n";
     return os;
 }
 

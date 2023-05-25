@@ -13,7 +13,7 @@
 #include "renderer/render_state.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/material.hpp"
-#include "image.hpp"
+#include "io/image.hpp"
 
 namespace ev2::renderer {
 
