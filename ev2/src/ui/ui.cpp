@@ -56,6 +56,7 @@ void show_settings_window(bool* p_open) {
         if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
             renderer.set_ssao_bias(ssao_bias);
         }
+        ImGui::DragFloat("Sky Brightness", &(renderer.sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
         ImGui::DragFloat("Exposure", &(renderer.exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
         ImGui::DragFloat("Gamma", &(renderer.gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
         ImGui::DragInt("Bloom Quality", &(renderer.bloom_iterations), 1, 1, 6);
@@ -72,7 +73,11 @@ void show_settings_window(bool* p_open) {
             ev2::Physics::get_singleton().enable_simulation(enable_physics_timestep);
         }
         ImGui::Separator();
-        ImGui::DragFloat("Sky Brightness", &(renderer.sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
+        
+        static bool idfr = false;
+        if (ImGui::Checkbox("Enable ID Frame Recording", &idfr)) {
+            renderer.set_recording(idfr);
+        }
     }
     ImGui::End();
 }
@@ -390,9 +395,10 @@ void Editor::show_transform_editor(Node* node) {
 }
 
 void Editor::select_node(const Ref<Node>& n) {
+    auto last = m_selected_node;
     m_selected_node = n;
 
-    if (m_selected_node) {
+    if (m_selected_node && m_selected_node != last) {
         for (auto& [name, tool] : m_editor_tools) {
             tool->on_selected_node(m_selected_node.get());
         }

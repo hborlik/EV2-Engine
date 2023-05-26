@@ -142,6 +142,19 @@ struct Primitive {
     int32_t     material_ind = 0; // material index in model material list
 };
 
+inline glm::uvec3 pack_id_to_uvec3(uint32_t id) noexcept {
+    glm::uvec3 target;
+    target[0] = id & (0xFF << 0);
+    target[1] = (id & (0xFF << 8)) >> 8;
+    target[2] = (id & (0xFF << 16)) >> 16;
+    return target;
+}
+
+inline uint32_t unpack_uvec3_to_id(const glm::uvec3& vec) noexcept {
+    uint32_t id = vec[0] | (vec[1] << 8) | (vec[2] << 16);
+    return id;
+}
+
 /**
  * @brief Renderer Drawable structure
  * 
@@ -189,6 +202,17 @@ struct ModelInstance {
 
     void set_drawable(std::shared_ptr<Drawable> drawable);
 
+    void set_picking_id(std::size_t picking_id);
+
+private:
+    void pack_id(uint32_t value) noexcept {
+        id_color = pack_id_to_uvec3(value);
+    }
+
+    uint32_t packed_id() const noexcept {
+        return unpack_uvec3_to_id(id_color);
+    }
+
 public:
     glm::mat4   transform = glm::identity<glm::mat4>();
 
@@ -202,6 +226,9 @@ private:
     int32_t                     id = -1;
     std::shared_ptr<Drawable>   drawable = nullptr;
     GLuint                      gl_vao = 0;
+
+    glm::uvec3 id_color{};
+    std::size_t m_picking_id{};
 };
 
 using ModelInstancePtr = std::unique_ptr<ModelInstance, void (*)(ModelInstance*)>;
@@ -253,12 +280,14 @@ public:
 
         void init() {
             mat_loc = program.getUniformInfo("materialId").Location;
+            obj_id_loc = program.getUniformInfo("id_color").Location;
             vert_col_w_loc = program.getUniformInfo("vertex_color_weight").Location;
             diffuse_sampler_loc = program.getUniformInfo("diffuse_tex").Location;
         }
 
         Program program{};
         int mat_loc = -1;
+        int obj_id_loc = -1;
         int vert_col_w_loc = -1;
         int diffuse_sampler_loc = -1;
     };
@@ -286,6 +315,7 @@ public:
 
     void set_wireframe(bool enable);
     void set_debug_draw(bool enable);
+    std::size_t read_obj_fb(const glm::uvec2& screen_point);
 
     void set_resolution(uint32_t width, uint32_t height);
     float get_aspect_ratio() const noexcept {return width / (float)height;}
@@ -321,8 +351,12 @@ public:
         m_passes.push_back(pass);
     }
 
+    void screenshot();
+
+
 private:
     friend Material;
+    friend ModelInstance;
 
     void draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
@@ -340,6 +374,8 @@ private:
     void destroy_material(Material* material);
 
     void destroy_model_instance(ModelInstance* model);
+
+    void update_picking_id_model_instance(ModelInstance* drawable);
 
     void destroy_instanced_drawable(InstancedDrawable* drawable);
 
@@ -389,6 +425,9 @@ private:
     // instances of a drawable with instanced draw calls
     std::unordered_map<int32_t, InstancedDrawable*> instanced_drawables;
     uint32_t next_instanced_drawable_id = 100;
+
+    // picking id map small hash to original id
+    std::unordered_map<uint32_t, std::size_t> m_picking_id_map{};
 
     // std::unordered_map<int32_t, RenderObj> meshes;
     // uint32_t next_mesh_id = 1;
@@ -450,6 +489,7 @@ private:
     std::shared_ptr<Texture> shadow_depth_tex;
 
     // g buffer fbo attachment textures
+    std::shared_ptr<Texture> obj_id_tex;
     std::shared_ptr<Texture> material_tex;
     std::shared_ptr<Texture> albedo_spec;
     std::shared_ptr<Texture> normals;

@@ -31,6 +31,8 @@ public:
 
     void change_scene(Ref<Node> p_scene);
 
+    Ref<Node> get_node(std::size_t uuid_hash);
+
 private:
     friend class Node;
 
@@ -46,6 +48,7 @@ private:
     int node_count = 0;
 
     std::queue<Ref<Node>> m_destroy_queue{};
+    std::unordered_map<std::size_t, Node*> m_object_map;
 };
 
 }

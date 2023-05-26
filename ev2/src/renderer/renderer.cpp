@@ -36,6 +36,12 @@ void ModelInstance::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings);
 }
 
+void ModelInstance::set_picking_id(std::size_t picking_id) {
+    m_picking_id = picking_id;
+    pack_id((uint32_t)picking_id ^ (picking_id >> 32));
+    Renderer::get_singleton().update_picking_id_model_instance(this);
+}
+
 void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
     this->drawable = drawable;
 
@@ -229,6 +235,9 @@ void Renderer::init() {
     if (!depth_fbo.check())
         throw engine_exception{"Framebuffer is not complete"};
     
+    obj_id_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    obj_id_tex->recreate_storage2D(1, gl::TextureInternalFormat::RGB8UI, width, height);
+    g_buffer.attach(obj_id_tex, gl::FBOAttachment::COLOR5, 5);
 
     material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     material_tex->recreate_storage2D(1, gl::TextureInternalFormat::R8UI, width, height);
@@ -645,6 +654,7 @@ ModelInstancePtr Renderer::create_model_instance() {
 void Renderer::destroy_model_instance(ModelInstance* model) {
     assert(model);
     model_instances.erase(model->id);
+    m_picking_id_map.erase(model->packed_id());
 }
 
 InstancedDrawablePtr Renderer::create_instanced_drawable() {
@@ -663,6 +673,12 @@ InstancedDrawablePtr Renderer::create_instanced_drawable() {
     assert(inserted);
 
     return model;
+}
+
+void Renderer::update_picking_id_model_instance(ModelInstance* drawable) {
+    uint32_t dr_p_id = drawable->packed_id();
+    m_picking_id_map.erase(dr_p_id);
+    m_picking_id_map.insert_or_assign(dr_p_id, drawable->m_picking_id);
 }
 
 void Renderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
@@ -819,6 +835,11 @@ void Renderer::render(const Camera &camera) {
             ev2::gl::glUniform(m->transform, gp_m_location);
             ev2::gl::glUniform(V * m->transform, gp_mv_location);
             ev2::gl::glUniform(G, gp_g_location);
+
+            const int obj_id_loc = geometry_program.obj_id_loc;
+            if (obj_id_loc >= 0) {
+                GL_CHECKED_CALL(gl::glUniform(m->id_color, obj_id_loc));
+            }
 
             int32_t mat_id_override = m->material_override ? m->material_override->get_material_id() : -1;
 
@@ -1196,7 +1217,9 @@ void Renderer::render(const Camera &camera) {
         m_id_frame_save_async = std::async(std::launch::async, save_task, std::move(image));
     }
 
-    if (m_id_frame_save_async.wait_for(std::chrono::milliseconds{0}) == std::future_status::ready) {
+    if (m_id_frame_save_async.valid() &&
+        m_id_frame_save_async.wait_for(std::chrono::milliseconds{0}) ==
+            std::future_status::ready) {
         try {
             m_id_frame_save_async.get();
             Engine::log_t<Renderer>("Frame Saved");
@@ -1204,7 +1227,6 @@ void Renderer::render(const Camera &camera) {
             Engine::log_t<Renderer>(e.what());
         }
     }
-
 
     // std::cout << "size: " << (sizeof(data)) << " Center ID: ";
     // for (int i = 0; i < sizeof(data)/sizeof(data[0]); ++i) {
@@ -1218,6 +1240,40 @@ void Renderer::render(const Camera &camera) {
 
 void Renderer::set_wireframe(bool enable) {
     wireframe = enable;
+}
+
+void Renderer::screenshot() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glReadBuffer(GL_BACK);
+    Image image{(int)width, (int)height, 3, 1};
+    GL_CHECKED_CALL(glReadnPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
+
+    try {
+        std::string filename = "Screenshot_" + util::formatted_current_time() + ".png";
+        image.write(filename);
+        Engine::log_t<Renderer>("Screenshot " + filename + " Saved");
+    } catch (std::exception& e) {
+        Engine::log_t<Renderer>(e.what());
+    }
+}
+
+std::size_t Renderer::read_obj_fb(const glm::uvec2& screen_point) {
+    if (screen_point.x > width || screen_point.y > height) {
+        return 0; // TODO should this throw exception??
+    }
+    g_buffer.bind();
+    glReadBuffer((GLenum)gl::FBOAttachment::COLOR5);
+    Image image{2, 1, 3, 1};
+    GL_CHECKED_CALL(glReadnPixels(screen_point.x, height-screen_point.y, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
+    g_buffer.unbind();
+
+    glm::uvec3 id_vec{image.data()[0], image.data()[1], image.data()[2]};
+    uint32_t id = unpack_uvec3_to_id(id_vec);
+    std::size_t picking_id{};
+    auto itr = m_picking_id_map.find(id);
+    if (itr != m_picking_id_map.end())
+        picking_id = itr->second;
+    return picking_id;
 }
 
 void Renderer::set_resolution(uint32_t width, uint32_t height) {

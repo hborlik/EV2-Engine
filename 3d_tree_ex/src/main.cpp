@@ -10,13 +10,14 @@
 
 #include "scene/node.hpp"
 #include "ev.hpp"
-#include "renderer/ev_gl.hpp"
 #include "window.hpp"
-#include "renderer/shader.hpp"
 #include "application.hpp"
+#include "renderer/renderer.hpp"
+#include "renderer/ev_gl.hpp"
+#include "renderer/shader.hpp"
 #include "renderer/camera.hpp"
-#include "window.hpp"
 #include "renderer/mesh.hpp"
+#include "window.hpp"
 #include "resource.hpp"
 #include "physics.hpp"
 #include "scene/visual_nodes.hpp"
@@ -137,6 +138,14 @@ public:
 
         ImGuiIO& io = ImGui::GetIO();
 
+        // object picking
+        if (show_debug && (left_mouse_down || ev2::window::getMouseCaptured()) && !io.WantCaptureMouse) {
+            std::size_t id = ev2::renderer::Renderer::get_singleton().read_obj_fb(mouse_p);
+            if (id)
+                scene_editor.set_selected_node(get_scene_tree().get_node(id).get());
+        }
+
+        // camera rotation
         if (show_debug && (right_mouse_down || ev2::window::getMouseCaptured()) && !io.WantCaptureMouse) {
             mouse_delta = ev2::window::getCursorPosition() - mouse_p;
             mouse_p = ev2::window::getCursorPosition();
@@ -209,7 +218,11 @@ public:
                     show_debug = !show_debug;
                     ev2::window::setMouseCaptured(!show_debug);
                     ev2::input::SetInputEnabled(!show_debug);
-                } 
+                }
+                break;
+            case ev2::input::Key::KeyP:
+                if (down)
+                    ev2::renderer::Renderer::get_singleton().screenshot();
                 break;
             default:
                 break;
@@ -273,8 +286,9 @@ public:
         Application::on_mouse_button(mouse_x, mouse_y, scroll_pos, button, down);
 
         mouse_p = ev2::window::getCursorPosition();
-        if (button == 1)
+        if (button == 1) {
             left_mouse_down = down;
+        }
         if (button == 3)
             right_mouse_down = down;
     }

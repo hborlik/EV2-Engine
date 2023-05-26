@@ -55,6 +55,8 @@ public:
         return *m_terrain_renderer.get();
     }
 
+    SceneTree& get_scene_tree() noexcept {return scene_tree;}
+
 protected:
     bool show_debug = false;
     Editor scene_editor{};
