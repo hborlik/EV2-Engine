@@ -200,6 +200,8 @@ public:
 private:
     friend class SceneTree;
 
+    void internal_destroy();
+
     void node_propagate_update(float dt);
     void node_propagate_ready();
     void node_propagate_enter_tree(SceneTree* scene_tree);
@@ -212,6 +214,7 @@ private:
 
     bool m_is_ready = false;
     bool m_is_destroyed = false;
+    bool m_is_destroyed_queued = false;
     Transform transform{};
     std::list<Ref<Node>> children;
     

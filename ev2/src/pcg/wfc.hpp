@@ -7,10 +7,9 @@
 #ifndef WFC_H
 #define WFC_H
 
-#include <algorithm>
-#include <initializer_list>
-#include <utility>
+
 #include "evpch.hpp"
+
 
 namespace wfc {
 
@@ -93,10 +92,21 @@ namespace wfc {
 
 class Pattern;
 
+class Node {
+public:
+    Node(int node_id): node_id{ node_id } {
+        assert(node_id != -1);
+    }
+
+    virtual ~Node() = default;
+
+    const int               node_id = -1;
+};
+
 
 class GraphNode {
 public:
-    GraphNode(const std::string& identifier, int node_id): node_id{ node_id }, identifier{ identifier } {
+    GraphNode(std::string_view identifier, int node_id): node_id{ node_id }, identifier{identifier.data()} {
         assert(node_id != -1);
     }
 
@@ -122,7 +132,7 @@ public:
 };
 
 template<typename T,
-    typename = std::enable_if_t<std::is_base_of_v<GraphNode, T>>>
+    typename = std::enable_if_t<std::is_base_of_v<GraphNode, T> || std::is_base_of_v<Node, T>>>
 class Graph {
 public:
     virtual ~Graph() {}
@@ -214,23 +224,15 @@ public:
             std::swap(a, b);
         }
 
-        coord c{ a_i->mat_coord, b_i->mat_coord };
+        // takes care of directed vs undirected graphs
+        if (!add_i_edge_sam(a_i, b_i, v))
+            return;
 
-        if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
-            return; // already added
-
-        if (!m_is_directed && c.x == c.y)
-            return; // no self loops (diagonals)
-        
         // build adjacency information
         a_i->adjacent_nodes.push_back(b);
         if (!m_is_directed)
             b_i->adjacent_nodes.push_back(a);
 
-        auto& sam = sparse_adjacency_map[c];
-        sam.i_nodeA = a_i;
-        sam.i_nodeB = b_i;
-        sam.w = v;
     }
 
     void remove_edge(T* a, T* b) override {
@@ -242,8 +244,9 @@ public:
         if (!(a_i && b_i))
             return;
 
-        // no distinction between directed and undirected graphs here 
-        remove_i_edge_sam(a_i, b_i);
+        // takes care of directed vs undirected graphs
+        if (!remove_i_edge_sam(a_i, b_i))
+            return;
 
         // erase element from adjacency lists
         auto& vec = a_i->adjacent_nodes;
@@ -307,11 +310,10 @@ public:
 
     std::vector<T*> adjacent_nodes(const T* a) const override {
         assert(a != nullptr);
-        std::vector<T*> output{};
         const internal_node* a_i = get_i_node(a);
 
         if (a_i == nullptr)
-            return output;
+            return {};
 
         return a_i->adjacent_nodes;
     }
@@ -320,11 +322,48 @@ public:
 
     int get_n_nodes() const noexcept override { return node_map.size(); }
 
+    /**
+     * @brief Make map of <node_id -> bool> for use in marking visitation
+     * 
+     * @return std::unordered_map<int, bool> 
+     */
     std::unordered_map<int, bool> make_visited_map() const override {
         std::unordered_map<int, bool> out(get_n_nodes());
         for (const auto& [k, _] : node_map)
             out.insert({ k, false });
         return out;
+    }
+
+    bool bfs(internal_node* a_ind, internal_node* b_ind, std::unordered_map<int, internal_node*>& parent) const {
+        assert(a_ind && b_ind);
+        parent.clear();
+
+        auto visited = make_visited_map();
+
+        std::queue<internal_node*> q{};
+        q.push(a_ind);
+        visited[a_ind->node->node_id] = true;
+
+        while (!q.empty()) {
+            internal_node* u_ind = q.front();
+            q.pop();
+            // visit n, for each adjacent node
+            for (auto v_ind : u_ind->adjacent_nodes) {
+                internal_node* v_ind_i = get_i_node(v_ind);
+                // if this node has not been visited and adjacent (from u to v)
+                if (!visited[v_ind] && adjacent_sam(u_ind, v_ind_i) > 0.f) {
+                    q.push(v_ind);
+                    visited[v_ind] = true;
+                    parent[v_ind] = u_ind; // v was reached from u
+
+                    if (v_ind == b_ind) {
+                        // found target, starting from target, record all parents into path
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 private:
@@ -363,6 +402,46 @@ private:
         return const_cast<internal_node*>(const_cast<const SparseGraph<T>*>(this)->get_i_node(node));
     }
 
+    float adjacent_sam(internal_node* a_i, internal_node* b_i) const {
+        if (a_i == nullptr || b_i == nullptr)
+            return 0.f;
+
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord)
+            std::swap(a_i, b_i);
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        if (!m_is_directed && c.x == c.y)
+            return 0.f; // no self loops (diagonals)
+
+        auto itr = sparse_adjacency_map.find(c);
+        if (itr != sparse_adjacency_map.end())
+            return itr->second.w;
+        return 0.f;
+    }
+
+    bool add_i_edge_sam(internal_node* a_i, internal_node* b_i, float w) {
+        // enforce populating only the upper triangular matrix
+        if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
+            std::swap(a_i, b_i);
+        }
+
+        coord c{ a_i->mat_coord, b_i->mat_coord };
+
+        if (sparse_adjacency_map.find(c) != sparse_adjacency_map.end())
+            return false; // already added
+
+        if (!m_is_directed && c.x == c.y)
+            return false; // no self loops (diagonals)
+        
+        auto& sam = sparse_adjacency_map[c];
+        sam.i_nodeA = a_i;
+        sam.i_nodeB = b_i;
+        sam.w = w;
+
+        return true;
+    }
+
     bool remove_i_edge_sam(internal_node* a_i, internal_node* b_i) {
         // enforce populating only the upper triangular matrix
         if (!m_is_directed && a_i->mat_coord > b_i->mat_coord) {
@@ -390,12 +469,12 @@ private:
 
         std::vector<T*> node_order{};
         for (auto& [i, i_node] : graph.node_map) {
-            out << std::setw(10) << i_node.node->identifier;
+            out << std::setw(10) << i_node.node->node_id;
             node_order.push_back(i_node.node);
         }
         out << "\n" << std::setprecision(5);
         for (auto& [i, i_node] : graph.node_map) {
-            out << std::setw(10) << i_node.node->identifier;
+            out << std::setw(10) << i_node.node->node_id;
             
             // print row of adjacencies for this node
             for (auto j_node : node_order) {
@@ -666,11 +745,11 @@ private:
             out << "_From column_ \n";
         out << std::setw(10) << "_";
         for (int j = 0; j < graph.get_n_nodes(); ++j) {
-            out << std::setw(10) << graph.m_nodes[j]->identifier;
+            out << std::setw(10) << graph.m_nodes[j]->node_id;
         }
         out << "\n" << std::setprecision(5);
         for (int i = 0; i < graph.get_n_nodes(); ++i) {
-            out << std::setw(10) << graph.m_nodes[i]->identifier;
+            out << std::setw(10) << graph.m_nodes[i]->node_id;
             for (int j = 0; j < graph.get_n_nodes(); ++j)
                 out << std::setw(10) << graph.adjacent(i, j);
             out << "\n";
@@ -695,7 +774,43 @@ private:
  * @param residual_graph optional residual graph output
  * @return int max flow
  */
-float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph);
+// float ford_fulkerson(const DenseGraph<GraphNode>& dg, const GraphNode* source, const GraphNode* sink, DenseGraph<GraphNode>* residual_graph);
+
+template<typename T>
+float ford_fulkerson(const DenseGraph<T>& dg, const T* source, const T* sink, DenseGraph<T>* residual_graph) {
+    // based on https://www.geeksforgeeks.org/ford-fulkerson-algorithm-for-maximum-flow-problem/
+    assert(source && sink);
+
+    DenseGraph<T> residual = dg;
+
+    float max_flow = 0.f;
+
+    int s_ind = residual.get_node_index(source);
+    int t_ind = residual.get_node_index(sink);
+
+    std::vector<int> parent;
+    while (residual.bfs(s_ind, t_ind, parent)) {
+        // find the minimum residual capacity along the 
+        // path in residual graph
+        float path_flow = INFINITY;
+        for (int v = t_ind; v != s_ind; v = parent[v]) {
+            int u = parent[v];
+            path_flow = std::min(path_flow, residual.adjacent(u, v));
+        }
+
+        // update residual capacities on the path edges
+        for (int v = t_ind; v != s_ind; v = parent[v]) {
+            int u = parent[v];
+            residual.adjacent(u, v) -= path_flow;
+            residual.adjacent(v, u) += path_flow;
+        }
+
+        max_flow += path_flow;
+    }
+    if (residual_graph)
+        *residual_graph = residual;
+    return max_flow;
+}
 
 /**
  * @brief Pattern is a valid configuration of cell values in the generated output
@@ -709,8 +824,13 @@ class Pattern {
     Pattern(int pattern_class, std::initializer_list<int> l,
             float weight = 1.f) noexcept
         : required_types{l}, pattern_type{pattern_class}, weight{weight} {}
+    Pattern(int pattern_class, const std::vector<int>& l,
+            float weight = 1.f) noexcept
+        : required_types{l}, pattern_type{pattern_class}, weight{weight} {}
 
     bool valid(const std::vector<DGraphNode *> &neighborhood) const;
+
+    bool valid_approx(const std::vector<DGraphNode *> &neighborhood) const;
 
     std::vector<int> required_types{};
     int pattern_type{-1};
@@ -737,16 +857,19 @@ public:
 public:
     virtual ~IWFCSolver() = default;
 
-    virtual T* step_wfc(T* node) = 0;
-    virtual bool can_continue() const noexcept = 0;
-
-    virtual T* propagate(T* node) = 0;
-    virtual bool observe(T* node) = 0;
-    virtual void collapse(T* node) = 0;
+    virtual void step_wfc(T* node) = 0;
+    virtual void propagate(T* node) = 0;
+    virtual bool update_domain(T* node) = 0;
+    virtual void observe(T* node) = 0;
 
     virtual float node_entropy(const T* node) const = 0;
     virtual void set_entropy_func(const entropy_callback_t& callback) = 0;
     virtual void set_propagate_callback_func(const propagate_callback_t& callback) = 0;
+};
+
+enum class SolverValidMode {
+    Correct = 0,
+    Approximate
 };
 
 /**
@@ -757,18 +880,18 @@ public:
  */
 class WFCSolver : public IWFCSolver<DGraphNode> {
 public:
-    WFCSolver(Graph<DGraphNode>* graph, PatternMap patterns,
-            std::mt19937& gen)
-        : graph{graph}, gen{gen}, m_patterns{std::move(patterns)} {}
+ WFCSolver(Graph<DGraphNode>* graph, PatternMap patterns, std::mt19937& gen,
+           bool constraint_prop_solved, SolverValidMode mode)
+     : graph{graph},
+       gen{gen},
+       m_patterns{std::move(patterns)},
+       m_constraint_prop_solved{constraint_prop_solved},
+       m_validity_mode{mode} {}
 
-    DGraphNode* step_wfc(DGraphNode* node) override {
-        DGraphNode* solved_node = node ? node : next_node;
-        collapse(solved_node);
-        next_node = propagate(solved_node);
-        return solved_node;
+    void step_wfc(DGraphNode* node) override {
+        observe(node);
+        propagate(node);
     }
-
-    bool can_continue() const noexcept override {return next_node != nullptr;}
 
     auto get_pattern(int pattern_id) const {
         return m_patterns.find(pattern_id);
@@ -779,41 +902,37 @@ public:
      *
      * @param node
      */
-    DGraphNode* propagate(DGraphNode* node) override {
+    void propagate(DGraphNode* node) override {
         assert(node != nullptr);
         std::queue<DGraphNode*> propagation_stack;
+        std::unordered_set<DGraphNode*> visited_set;
         propagation_stack.push(node);
-        DGraphNode* min_e = nullptr;
-        float entropy = 0.f;
+        visited_set.insert(node);
         bool f = true; // force propagation on the first node
+
         while (!propagation_stack.empty()) {
             DGraphNode* n = propagation_stack.front();
             propagation_stack.pop();
 
-            if (n->domain.size() <= 1 && !f) // skip solved nodes
+            if (!m_constraint_prop_solved && n->domain.size() <= 1 && !f) // skip solved nodes
                 continue;
 
-            if (observe(n) || f) { // only update neighbors if the domain changed
-                if (propagate_callback_func) propagate_callback_func(n);
+            if (f || update_domain(n)) { // only update neighbors if the domain changed
                 f = false;
                 auto neighbor_nodes = graph->adjacent_nodes(n);
                 std::shuffle(neighbor_nodes.begin(), neighbor_nodes.end(), gen);
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
-                    // if (neighbor->domain.size() > 1)
+
+                    auto itr = visited_set.insert(neighbor);
+                    if (itr.second) { // was inserted
                         propagation_stack.push(neighbor);
+                    }
                 }
-            }
-            
-            if (float en = entropy_func ? entropy_func(node, n) : node_entropy(n);
-                n != node && 
-                (!min_e || en < entropy)) {
-                
-                min_e = n;
-                entropy = en;
+
+                if (propagate_callback_func) propagate_callback_func(n);
             }
         }
-        return min_e;
     }
 
     /**
@@ -821,7 +940,7 @@ public:
      *
      * @param node
      */
-    bool observe(DGraphNode* node) override {
+    bool update_domain(DGraphNode* node) override {
         assert(node != nullptr);
         bool changed = false;
         decltype(node->domain) new_domain{};
@@ -844,23 +963,16 @@ public:
      *
      * @param node
      */
-    void collapse(DGraphNode* node) override {
+    void observe(DGraphNode* node) override {
         assert(node != nullptr);
         
-        if (node->domain.size() == 0)
+        if (node->domain.size() <= 1)
             return;
 
-        if (node->domain.size() == 1) {
-            node->set_value(node->domain[0]);
-            return;
-        } else {
-            // weighted random selection of available domain values
-            node->set_value(weighted_pick_domain(node));
-        }
-    }
+        // weighted random selection of available domain values
+        node->set_value(weighted_pick_domain(node));
 
-    void set_next_node(DGraphNode* next) {
-        next_node = next;
+        if (propagate_callback_func) propagate_callback_func(node);
     }
 
     void set_entropy_func(const entropy_callback_t& callback) override {
@@ -873,6 +985,8 @@ public:
 
     float node_entropy(const DGraphNode* node) const override {
         float sum = 0;
+        if (node->domain.size() == 1)
+            return 0;
         for (auto value : node->domain) {
             auto end = m_patterns.end();
             if (auto itr = m_patterns.find(value.value); itr != end) {
@@ -889,6 +1003,9 @@ public:
      * @return int value picked
      */
     Val weighted_pick_domain(DGraphNode* node) const {
+        if (node->domain.size() == 1)
+            return node->domain[0];
+        
         std::vector<float> weights(node->domain.size());
         std::transform(node->domain.begin(), node->domain.end(), weights.begin(), [this](const wfc::Val& value) -> auto {
             float total_class_weight = 0.f;
@@ -906,16 +1023,29 @@ public:
         auto neighborhood = graph->adjacent_nodes(node);
         auto itr = m_patterns.find(value.value);
         auto end = m_patterns.end();
-        return (itr != end && itr->second.valid(neighborhood));
+        bool validity = false;
+        if (itr != end) {
+            switch(m_validity_mode) {
+                case SolverValidMode::Correct:
+                    validity = itr->second.valid(neighborhood);
+                break;
+                case SolverValidMode::Approximate:
+                    validity = itr->second.valid_approx(neighborhood);
+                break;
+            }
+        }
+        return validity;
     }
 
 private:
     Graph<DGraphNode>* graph = nullptr;
-    DGraphNode* next_node = nullptr;
     entropy_callback_t entropy_func{};
     propagate_callback_t propagate_callback_func{};
     std::mt19937& gen;
     PatternMap m_patterns{};
+
+    bool m_constraint_prop_solved = true;
+    SolverValidMode m_validity_mode = SolverValidMode::Correct;
 };
 
 } // namespace pcg

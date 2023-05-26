@@ -266,6 +266,8 @@ public:
      */
     GLsizei get_height() const noexcept {return height;}
 
+    GLuint get_handle() noexcept {return gl_reference;}
+
 private:
     gl::FBOTarget target;
     GLuint gl_reference = 0;

@@ -93,7 +93,7 @@ public:
 
     static std::unique_ptr<ObjectMetadataDB> load_object_database(std::string_view path);
     
-    void write_database(std::string_view path);
+    void write_database(std::string_view path) const;
 
     /**
      * @brief 

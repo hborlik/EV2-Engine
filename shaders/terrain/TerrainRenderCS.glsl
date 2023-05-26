@@ -72,7 +72,7 @@ void main()
     gAlbedoSpec = vec4(na.albedo, 0.0f);
     gPosition = i_frag_pos;
     gMaterialTex = u_MaterialID;
-    gNormal = na.normal;
+    gNormal = normalize((u_NormalMatrix * vec4(na.normal, 0)).xyz);
     gEmissive = vec4(0.0);
 }
 #endif

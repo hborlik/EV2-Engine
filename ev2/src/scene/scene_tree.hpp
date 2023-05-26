@@ -24,11 +24,14 @@ class Node;
 class SceneTree {
 public:
     SceneTree() = default;
+    ~SceneTree();
 
     void update(float dt);
     void update_pre_render();
 
     void change_scene(Ref<Node> p_scene);
+
+    Ref<Node> get_node(std::size_t uuid_hash);
 
 private:
     friend class Node;
@@ -38,9 +41,14 @@ private:
     void node_removed(Node *p_node);
     void node_renamed(Node *p_node);
 
+    void queue_destroy(Ref<Node> node);
+
 private:
     Ref<Node> current_scene = nullptr;
     int node_count = 0;
+
+    std::queue<Ref<Node>> m_destroy_queue{};
+    std::unordered_map<std::size_t, Node*> m_object_map;
 };
 
 }

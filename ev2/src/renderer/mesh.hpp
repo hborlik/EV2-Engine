@@ -58,11 +58,8 @@ struct VertexBufferLayout {
         return *this;
     }
 
-    void set_attribute_divisor(uint16_t divisor) {
-        this->divisor = divisor;
-    }
-
     VertexBufferLayout& finalize() {
+        assert(!finalized());
         uint32_t total_size = 0;
         for (auto& l : attributes) {
             l.offset = total_size;
@@ -78,7 +75,6 @@ struct VertexBufferLayout {
 
     std::vector<Attribute> attributes;
     uint32_t stride = 0;
-    uint16_t divisor = 0;
 };
 
 class VertexBuffer {

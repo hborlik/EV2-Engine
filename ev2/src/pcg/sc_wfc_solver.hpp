@@ -10,22 +10,66 @@
 #ifndef EV2_PCG_SC_WFC_SOLVER_HPP
 #define EV2_PCG_SC_WFC_SOLVER_HPP
 
-#include <unordered_set>
-#include "events/notifier.hpp"
 #include "evpch.hpp"
 
+#include "events/notifier.hpp"
 #include "pcg/wfc.hpp"
 #include "sc_wfc.hpp"
 #include "object_database.hpp"
 
 namespace ev2::pcg {
 
+enum class NewDomainMode {
+    Full = 0,
+    Dependent
+};
+
+enum class RefreshNeighborhoodRadius {
+    Never = 0,
+    Always
+};
+
+enum class DiscoveryMode {
+    EntropyOrder = 0,
+    DiscoveryOrder
+};
+
+struct SCWFCSolverArgs {
+    NewDomainMode domain_mode = NewDomainMode::Full;
+    wfc::SolverValidMode validity_mode = wfc::SolverValidMode::Correct;
+    DiscoveryMode solving_order = DiscoveryMode::DiscoveryOrder;
+    
+    RefreshNeighborhoodRadius node_neighborhood = RefreshNeighborhoodRadius::Never;
+
+    float neighbor_radius_fac = 3.f;
+    bool allow_revisit_node = false;
+};
+
 class SCWFCSolver {
-public:
-    SCWFCSolver(SCWFC& scwfc_node, 
+private:
+    struct BoundaryQueue  {
+        virtual ~BoundaryQueue() = default;
+        virtual void push(Ref<SCWFCGraphNode> node) = 0;
+        virtual Ref<SCWFCGraphNode> pop_top() = 0;
+        virtual std::size_t size() = 0;
+    };
+    struct BoundaryQueueFIFO;
+    struct BoundaryQueueEntropy;
+
+    SCWFCSolver(SCWFC& scwfc_node,
                 std::shared_ptr<ObjectMetadataDB> obj_db,
-                std::random_device& rd,
-                std::shared_ptr<renderer::Drawable> unsolved_drawable);
+                std::unique_ptr<std::mt19937> mt,
+                std::shared_ptr<renderer::Drawable> unsolved_drawable,
+                const SCWFCSolverArgs& args,
+                std::unique_ptr<SCWFCSolver::BoundaryQueue> boundary_queue,
+                std::unique_ptr<wfc::WFCSolver> wfc_solver);
+
+public:
+    static std::unique_ptr<SCWFCSolver> make_solver(
+        SCWFC& scwfc_node, std::shared_ptr<ObjectMetadataDB> obj_db,
+        std::random_device& rd,
+        std::shared_ptr<renderer::Drawable> unsolved_drawable,
+        const SCWFCSolverArgs& args);
 
     void sc_propagate(int n, int brf, float mass);
 
@@ -63,9 +107,21 @@ public:
         m_discovered.erase(node->get_ref<SCWFCGraphNode>());
     }
 
-    auto get_boundary_size() const noexcept {return m_boundary.size();}
+    std::size_t get_boundary_size() const noexcept;
+    std::size_t get_discovered_size() const noexcept;
 
-    auto get_discovered_size() const noexcept {return m_discovered.size();}
+private:
+    struct LessThanByEntropy {
+        LessThanByEntropy(wfc::WFCSolver* solver) : wfc_solver{solver} {}
+
+        bool operator()(const Ref<SCWFCGraphNode>& lhs, const Ref<SCWFCGraphNode>& rhs) const
+        {
+            // low to high values
+            return wfc_solver->node_entropy(lhs.get()) > wfc_solver->node_entropy(rhs.get());
+        }
+
+        wfc::WFCSolver* wfc_solver;
+    };
 
 public:
     DelegateListener<SCWFCGraphNode*> node_removed_listener{};
@@ -73,14 +129,16 @@ public:
 
 private:
     SCWFC& scwfc_node;
-    std::mt19937 m_mt;
+    std::unique_ptr<std::mt19937> m_mt;
     std::shared_ptr<ObjectMetadataDB> obj_db;
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
     std::shared_ptr<renderer::Drawable> unsolved_drawable;
 
-    std::queue<Ref<SCWFCGraphNode>> m_boundary{};
+    std::unique_ptr<BoundaryQueue> m_boundary;
     std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};
     std::unordered_set<Ref<SCWFCGraphNode>> m_discovered{};
+
+    SCWFCSolverArgs m_args{};
 };
 
 } // namespace ev2::pcg

@@ -7,6 +7,7 @@ namespace ev2 {
 
 void VisualInstance::on_init() {
     iid = renderer::Renderer::get_singleton().create_model_instance();
+    iid->set_picking_id(uuid_hash);
 }
 
 void VisualInstance::on_ready() {

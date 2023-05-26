@@ -140,13 +140,45 @@ void SCWFCEditor::show_editor_tool() {
 
     ImGui::BeginDisabled(m_scwfc_node == nullptr);
     if (ImGui::CollapsingHeader("Solver")) {
+
+        if (m_scwfc_solver == nullptr)
+            reset_solver();
+
+        ImGui::Text("Solver Settings");
+
+        constexpr const char* DomainMode[] = {"Full", "Dependent"};
+        if (ImGui::Combo("New Node Domain Mode", (int*)&m_solver_args.domain_mode, DomainMode, IM_ARRAYSIZE(DomainMode))) {
+            reset_solver();
+        }
+
+        constexpr const char* DiscoveryMode[] = {"EntropyOrder", "DiscoveryOrder"};
+        if (ImGui::Combo("Solving Order", (int*)&m_solver_args.solving_order, DiscoveryMode, IM_ARRAYSIZE(DiscoveryMode))) {
+            reset_solver();
+        }
+
+        constexpr const char* ValidityModes[] = {"Correct", "Approximate"};
+        if (ImGui::Combo("Solver Validity Mode", (int*)&m_solver_args.validity_mode, ValidityModes, IM_ARRAYSIZE(ValidityModes))) {
+            reset_solver();
+        }
+
+        constexpr const char* NeighborhoodRadiusModes[] = {"Never", "Always"};
+        if (ImGui::Combo("Refresh Neighborhood Radius", (int*)&m_solver_args.node_neighborhood, NeighborhoodRadiusModes, IM_ARRAYSIZE(NeighborhoodRadiusModes))) {
+            reset_solver();
+        }
+
+        if (ImGui::Checkbox("Allow Revisiting", &m_solver_args.allow_revisit_node)) {
+            reset_solver();
+        }
+
+        ImGui::Separator();
+
         ImGui::Text("SC propagate");
         static int sc_steps = 10;
         static int sc_brf = 1;
         static float sc_mass = 0.2f;
         ImGui::InputInt("N Nodes", &sc_steps);
         ImGui::InputInt("Branching", &sc_brf);
-        ImGui::SliderFloat("Mass", &sc_mass, 0.01f, 1.f);\
+        ImGui::SliderFloat("Mass", &sc_mass, 0.01f, 1.f);
 
         ImGui::BeginDisabled(m_scwfc_solver == nullptr);
         if (ImGui::Button("Propagate")) {
@@ -165,6 +197,7 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::EndDisabled();
         if (ImGui::Button("Reset")) {
             m_scwfc_node->reset();
+            reset_solver();
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
@@ -186,7 +219,7 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::Separator();
         ImGui::Text("WFC solver");
 
-        static int solver_steps = 100;
+        static int solver_steps = 20;
         ImGui::InputInt("Steps", &solver_steps);
         ImGui::SameLine();
         auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
@@ -276,8 +309,9 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
 
             ImGui::SameLine();
+            bool delete_pattern = false;
             if (ImGui::Button("Delete")) {
-                p_itr = m_obj_db->pattern_erase(p_itr);
+                delete_pattern = true;
             }
             if (ImGui::IsItemHovered()) {
                 ImGui::SetTooltip("Delete Pattern \"%s\"", pattern_name.c_str());
@@ -315,7 +349,10 @@ void SCWFCEditor::db_editor_show_pattern_editor_widget() {
             }
 
             ImGui::PopID();
-            ++p_itr;
+            if (delete_pattern)
+                p_itr = m_obj_db->pattern_erase(p_itr);
+            else
+                ++p_itr;
         }
         ImGui::EndTable();
     }
@@ -976,13 +1013,17 @@ void SCWFCEditor::on_selected_node(Node* node) {
         if (n) {
             m_scwfc_node = n;
 
-            if (m_obj_db) {
-                m_scwfc_solver = std::make_unique<SCWFCSolver>(*m_scwfc_node, m_obj_db, m_rd, m_unsolved_drawable);
-                // attach notification events scene nodes being removed
-                m_scwfc_solver->node_added_listener.subscribe(&m_scwfc_node->child_node_added);
-                m_scwfc_solver->node_removed_listener.subscribe(&m_scwfc_node->child_node_removed);
-            }
+            reset_solver();
         }
+    }
+}
+
+void SCWFCEditor::reset_solver() {
+    if (m_obj_db) {
+        m_scwfc_solver = SCWFCSolver::make_solver(*m_scwfc_node, m_obj_db, m_rd, m_unsolved_drawable, m_solver_args);
+        // attach notification events scene nodes being removed
+        m_scwfc_solver->node_added_listener.subscribe(&m_scwfc_node->child_node_added);
+        m_scwfc_solver->node_removed_listener.subscribe(&m_scwfc_node->child_node_removed);
     }
 }
 

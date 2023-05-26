@@ -55,7 +55,7 @@ void main() {
         discard;
 
     vec3 Normal = texture(gNormal, tex_coord).rgb;
-    vec3 vNormal = (View * vec4(Normal, 0)).xyz;
+    vec3 vNormal = normalize((View * vec4(Normal, 0)).xyz);
     vec3 Albedo = texture(gAlbedoSpec, tex_coord).rgb;
     float Specular = texture(gAlbedoSpec, tex_coord).a;
     uint MaterialId = texture(gMaterialTex, tex_coord).r;
@@ -74,7 +74,8 @@ void main() {
     vec4 LSfPos = (inv_pv * vec4(FragPosView, 1.0));
     float Shade = TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
-    vec3 color = AO * lightAmbient * (Albedo + materials[MaterialId].diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
+    vec3 diffuse = pow(materials[MaterialId].diffuse, vec3(2.2)); // gamma correction is applied in post processing.
+    vec3 color = AO * lightAmbient * (Albedo + diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
     
     frag_color = vec4(color, 1.0);
     // frag_color = vec4(AO, AO, AO, 1.0);

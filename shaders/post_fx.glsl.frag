@@ -23,6 +23,8 @@ void main() {
 
     // exposure tone mapping
     color = vec3(1.0) - exp(-color * exposure);
+    // Reinhard
+    // color = color / (color + vec3(1.0));
     // gamma correction 
     color = pow(color, vec3(1.0 / gamma));
 

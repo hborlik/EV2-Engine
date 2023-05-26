@@ -6,6 +6,7 @@
 layout(std140, column_major, binding = BUFFER_BINDING_TERRAIN_VARIABLES)
 uniform PerFrameVariables {
     mat4 u_ModelMatrix;
+    mat4 u_NormalMatrix;
     mat4 u_ModelViewMatrix;
     mat4 u_ViewMatrix;
     mat4 u_CameraMatrix;
@@ -361,12 +362,12 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
     float blendFactor = exp2(-nearestDistance / wireScale);
 #endif
 
-#if FLAG_DISPLACE
-#if 1
+// #if FLAG_DISPLACE
+// #if 1
     // slope
-    vec2 smap = texture(u_SmapSampler, texCoord).rg * u_DmapFactor * 0.03;
-    vec3 n = normalize(vec3(-smap.r, 1, smap.g));
-#else // compute the slope from the dmap directly
+    // vec2 smap = texture(u_SmapSampler, texCoord).rg * u_DmapFactor;// * 0.03;
+    // vec3 n = normalize(vec3(-smap, 1));
+// #else // compute the slope from the dmap directly
     float filterSize = 1.0f / float(textureSize(u_DmapSampler, 0).x);// sqrt(dot(dFdx(texCoord), dFdy(texCoord)));
     float sx0 = textureLod(u_DmapSampler, texCoord - vec2(filterSize, 0.0), 0.0).r;
     float sx1 = textureLod(u_DmapSampler, texCoord + vec2(filterSize, 0.0), 0.0).r;
@@ -375,49 +376,49 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
     float sx = sx1 - sx0;
     float sy = sy1 - sy0;
 
-    vec2 s = u_DmapFactor * 0.03 / filterSize * 0.5f * vec2(-sx, -sy);
-    vec3 n = normalize(vec3(s.x, 1, -s.y));
-#endif
-#else
-    vec3 n = vec3(0, 1, 0);
-#endif
+    vec3 n = normalize(vec3(u_DmapFactor / filterSize * 0.5f * vec2(-sx, -sy), 1));
+    // vec3 n = normalize(vec3(-smap, 1));
+// #endif
+// #else
+//     vec3 n = vec3(0, 1, 0);
+// #endif
 
-#if SHADING_SNOWY
-    float d = clamp(n.z, 0.0, 1.0);
+// #if SHADING_SNOWY
+//     float d = clamp(n.z, 0.0, 1.0);
     float slopeMag = dot(n.xy, n.xy);
     vec3 albedo = slopeMag > 0.5 ? vec3(0.75) : vec3(2);
-    float z = 3.0 * gl_FragCoord.z / gl_FragCoord.w;
+//     float z = 3.0 * gl_FragCoord.z / gl_FragCoord.w;
+
+//     return NormalAlbedo(
+//         n,
+//         vec3(mix(vec3(albedo * d / 3.14159), vec3(0.5), 1.0 - exp2(-z)))
+//     );
+// #elif SHADING_DIFFUSE
+//     vec3 wi = normalize(vec3(1, 1, 1));
+//     float d = dot(wi, n) * 0.5 + 0.5;
+    // vec3 albedo = vec3(252, 197, 150) / 255.0f;
+//     vec3 camPos = u_CameraMatrix[3].xyz;
+//     vec3 extinction;
+//     vec3 inscatter = inScattering(camPos.zxy + earthPos,
+//                                   worldPos.zxy + earthPos,
+//                                   wi.zxy,
+//                                   extinction);
+// #if FLAG_WIRE
+//     vec3 shading = mix((d / 3.14159) * albedo, wireColor.xyz, blendFactor);
+// #else
+//     vec3 shading = (d / 3.14159) * albedo;
+// #endif
 
     return NormalAlbedo(
         n,
-        vec3(mix(vec3(albedo * d / 3.14159), vec3(0.5), 1.0 - exp2(-z)))
+        pow(albedo, vec3(2.2)) // shading * extinction + inscatter * 0.5
     );
-#elif SHADING_DIFFUSE
-    vec3 wi = normalize(vec3(1, 1, 1));
-    float d = dot(wi, n) * 0.5 + 0.5;
-    vec3 albedo = vec3(252, 197, 150) / 255.0f;
-    vec3 camPos = u_CameraMatrix[3].xyz;
-    vec3 extinction;
-    vec3 inscatter = inScattering(camPos.zxy + earthPos,
-                                  worldPos.zxy + earthPos,
-                                  wi.zxy,
-                                  extinction);
-#if FLAG_WIRE
-    vec3 shading = mix((d / 3.14159) * albedo, wireColor.xyz, blendFactor);
-#else
-    vec3 shading = (d / 3.14159) * albedo;
-#endif
-
-    return NormalAlbedo(
-        n,
-        shading * extinction + inscatter * 0.5
-    );
-#else
-    return NormalAlbedo(
-        n,
-        vec3(1, 0, 0)
-    );
-#endif
+// #else
+//     return NormalAlbedo(
+//         n,
+//         vec3(1, 0, 0)
+//     );
+// #endif
 }
 
 #endif
