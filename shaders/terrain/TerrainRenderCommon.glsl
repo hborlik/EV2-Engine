@@ -409,9 +409,49 @@ NormalAlbedo ShadeFragmentGbuf(vec2 texCoord, vec3 worldPos)
 //     vec3 shading = (d / 3.14159) * albedo;
 // #endif
 
+    float h = textureLod(u_DmapSampler, texCoord, 0.0).r;
+    float N = n.z;
+
+    // from https://www.shadertoy.com/view/ldyXRw
+    // materials
+    #define c_water vec3(.015, .110, .455)
+    #define c_grass vec3(.086, .132, .018)
+    #define c_beach vec3(.153, .172, .121)
+    #define c_rock  vec3(.080, .050, .030)
+    #define c_snow  vec3(.600, .600, .600)
+
+    // limits
+    #define l_water .05
+    #define l_shore .17
+    #define l_grass .511
+    #define l_rock .851
+
+    float s = smoothstep(.4, 1., h);
+    vec3 rock = mix(
+        c_rock, c_snow,
+        smoothstep(1. - .3*s, 1. - .2*s, N));
+
+    vec3 grass = mix(
+        c_grass, rock,
+        smoothstep(l_grass, l_rock, h));
+        
+    vec3 shoreline = mix(
+        c_beach, grass,
+        smoothstep(l_shore, l_grass, h));
+
+    vec3 water = mix(
+        c_water / 2., c_water,
+        smoothstep(0., l_water, h));
+
+    vec3 ocean = water;
+
+    vec3 color = mix(
+		ocean, shoreline,
+		smoothstep(l_water, l_shore, h));
+
     return NormalAlbedo(
         n,
-        pow(albedo, vec3(2.2)) // shading * extinction + inscatter * 0.5
+        color // shading * extinction + inscatter * 0.5
     );
 // #else
 //     return NormalAlbedo(

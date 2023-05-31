@@ -1,6 +1,3 @@
-
-#extension GL_GOOGLE_include_directive : enable
-
 #include "globals.glslinc"
 
 in vec3 VertPos;

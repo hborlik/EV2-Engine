@@ -13,6 +13,7 @@ by Jonathan Dupuy
  */
 #ifdef VERTEX_SHADER
 layout(location = 0) in vec2 i_VertexPos;
+
 layout(location = 0) out vec2 o_TexCoord;
 layout(location = 1) out vec3 o_WorldPos;
 layout(location = 2) out vec3 o_frag_pos;
