@@ -48,6 +48,8 @@ public:
 
     glm::vec3 sphere_repulsion(const Sphere& sph) const;
 
+    glm::vec3 node_repulsion(const SCWFCGraphNode* node) const;
+
     /**
      * @brief Check if a node intersects any of its adjacent nodes in the scene.
      *  Note that this does not check for intersections among all children, only those nodes

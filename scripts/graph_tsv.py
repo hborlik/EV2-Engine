@@ -113,6 +113,6 @@ def update_all_adjacency_plot():
     plt.show()
 
 # AD_plot()
-DR_plot()
+# DR_plot()
 # GWFC_plot()
-# update_all_adjacency_plot()
+update_all_adjacency_plot()

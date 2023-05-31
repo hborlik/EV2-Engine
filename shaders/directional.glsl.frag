@@ -1,6 +1,3 @@
-
-#extension GL_GOOGLE_include_directive : enable
-
 #include "globals.glslinc"
 #include "disney.glslinc"
 
@@ -23,7 +20,8 @@ uniform vec3 lightAmbient;
 
 /* returns 1 if shadowed */
 /* called with the point projected into the light's coordinate space */
-float TestShadow(vec3 LSfPos, vec3 Normal) {
+float PCF(in vec3 LSfPos, in vec3 Normal) {
+    // outside shadow area
     if (any(greaterThan(abs(2 * LSfPos - 1.0f), vec3(1.0f))))
         return 0.f;
     // pcss
@@ -72,10 +70,10 @@ void main() {
 
     mat4 inv_pv = LS * VInv;
     vec4 LSfPos = (inv_pv * vec4(FragPosView, 1.0));
-    float Shade = TestShadow(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
+    float Shade = PCF(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
-    vec3 diffuse = pow(materials[MaterialId].diffuse, vec3(2.2)); // gamma correction is applied in post processing.
-    vec3 color = AO * lightAmbient * (Albedo + diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
+    vec3 diffuse = pow(materials[MaterialId].diffuse, vec3(2.2)); // diffuse is srgb.
+    vec3 color = AO * lightAmbient * (Albedo + diffuse) + /*(1.0 - Shade) * */lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
     
     frag_color = vec4(color, 1.0);
     // frag_color = vec4(AO, AO, AO, 1.0);

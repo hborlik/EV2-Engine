@@ -70,7 +70,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
                 // need to push id to differentiate between different selections
                 ImGui::PushID(adjacent);
                 if (ImGui::Selectable(s_adjacent->name.c_str()))
-                    m_editor->set_selected_node(s_adjacent);
+                    m_editor->set_selected_node(Ref{s_adjacent});
                 if (ImGui::IsItemHovered())
                     s_adjacent_hovered = s_adjacent;
                 ImGui::PopID();
@@ -178,21 +178,22 @@ void SCWFCEditor::show_editor_tool() {
         static float sc_mass = 0.2f;
         ImGui::InputInt("N Nodes", &sc_steps);
         ImGui::InputInt("Branching", &sc_brf);
-        ImGui::SliderFloat("Mass", &sc_mass, 0.01f, 1.f);
+        ImGui::SliderFloat("Repulsion", &sc_mass, 0.0f, 5.f);
 
         ImGui::BeginDisabled(m_scwfc_solver == nullptr);
         if (ImGui::Button("Propagate")) {
-            m_scwfc_solver->sc_propagate(sc_steps, 1, sc_mass);
+            m_scwfc_solver->sc_propagate(sc_steps, sc_brf, sc_mass);
         }
         if (ImGui::Button("Propagate From Selected")) {
-            auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
+            auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node().get());
             auto nnode = m_scwfc_solver->sc_propagate_from(selected_node, sc_steps, sc_mass);
-            m_editor->set_selected_node(nnode.get());
+            if (nnode.size() > 0)
+                m_editor->set_selected_node(nnode.at(0));
         }
         ImGui::Separator();
         if (ImGui::Button("Unsolved Node")) {
             auto nnode = m_scwfc_solver->spawn_unsolved_node();
-            m_editor->set_selected_node(nnode.get());
+            m_editor->set_selected_node(nnode);
         }
         ImGui::EndDisabled();
         if (ImGui::Button("Reset")) {
@@ -203,6 +204,7 @@ void SCWFCEditor::show_editor_tool() {
             ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
         }
         ImGui::SameLine();
+        ImGui::BeginDisabled(m_scwfc_solver == nullptr);
         if (ImGui::Button("Clear Unsolved")) {
             m_scwfc_node->remove_all_unsolved();
         }
@@ -215,6 +217,7 @@ void SCWFCEditor::show_editor_tool() {
         if (ImGui::IsItemHovered()) {
             ImGui::SetTooltip("remove any nodes that do not have their requirements satisfied");
         }
+        ImGui::EndDisabled();
 
         ImGui::Separator();
         ImGui::Text("WFC solver");
@@ -222,11 +225,11 @@ void SCWFCEditor::show_editor_tool() {
         static int solver_steps = 20;
         ImGui::InputInt("Steps", &solver_steps);
         ImGui::SameLine();
-        auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node());
+        auto selected_node = m_editor->get_selected_node().ref_cast<SCWFCGraphNode>();
         ImGui::BeginDisabled(m_scwfc_solver == nullptr || (selected_node == nullptr && !m_scwfc_solver->can_continue()));
         if (ImGui::Button("Solve")) {
             if (!m_scwfc_solver->can_continue())
-                m_scwfc_solver->set_seed_node(selected_node->get_ref<SCWFCGraphNode>());
+                m_scwfc_solver->set_seed_node(selected_node);
             m_scwfc_solver->wfc_solve(solver_steps);
         }
         ImGui::EndDisabled();

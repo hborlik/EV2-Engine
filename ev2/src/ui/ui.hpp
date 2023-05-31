@@ -54,8 +54,8 @@ public:
     void show_scene_explorer(Node* scene, bool* p_open, const Camera* camera);
     void show_node_editor_widget(Node* node);
 
-    void set_selected_node(Node* node) noexcept {select_node(Ref<Node>{node});}
-    Node* get_selected_node() const noexcept {return Ref<Node>{m_selected_node}.get();}
+    void set_selected_node(Ref<Node> node) noexcept {select_node(node);}
+    Ref<Node> get_selected_node() const noexcept {return m_selected_node;}
 
     void add_custom_node_editor(std::shared_ptr<NodeEditor> editor);
 

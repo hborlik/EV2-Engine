@@ -2,7 +2,7 @@
 
 namespace ev2::renderer {
 
-void VertexBuffer::add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout) {
+void VertexBuffer::add_accessors_from_layout(int buffer_id, const BufferLayout& layout) {
     assert(buffers.find(buffer_id) != buffers.end());
     // map the attributes defined in the layout
     for (auto& attr : layout.attributes) {
@@ -61,7 +61,7 @@ VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffe
     return std::move(vb);
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const VertexBufferLayout& layout) {
+VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const BufferLayout& layout) {
     VertexBuffer vb;
     
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
@@ -134,7 +134,7 @@ std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitSST() {
     return std::make_pair(std::move(vb), gl_vao);
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexSpec(const std::vector<float>& buffer, const VertexBufferLayout& layout) {
+VertexBuffer VertexBuffer::vbInitArrayVertexSpec(const std::vector<float>& buffer, const BufferLayout& layout) {
     assert(layout.finalized());
     VertexBuffer vb;
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));

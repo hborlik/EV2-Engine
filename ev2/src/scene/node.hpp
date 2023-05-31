@@ -192,7 +192,7 @@ public:
     }
 
     bool is_inside_tree() const noexcept {return scene_tree;}
-    bool is_destroyed() const noexcept {return m_is_destroyed;}
+    bool is_destroyed() const noexcept {return m_is_destroyed || m_is_destroyed_queued;}
 
 public:
     std::string name = "Node";
