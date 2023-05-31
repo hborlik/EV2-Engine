@@ -15,16 +15,7 @@
 
 namespace ev2::renderer {
 
-struct VertexBufferAccessor {
-    int         buffer_id   = -1;     // buffer in VertexBuffer
-    size_t      byte_offset = 0;
-    bool        normalized  = false;
-    gl::DataType type       = gl::DataType::FLOAT;
-    size_t      count       = 0;       // required
-    size_t      stride      = 0;
-};
-
-struct VertexBufferLayout {
+struct BufferLayout {
     struct Attribute {
         VertexAttributeLabel attribute   = VertexAttributeLabel::Vertex;
         gl::DataType        type        = gl::DataType::FLOAT;
@@ -33,7 +24,7 @@ struct VertexBufferLayout {
         uint16_t            offset = 0;    // calculated offset. This is populated by finalize()
     };
 
-    VertexBufferLayout& add_attribute(VertexAttributeLabel type) {
+    BufferLayout& add_attribute(VertexAttributeLabel type) {
         // Layout should not be finalized
         assert(!finalized());
         switch(type) {
@@ -51,14 +42,14 @@ struct VertexBufferLayout {
         return *this;
     }
 
-    VertexBufferLayout& add_attribute(VertexAttributeLabel type, gl::DataType data_type, uint16_t count, uint16_t size) {
+    BufferLayout& add_attribute(VertexAttributeLabel type, gl::DataType data_type, uint16_t count, uint16_t size) {
         // Layout should not be finalized
         assert(!finalized());
         attributes.push_back(Attribute{type, data_type, count, size, 0});
         return *this;
     }
 
-    VertexBufferLayout& finalize() {
+    BufferLayout& finalize() {
         assert(!finalized());
         uint32_t total_size = 0;
         for (auto& l : attributes) {
@@ -75,6 +66,15 @@ struct VertexBufferLayout {
 
     std::vector<Attribute> attributes;
     uint32_t stride = 0;
+};
+
+struct VertexBufferAccessor {
+    int         buffer_id   = -1;     // buffer in VertexBuffer
+    size_t      byte_offset = 0;
+    bool        normalized  = false;
+    gl::DataType type       = gl::DataType::FLOAT;
+    size_t      count       = 0;       // required
+    size_t      stride      = 0;
 };
 
 class VertexBuffer {
@@ -122,7 +122,7 @@ public:
      * @param buffer_id buffer that is the target of the layout. Buffer should be in buffers map
      * @param layout vertex buffer layout
      */
-    void add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout);
+    void add_accessors_from_layout(int buffer_id, const BufferLayout& layout);
 
     /**
      * @brief create a vertex array object using stored accessors and locations specified in map
@@ -159,10 +159,10 @@ public:
      * @param instance_buffer instance buffer to be used with the returned VAO
      * @return VertexBuffer 
      */
-    static std::pair<VertexBuffer, int32_t> vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const VertexBufferLayout& layout);
+    static std::pair<VertexBuffer, int32_t> vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const BufferLayout& layout);
 
-    static VertexBuffer vbInitArrayVertexSpec(const std::vector<float>& buffer, const VertexBufferLayout& layout);
-    static VertexBuffer vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const VertexBufferLayout& layout);
+    static VertexBuffer vbInitArrayVertexSpec(const std::vector<float>& buffer, const BufferLayout& layout);
+    static VertexBuffer vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const BufferLayout& layout);
 
     static std::pair<VertexBuffer, int32_t> vbInitDefault();
 

@@ -69,7 +69,7 @@ public:
     ptree::Skeleton tree_skeleton;
     ptree::Tree tree;
     std::map<std::string, float> params;
-    ev2::renderer::VertexBufferLayout buffer_layout;
+    ev2::renderer::BufferLayout buffer_layout;
     std::shared_ptr<ev2::renderer::Drawable> tree_geometry;
 
     PlantInfo plantInfo{};

@@ -31,7 +31,7 @@ void VisualInstance::set_material_override(Ref<renderer::Material> material_over
 }
 
 void InstancedGeometry::on_init() {
-    renderer::VertexBufferLayout quad_layout;
+    renderer::BufferLayout quad_layout;
     quad_layout .add_attribute(renderer::VertexAttributeLabel::Vertex)
                 .add_attribute(renderer::VertexAttributeLabel::Normal)
                 .add_attribute(renderer::VertexAttributeLabel::Texcoord)

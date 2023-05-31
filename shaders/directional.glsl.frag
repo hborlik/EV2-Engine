@@ -73,8 +73,7 @@ void main() {
     float Shade = PCF(LSfPos.xyz, (LS * vec4(Normal, 0.0)).xyz);
 
     vec3 diffuse = pow(materials[MaterialId].diffuse, vec3(2.2)); // diffuse is srgb.
-    // vec3 color = /*AO*/0 * lightAmbient * (Albedo + diffuse) + (1.0 - Shade) * lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
-    vec3 color = (1.0 - Shade) * lightColor;// * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
+    vec3 color = AO * lightAmbient * (Albedo + diffuse) + /*(1.0 - Shade) * */lightColor * BRDF(lightDirV, viewDir, vNormal, X, Y, Albedo, materials[MaterialId]);
     
     frag_color = vec4(color, 1.0);
     // frag_color = vec4(AO, AO, AO, 1.0);
