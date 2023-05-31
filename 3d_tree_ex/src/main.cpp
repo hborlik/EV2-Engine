@@ -142,7 +142,7 @@ public:
         if (show_debug && (left_mouse_down || ev2::window::getMouseCaptured()) && !io.WantCaptureMouse) {
             std::size_t id = ev2::renderer::Renderer::get_singleton().read_obj_fb(mouse_p);
             if (id)
-                scene_editor.set_selected_node(get_scene_tree().get_node(id).get());
+                scene_editor.set_selected_node(get_scene_tree().get_node(id));
         }
 
         // camera rotation

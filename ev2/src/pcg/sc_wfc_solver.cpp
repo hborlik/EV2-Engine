@@ -117,19 +117,20 @@ void SCWFCSolver::sc_propagate(int n, int brf, float repulsion) {
     for (int cnt = 0; cnt < n; ++cnt) {
         if (m_boundary_expanding.size() < 1)
             break;
-        Ref<SCWFCGraphNode> n = m_boundary_expanding.front();
+        Ref<SCWFCGraphNode> node = m_boundary_expanding.front();
         m_boundary_expanding.pop();
 
-        if (n->is_destroyed())
+        if (node->is_destroyed())
             continue;
 
-        auto node = sc_propagate_from(n.get(), n, repulsion);
-        m_boundary_expanding.push(node);
+        auto new_nodes = sc_propagate_from(node.get(), brf, repulsion);
+        for (const auto& e : new_nodes)
+            m_boundary_expanding.push(e);
     }
 }
 
 
-Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, float repulsion) {
+std::vector<Ref<SCWFCGraphNode>> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, float repulsion) {
     if (n <= 0)
         return {};
 
@@ -139,6 +140,8 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
     struct Spawn {
         std::vector<glm::vec3> positions;
         std::unordered_set<int> domain_class_ids{};
+        std::unordered_set<wfc::Val> new_domain_vals{};
+        float en_radius = 0.f;
     };
 
     // all available class_ids
@@ -161,15 +164,19 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
         node_spawns.clear();
 
         // since we are propagating from an existing node, spawn a
-        // node that contains set of valid neighbors for that existing
+        // node that possibly contains set of valid neighbors for that existing
         // node.
+
+        // get repulsion
+        const glm::vec3 r_vec = repulsion * ((repulsion > 0) ? scwfc_node.node_repulsion(node) : glm::vec3{});
+
         const float entropy = wfc_solver->node_entropy(node);
         for (auto domain_val : node->domain) {
             if (auto pattern = obj_db->get_pattern(domain_val.value);
                 pattern != nullptr) {  // pattern_id is valid
                 Spawn sp{};
 
-                const float success = pattern->weight / entropy;
+                const float success = pattern->weight / (entropy ? entropy : pattern->weight);
                 // does this current node need more nodes to become valid?
                 switch(m_args.domain_mode) {
                     case NewDomainMode::Full:
@@ -178,8 +185,8 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                     
                     case NewDomainMode::Dependent:
                         if (wfc_solver->valid(domain_val, node) && binomial_trial(success, *m_mt.get())) {
-                        // add all required classes
-                        sp.domain_class_ids.insert(pattern->required_types.begin(), pattern->required_types.end());
+                            // add all required classes
+                            sp.domain_class_ids.insert(pattern->required_types.begin(), pattern->required_types.end());
                         } else {
                             sp.domain_class_ids = all_class_ids;
                         }
@@ -187,10 +194,14 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                 }
 
                 // wfc::Val domain_val = wfc_solver->weighted_pick_domain(node);
-                auto [obj_p, obj_e] = obj_db->objs_for_id(pattern->pattern_type);                    
+                sp.new_domain_vals = domain_from_class_ids(sp.domain_class_ids);
+                sp.en_radius = glm::length(weighted_average_diagonal({sp.new_domain_vals.begin(), sp.new_domain_vals.end()})) / 2.f;
+                
+                // all ObjectData for type
+                auto [obj_p, obj_e] = obj_db->objs_for_id(pattern->pattern_type);                 
 
                 // random trials for placements
-                for (int i = 0; i < 20; ++i) {
+                for (int i = 0; i < std::ceil(n * success); ++i) {
                     const auto& [id, obj] = *select_randomly(obj_p, obj_e, *m_mt.get());
                     const auto n_props = obj.propagation_patterns.size();
                     if (!binomial_trial(success / n_props, *m_mt.get()))
@@ -208,7 +219,15 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
                         dist_z(*m_mt.get())
                     };
 
-                    sp.positions.push_back(node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 1.f});
+                    glm::vec3 position = node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 1.f};
+                    glm::vec3 prop_dir = node->get_linear_transform() * obb.get_transform() * glm::vec4{pos_in_obb, 0.f};
+
+                    glm::vec3 final_pos = position + r_vec;
+
+                    final_pos.y = 0; // TODO ground placement rules
+
+                    if (!(glm::dot(glm::normalize(r_vec), glm::normalize(prop_dir)) < -.2))
+                        sp.positions.push_back(final_pos);
                 }
                 node_spawns.emplace_back(std::move(sp));
             }
@@ -224,29 +243,26 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
 
 
     for (const auto& spawn : node_spawns) {
-        std::unordered_set<wfc::Val> new_domain_vals = domain_from_class_ids(spawn.domain_class_ids);
-
         for (const auto& pos : spawn.positions) {
             auto nnode = scwfc_node.create_child_node<SCWFCGraphNode>("SGN " + std::to_string(scwfc_node.get_n_children()));
             // populate domain of new node
-            nnode->domain = {new_domain_vals.begin(), new_domain_vals.end()};
-            float en_radius = glm::length(weighted_average_diagonal(nnode.get())) / 2.f; // wfc_solver->node_entropy(nnode.get()) + 
+            nnode->domain = {spawn.new_domain_vals.begin(), spawn.new_domain_vals.end()};
+            const float en_radius = spawn.en_radius;
 
             // get repulsion
             Sphere sph(pos, en_radius);
             glm::vec3 final_pos = sph.center;
-            final_pos += repulsion * ((repulsion > 0) ? scwfc_node.sphere_repulsion(sph) : glm::vec3{});
+            
+            // const glm::vec3 r_vec = repulsion * ((repulsion > 0) ? scwfc_node.sphere_repulsion(sph) : glm::vec3{});
+            // final_pos += r_vec;
 
-            final_pos.y = 0; // TODO placement rules
+            // final_pos.y = 0; // TODO placement rules
 
             nnode->set_radius(en_radius);
             nnode->set_neighborhood_radius(en_radius * m_args.neighbor_radius_fac);
             nnode->set_position(final_pos);
             if (node)
                 nnode->set_rotation(node->get_rotation());
-        
-            // attach new node to all nearby neighbors
-            // scwfc_node.update_all_adjacencies(nnode, n_radius);
 
             // update visual node state, may be destroyed
             node_check_and_update(nnode.get());
@@ -256,10 +272,11 @@ Ref<SCWFCGraphNode> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* node, int n, 
         }
     }
 
-    if (!nnodes.empty())
-        node = select_randomly(nnodes.begin(), nnodes.end(), *m_mt.get())->get();
+    // if (!nnodes.empty())
+    //     node = select_randomly(nnodes.begin(), nnodes.end(), *m_mt.get())->get();
 
-    return node->get_ref<SCWFCGraphNode>();
+    // return node->get_ref<SCWFCGraphNode>();
+    return nnodes;
 }
 
 void SCWFCSolver::wfc_solve(int steps) {
@@ -287,7 +304,7 @@ void SCWFCSolver::wfc_solve(int steps) {
             break;
         auto n = m_boundary->pop_top();
 
-        if (n->is_destroyed()) // m_boundary will contain destroyed nodes
+        if (n->is_destroyed()) // m_boundary can contain destroyed nodes
             continue;
 
         // add all adjacent nodes to the solver boundary
@@ -403,7 +420,7 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
         const auto& aabb = model->bounding_box;
         const float scale = extent / glm::length(aabb.diagonal()); // scale uniformly
         // float radius = aabb.min_diagonal() * scale / 2.f;
-        float radius = glm::length(weighted_average_diagonal(s_node)) / 2.f;//wfc_solver->node_entropy(s_node) +
+        float radius = glm::length(weighted_average_diagonal(s_node->domain)) / 2.f;//wfc_solver->node_entropy(s_node) +
 
         s_node->set_model(model);
         s_node->set_scale(glm::vec3{scale});
@@ -430,7 +447,7 @@ Ref<SCWFCGraphNode> SCWFCSolver::spawn_unsolved_node() {
     // populate domain of new node
     nnode->domain = {domain.begin(), domain.end()};
 
-    float en_radius = wfc_solver->node_entropy(nnode.get()) + glm::length(weighted_average_diagonal(nnode.get())) / 2.f;
+    float en_radius = glm::length(weighted_average_diagonal(nnode->domain)) / 2.f;
     nnode->set_radius(en_radius);
     nnode->set_neighborhood_radius(en_radius * m_args.neighbor_radius_fac);
 
@@ -456,13 +473,10 @@ std::unordered_set<wfc::Val> SCWFCSolver::domain_from_class_ids(const std::unord
     return domain;
 }
 
-glm::vec3 SCWFCSolver::weighted_average_diagonal(SCWFCGraphNode* s_node) {
-    if (!s_node)
-        return {};
-    
+glm::vec3 SCWFCSolver::weighted_average_diagonal(const std::vector<wfc::Val>& domain) {
     glm::vec3 total_diagonal{};
     float total_weights = 0.f;
-    for (auto pattern_id : s_node->domain) {
+    for (auto pattern_id : domain) {
         // every node in domain should be valid for this node.
         glm::vec3 class_size{};
 
@@ -473,7 +487,7 @@ glm::vec3 SCWFCSolver::weighted_average_diagonal(SCWFCGraphNode* s_node) {
             if (size > 0) {
                 std::for_each(o_itr, o_end, [&class_size](auto& pair) -> void {
                     auto& [class_id, obj] = pair;
-                    class_size += obj.get_scaled_bounding_box().diagonal();
+                    class_size += obj.get_scaled_bounding_box().min_diagonal();
                 });
                 class_size /= size;
             }

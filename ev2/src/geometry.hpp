@@ -464,8 +464,9 @@ struct OBB {
 
     glm::mat4 get_transform() const {
         glm::mat4 tr{rotation};
-        tr[3] = glm::vec4{center, 1.f};
-        return tr;
+        // tr[3] = glm::vec4{center, 1.f};
+        glm::mat4 translate = glm::translate(glm::mat4{1}, center);
+        return translate * tr;
     }
 
     glm::mat4 make_transform(const glm::vec3& model_half_extents) const {

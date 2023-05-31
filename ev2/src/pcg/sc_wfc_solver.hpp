@@ -35,7 +35,7 @@ enum class DiscoveryMode {
 };
 
 struct SCWFCSolverArgs {
-    NewDomainMode domain_mode = NewDomainMode::Full;
+    NewDomainMode domain_mode = NewDomainMode::Dependent;
     wfc::SolverValidMode validity_mode = wfc::SolverValidMode::Correct;
     DiscoveryMode solving_order = DiscoveryMode::DiscoveryOrder;
     
@@ -73,7 +73,7 @@ public:
 
     void sc_propagate(int n, int brf, float mass);
 
-    Ref<SCWFCGraphNode> sc_propagate_from(SCWFCGraphNode* node, int n, float repulsion);
+    std::vector<Ref<SCWFCGraphNode>> sc_propagate_from(SCWFCGraphNode* node, int n, float repulsion);
 
     void wfc_solve(int steps);
 
@@ -93,7 +93,7 @@ public:
      */
     std::unordered_set<wfc::Val> domain_from_class_ids(const std::unordered_set<int>& class_ids);
 
-    glm::vec3 weighted_average_diagonal(SCWFCGraphNode* s_node);
+    glm::vec3 weighted_average_diagonal(const std::vector<wfc::Val>& domain);
 
     bool can_continue() const noexcept;
 

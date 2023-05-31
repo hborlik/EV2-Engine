@@ -80,11 +80,30 @@ glm::vec3 SCWFC::sphere_repulsion(const Sphere& sph) const {
         auto graph_node = c.ref_cast<SCWFCGraphNode>();
         if (graph_node) {
             const Sphere& bounds = graph_node->get_bounding_sphere();
-            // if (intersect(bounds, sph)) {
-                glm::vec3 c2c = bounds.center - sph.center;
-                float r2 = glm::dot(c2c, c2c);
-                net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / r2;
-            // }
+            glm::vec3 c2c = sph.center - bounds.center;
+            float r2 = glm::dot(c2c, c2c);
+            if (r2 > std::numeric_limits<float>::epsilon()) {
+                net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / (r2 + 1e-5f);
+            }
+        }
+    }
+    return net;
+}
+
+glm::vec3 SCWFC::node_repulsion(const SCWFCGraphNode* node ) const {
+    if (!node)
+        return {};
+    const Sphere& sph = node->get_bounding_sphere();
+    glm::vec3 net{};
+    for (auto& c : get_children()) {
+        auto graph_node = c.ref_cast<SCWFCGraphNode>();
+        if (graph_node && graph_node.get() != node) {
+            const Sphere& bounds = graph_node->get_bounding_sphere();
+            glm::vec3 c2c = sph.center - bounds.center;
+            float r2 = glm::dot(c2c, c2c);
+            if (r2 > std::numeric_limits<float>::epsilon()) {
+                net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / (r2 + 1e-5f);
+            }
         }
     }
     return net;
@@ -94,7 +113,7 @@ bool SCWFC::intersects_any_solved_neighbor(const Ref<SCWFCGraphNode>& n) {
     // for every node that has been added as an adjacent one
     for (auto& node : m_data->graph.adjacent_nodes(n.get())) {
         auto sc_node = dynamic_cast<SCWFCGraphNode*>(node);
-        if (sc_node && sc_node->is_solved()) { // is it solved
+        if (sc_node && sc_node->is_solved() && !sc_node->is_destroyed()) { // is it solved
             const Sphere& bounds = sc_node->get_bounding_sphere();
             if (intersect(bounds, n->get_bounding_sphere())) {
                 return true;
