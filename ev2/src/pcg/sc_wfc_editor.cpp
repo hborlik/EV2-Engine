@@ -172,18 +172,48 @@ void SCWFCEditor::show_editor_tool() {
 
         ImGui::Separator();
 
+        struct SolverWork {
+            int in_progress = 0;
+            int total = 0;
+
+            bool check(int i) noexcept {
+                if (in_progress < total) {
+                    in_progress++;
+                    return true;
+                }
+                return false;
+            }
+
+            float progress() noexcept {
+                return in_progress / (float)total;
+            }
+        };
+
         ImGui::Text("SC propagate");
         static int sc_steps = 10;
-        static int sc_brf = 1;
+        static int sc_brf = 20;
         static float sc_mass = 0.2f;
+        static bool sc_on_terrain = true;
+        static SolverWork sc_work{};
         ImGui::InputInt("N Nodes", &sc_steps);
         ImGui::InputInt("Branching", &sc_brf);
         ImGui::SliderFloat("Repulsion", &sc_mass, 0.0f, 5.f);
+        ImGui::Checkbox("On terrain", &sc_on_terrain);
 
         ImGui::BeginDisabled(m_scwfc_solver == nullptr);
         if (ImGui::Button("Propagate")) {
-            m_scwfc_solver->sc_propagate(sc_steps, sc_brf, sc_mass);
+            sc_work.total = sc_steps;
+            sc_work.in_progress = 0;
         }
+        if (sc_work.check(1)) {
+            m_scwfc_solver->sc_propagate(1, sc_brf, sc_mass);
+            ImGui::ProgressBar(sc_work.progress(), ImVec2(-100, 0));
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel")) {
+                sc_work = {};
+            }
+        }
+
         if (ImGui::Button("Propagate From Selected")) {
             auto selected_node = dynamic_cast<SCWFCGraphNode*>(m_editor->get_selected_node().get());
             auto nnode = m_scwfc_solver->sc_propagate_from(selected_node, sc_steps, sc_mass);
@@ -196,47 +226,65 @@ void SCWFCEditor::show_editor_tool() {
             m_editor->set_selected_node(nnode);
         }
         ImGui::EndDisabled();
-        if (ImGui::Button("Reset")) {
-            m_scwfc_node->reset();
-            reset_solver();
-        }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
-        }
-        ImGui::SameLine();
-        ImGui::BeginDisabled(m_scwfc_solver == nullptr);
-        if (ImGui::Button("Clear Unsolved")) {
-            m_scwfc_node->remove_all_unsolved();
-        }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Remove all unsolved children nodes");
-        }
-        if (ImGui::Button("Reevaluate discovered nodes")) {
-            m_scwfc_solver->reevaluate_validity();
-        }
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("remove any nodes that do not have their requirements satisfied");
-        }
-        ImGui::EndDisabled();
 
         ImGui::Separator();
         ImGui::Text("WFC solver");
 
         static int solver_steps = 20;
+        static SolverWork solver_work{};
         ImGui::InputInt("Steps", &solver_steps);
         ImGui::SameLine();
         auto selected_node = m_editor->get_selected_node().ref_cast<SCWFCGraphNode>();
         ImGui::BeginDisabled(m_scwfc_solver == nullptr || (selected_node == nullptr && !m_scwfc_solver->can_continue()));
         if (ImGui::Button("Solve")) {
-            if (!m_scwfc_solver->can_continue())
+            if (m_scwfc_solver && !m_scwfc_solver->can_continue())
                 m_scwfc_solver->set_seed_node(selected_node);
-            m_scwfc_solver->wfc_solve(solver_steps);
+
+            solver_work.total = sc_steps;
+            solver_work.in_progress = 0;
         }
         ImGui::EndDisabled();
+        if (solver_work.check(1)) {
+            if (m_scwfc_solver) m_scwfc_solver->wfc_solve(1);
+            ImGui::ProgressBar(solver_work.progress(), ImVec2(-100, 0));
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel") || (m_scwfc_solver && !m_scwfc_solver->can_continue())) {
+                solver_work = {};
+            }
+        }
         if (m_scwfc_solver) {
             ImGui::Text("%lu boundary nodes", m_scwfc_solver->get_boundary_size());
             ImGui::Text("%lu discovered nodes", m_scwfc_solver->get_discovered_size());
         }
+    }
+
+    if (ImGui::Button("Reevaluate discovered nodes")) {
+        if (m_scwfc_solver)
+            m_scwfc_solver->reevaluate_validity();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("remove any nodes that do not have their requirements satisfied");
+    }
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
+
+    ImGui::BeginDisabled(m_scwfc_solver == nullptr);
+    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(255, 0, 0, 255));
+    if (ImGui::Button("Reset")) {
+        m_scwfc_node->reset();
+        reset_solver();
+    }
+    ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Remove all children nodes, resetting the entire generated scene");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Clear Unsolved")) {
+        m_scwfc_node->remove_all_unsolved();
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Remove all unsolved children nodes");
     }
     ImGui::EndDisabled();
 

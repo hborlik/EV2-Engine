@@ -120,7 +120,7 @@ void SCWFCSolver::sc_propagate(int n, int brf, float repulsion) {
         Ref<SCWFCGraphNode> node = m_boundary_expanding.front();
         m_boundary_expanding.pop();
 
-        if (node->is_destroyed())
+        if (!node || (node && node->is_destroyed()))
             continue;
 
         auto new_nodes = sc_propagate_from(node.get(), brf, repulsion);
@@ -176,7 +176,7 @@ std::vector<Ref<SCWFCGraphNode>> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* 
                 pattern != nullptr) {  // pattern_id is valid
                 Spawn sp{};
 
-                const float success = pattern->weight / (entropy ? entropy : pattern->weight);
+                const float success = pattern->weight / (entropy ? entropy : 1.f);
                 // does this current node need more nodes to become valid?
                 switch(m_args.domain_mode) {
                     case NewDomainMode::Full:
@@ -304,7 +304,7 @@ void SCWFCSolver::wfc_solve(int steps) {
             break;
         auto n = m_boundary->pop_top();
 
-        if (n->is_destroyed()) // m_boundary can contain destroyed nodes
+        if (!n || (n && n->is_destroyed())) // m_boundary can contain destroyed nodes
             continue;
 
         // add all adjacent nodes to the solver boundary
@@ -510,7 +510,8 @@ bool SCWFCSolver::can_continue() const noexcept {
 }
 
 void SCWFCSolver::set_seed_node(Ref<SCWFCGraphNode> node) {
-    m_boundary->push(node);
+    if (node)
+        m_boundary->push(node);
 }
 
 std::size_t SCWFCSolver::get_boundary_size() const noexcept {return m_boundary->size();}
