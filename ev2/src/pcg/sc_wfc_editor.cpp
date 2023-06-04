@@ -100,7 +100,7 @@ void SCWFCGraphNodeEditor::show_editor(Node* node) {
     }
 }
 
-SCWFCEditor::SCWFCEditor() : m_rd{}, m_obj_db{} {
+SCWFCEditor::SCWFCEditor(Application* app) : app{app}, m_rd{}, m_obj_db{} {
     m_unsolved_drawable = ResourceManager::get_singleton().get_model(fs::path("models") / "cube.obj", false);
     m_unsolved_drawable->materials[0]->diffuse = glm::vec3{1, 0, 0};
 }
@@ -190,15 +190,14 @@ void SCWFCEditor::show_editor_tool() {
         };
 
         ImGui::Text("SC propagate");
-        static int sc_steps = 10;
+        static int sc_steps = 500;
         static int sc_brf = 20;
         static float sc_mass = 0.2f;
-        static bool sc_on_terrain = true;
         static SolverWork sc_work{};
         ImGui::InputInt("N Nodes", &sc_steps);
         ImGui::InputInt("Branching", &sc_brf);
         ImGui::SliderFloat("Repulsion", &sc_mass, 0.0f, 5.f);
-        ImGui::Checkbox("On terrain", &sc_on_terrain);
+        ImGui::Checkbox("Place on terrain", &m_scwfc_solver->b_on_terrain);
 
         ImGui::BeginDisabled(m_scwfc_solver == nullptr);
         if (ImGui::Button("Propagate")) {
@@ -230,7 +229,7 @@ void SCWFCEditor::show_editor_tool() {
         ImGui::Separator();
         ImGui::Text("WFC solver");
 
-        static int solver_steps = 20;
+        static int solver_steps = 100;
         static SolverWork solver_work{};
         ImGui::InputInt("Steps", &solver_steps);
         ImGui::SameLine();
@@ -1075,6 +1074,8 @@ void SCWFCEditor::reset_solver() {
         // attach notification events scene nodes being removed
         m_scwfc_solver->node_added_listener.subscribe(&m_scwfc_node->child_node_added);
         m_scwfc_solver->node_removed_listener.subscribe(&m_scwfc_node->child_node_removed);
+
+        m_scwfc_solver->app = app;
     }
 }
 

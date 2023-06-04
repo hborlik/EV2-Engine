@@ -355,6 +355,10 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
 
     auto model = unsolved_drawable;
 
+    glm::vec3 position = s_node->get_world_position() * glm::vec3{1, 0, 1};
+    if (app && b_on_terrain)
+        position.y = app->get_terrain().height_query(position.x, position.z);
+
     if (s_node->domain.size() == 0) {
         // remove nodes with 0 valid objects in their domain from the scene
         s_node->destroy();
@@ -402,8 +406,10 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
                 if (m_args.node_neighborhood == RefreshNeighborhoodRadius::Always)
                     s_node->set_neighborhood_radius(radius * m_args.neighbor_radius_fac);
 
+                position.y += -aabb_scaled.pMin.y;
+
                 s_node->rotate(glm::vec3{0, rotation_y, 0});
-                s_node->set_position(s_node->get_position() * glm::vec3{1, 0, 1} + glm::vec3{0, -aabb_scaled.pMin.y, 0});
+                s_node->set_world_position(position);
                 s_node->set_solved();
 
                 if (scwfc_node.intersects_any_solved_neighbor(Ref{ s_node })) {
@@ -425,6 +431,7 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
         s_node->set_model(model);
         s_node->set_scale(glm::vec3{scale});
         s_node->set_radius(radius);
+        s_node->set_world_position(position);
 
         if (m_args.node_neighborhood == RefreshNeighborhoodRadius::Always)
             s_node->set_neighborhood_radius(radius * m_args.neighbor_radius_fac);

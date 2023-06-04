@@ -14,6 +14,7 @@
 #include "pcg/sc_wfc_solver.hpp"
 #include "pcg/wfc.hpp"
 #include "renderer/renderer.hpp"
+#include "application.hpp"
 #include "ui/ui.hpp"
 #include "ui/file_dialog.hpp"
 #include "object_database.hpp"
@@ -29,7 +30,7 @@ class SCWFCGraphNode;
  */
 class SCWFCEditor : public EditorTool {
 public:
-    SCWFCEditor();
+    SCWFCEditor(Application* app);
 
     void show_editor_tool() override;
 
@@ -76,6 +77,7 @@ private:
     void reset_solver();
 
 private:
+    Application* app = nullptr;
     std::random_device m_rd{};
     Ref<SCWFC> m_scwfc_node{};
     std::shared_ptr<ObjectMetadataDB> m_obj_db{};
