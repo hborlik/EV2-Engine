@@ -60,7 +60,7 @@ def DR_plot():
     plt.show()
 
 def GWFC_plot():
-    title = 'GWFC Single Iteration Timings during Editor use'
+    title = 'GWFC Single Iteration Timings during Application use'
     filename = 'turnin_images/thesis_may2023/performance/wfc_solve_timings.tsv'
 
     df = pd.read_csv(filename, sep='\t')
@@ -71,7 +71,7 @@ def GWFC_plot():
     print(df.head())
 
     fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(1, 1, (1, 1), projection='3d')
+    ax = fig.add_subplot(1, 1, (1, 1))#, projection='3d')
 
     X, Y, Z = (df[n_nodes], df[n_domain], df['Time(ms)'])
 
@@ -80,26 +80,26 @@ def GWFC_plot():
     #     ax.scatter(data[n_nodes], data[n_domain], data['Time(ms)'], cmap='viridis', c=data[n_domain])
     colors = ListedColormap(['royalblue', 'blue', 'purple', 'hotpink', 'orangered', 'red'])
     labels = ['Domain Size 0', 'Domain Size 1', 'Domain Size 2', 'Domain Size 3', 'Domain Size 4', 'Domain Size 5']
-    sc=ax.scatter(X, Y, Z, cmap=colors, c=Y)
+    sc=ax.scatter(X, Z, cmap='viridis', c=Z)#, cmap=colors, c=Y)
 
     # ax.scatter(xs=X, ys=0, zs=Z)#, cmap=colors, c=Y)
-    ax.set_proj_type('persp', focal_length=0.3)
+    # ax.set_proj_type('persp', focal_length=0.3)
 
     ax.set_xlabel('Neighborhood Size')
-    ax.set_ylabel('Domain Size')
-    ax.set_zlabel('Time(ms)')
+    # ax.set_ylabel('Domain Size')
+    ax.set_ylabel('Time(ms)')
 
-    ax.view_init(elev=3., azim=126, roll=0)
-    ax.dist = 8    # define perspective (default=10)
+    # ax.view_init(elev=3., azim=126, roll=0)
+    # ax.dist = 8    # define perspective (default=10)
 
     # plt.legend()
     print(sc.legend_elements())
-    ax.legend(bbox_to_anchor=(1, 0.8), ncols=2 , loc='upper right', handles=sc.legend_elements()[0], labels=labels)
+    # ax.legend(bbox_to_anchor=(1, 0.8), ncols=2 , loc='upper right', handles=sc.legend_elements()[0], labels=labels)
     plt.title(title)
     plt.show()
 
 def update_all_adjacency_plot():
-    title = 'Scene Sphere Intersection Timings during Editor use'
+    title = 'Sampled adjacency update timings during application use'
     filename = 'turnin_images/thesis_may2023/performance/update_all_adjacencies_timings.tsv'
     xlabel = 'Nodes in scene'
     ylabel = 'Time (ms)'
@@ -114,5 +114,5 @@ def update_all_adjacency_plot():
 
 # AD_plot()
 # DR_plot()
-# GWFC_plot()
-update_all_adjacency_plot()
+GWFC_plot()
+# update_all_adjacency_plot()

@@ -98,7 +98,7 @@ public:
         set_current_scene(Node::create_node<Node>("root"));
 
         // add scene editors
-        auto node_editor = std::make_shared<ev2::pcg::SCWFCEditor>();
+        auto node_editor = std::make_shared<ev2::pcg::SCWFCEditor>(this);
         // scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::ProceduralGridEditor>());
         scene_editor.add_custom_node_editor(std::make_shared<ev2::pcg::SCWFCGraphNodeEditor>(node_editor.get()));
         scene_editor.add_custom_editor_tool(node_editor);

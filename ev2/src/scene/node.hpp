@@ -172,6 +172,12 @@ public:
         transform.set_position(pos);
         node_propagate_transform_changed(this);
     }
+    void set_world_position(const glm::vec3& pos) noexcept {
+        glm::mat4 inv{1};
+        if (parent)
+            inv = glm::inverse(parent->get_world_transform());
+        set_position(inv * glm::vec4{pos, 1.f});
+    }
     void set_rotation(const glm::quat& rot) noexcept {
         transform.set_rotation(rot);
         node_propagate_transform_changed(this);

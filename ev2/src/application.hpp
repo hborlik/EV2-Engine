@@ -51,7 +51,7 @@ public:
         current_camera = camera;
     }
 
-    renderer::TerrainRenderer &get_terrain() {
+    renderer::TerrainRenderer& get_terrain() {
         return *m_terrain_renderer.get();
     }
 

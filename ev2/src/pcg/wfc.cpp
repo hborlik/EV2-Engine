@@ -24,10 +24,11 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
         int v;
         GN* p;
     };
-    std::vector<ValueAndNode> neigh_values{};   // values in neighborhood with associated node in flow graph
+    // std::vector<ValueAndNode> neigh_values{};   // values in neighborhood with associated node in flow graph
+    std::unordered_multimap<int, ValueAndNode> neigh_value_map{};
     std::vector<ValueAndNode> required{};       // required values and associated node in flow graph
 
-    neigh_values.reserve(neighborhood.size());
+    // neigh_values.reserve(neighborhood.size());
     required.reserve(required_types.size());
 
     // extra two capacity for source and sink
@@ -60,42 +61,54 @@ bool Pattern::valid(const std::vector<DGraphNode*>& neighborhood) const {
         auto domain_node = std::make_unique<GN>(++id);
         dg.add_edge(domain_node.get(), sink.get(), 1.f);
         for (auto val : node->domain) {
-            neigh_values.emplace_back(ValueAndNode{
-                .v = val.type, // requirements are only for type, not value
+            // neigh_values.emplace_back(ValueAndNode{
+            //     .v = val.type, // requirements are only for type
+            //     .p = domain_node.get()
+            // });
+            neigh_value_map.insert(std::make_pair(val.type, ValueAndNode{
+                .v = val.type, // requirements are only for type
                 .p = domain_node.get()
-            });
+            }));
         }
 
         // save reference for cleanup
         neigh_nodes.emplace_back(std::move(domain_node));
     }
 
-    auto sort_vn = [](const ValueAndNode& a, const ValueAndNode& b) {
-        // sorted high to low cell values
-        return a.v < b.v;
-    };
+    // auto sort_vn = [](const ValueAndNode& a, const ValueAndNode& b) {
+    //     // sorted high to low cell values
+    //     return a.v < b.v;
+    // };
 
-    // sort by the cell values
-    std::sort(required.begin(), required.end(), sort_vn);
-    std::sort(neigh_values.begin(), neigh_values.end(), sort_vn);
+    // // sort by the cell values
+    // std::sort(required.begin(), required.end(), sort_vn);
+    // std::sort(neigh_values.begin(), neigh_values.end(), sort_vn);
 
-    // find the nodes associated with each required value by stepping through the sorted lists
+    // // find the nodes associated with each required value by stepping through the sorted lists
+    // for (const auto& req : required) {
+    //     auto vn_pos = neigh_values.begin();
+    //     bool has_single_neighbor = false;
+    //     while(vn_pos != neigh_values.end()) {
+    //         if (vn_pos->v == req.v) {
+    //             // connect required value node with neighbor node that
+    //             // has required value in its domain
+    //             dg.add_edge(req.p, vn_pos->p, 1.f);
+    //             // there is at least one node satisfying the requirement
+    //             has_single_neighbor = true;
+    //         } else if (vn_pos->v > req.v) {
+    //             if (has_single_neighbor == false)
+    //                 return false;
+    //             break; // did not match value
+    //         }
+    //         ++vn_pos;
+    //     }
+    // }
     for (const auto& req : required) {
-        auto vn_pos = neigh_values.begin();
-        bool has_single_neighbor = false;
-        while(vn_pos != neigh_values.end()) {
-            if (vn_pos->v == req.v) {
-                // connect required value node with neighbor node that
-                // has required value in its domain
-                dg.add_edge(req.p, vn_pos->p, 1.f);
-                // there is at least one node satisfying the requirement
-                has_single_neighbor = true;
-            } else if (vn_pos->v > req.v) {
-                if (has_single_neighbor == false)
-                    return false;
-                break; // did not match value
-            }
-            ++vn_pos;
+        auto [itr, end] = neigh_value_map.equal_range(req.v);
+        if (itr == end)
+            return false; // there is not at least one node satisfying the requirement
+        for (; itr != end; ++itr) {
+            dg.add_edge(req.p, itr->second.p, 1.f);
         }
     }
 

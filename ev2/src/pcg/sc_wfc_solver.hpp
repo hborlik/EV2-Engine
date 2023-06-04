@@ -12,6 +12,7 @@
 
 #include "evpch.hpp"
 
+#include "application.hpp"
 #include "events/notifier.hpp"
 #include "pcg/wfc.hpp"
 #include "sc_wfc.hpp"
@@ -126,6 +127,9 @@ private:
 public:
     DelegateListener<SCWFCGraphNode*> node_removed_listener{};
     DelegateListener<SCWFCGraphNode*> node_added_listener{};
+
+    bool b_on_terrain = false;
+    Application* app = nullptr;
 
 private:
     SCWFC& scwfc_node;

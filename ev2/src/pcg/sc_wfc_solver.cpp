@@ -120,7 +120,7 @@ void SCWFCSolver::sc_propagate(int n, int brf, float repulsion) {
         Ref<SCWFCGraphNode> node = m_boundary_expanding.front();
         m_boundary_expanding.pop();
 
-        if (node->is_destroyed())
+        if (!node || (node && node->is_destroyed()))
             continue;
 
         auto new_nodes = sc_propagate_from(node.get(), brf, repulsion);
@@ -176,7 +176,7 @@ std::vector<Ref<SCWFCGraphNode>> SCWFCSolver::sc_propagate_from(SCWFCGraphNode* 
                 pattern != nullptr) {  // pattern_id is valid
                 Spawn sp{};
 
-                const float success = pattern->weight / (entropy ? entropy : pattern->weight);
+                const float success = pattern->weight / (entropy ? entropy : 1.f);
                 // does this current node need more nodes to become valid?
                 switch(m_args.domain_mode) {
                     case NewDomainMode::Full:
@@ -304,7 +304,7 @@ void SCWFCSolver::wfc_solve(int steps) {
             break;
         auto n = m_boundary->pop_top();
 
-        if (n->is_destroyed()) // m_boundary can contain destroyed nodes
+        if (!n || (n && n->is_destroyed())) // m_boundary can contain destroyed nodes
             continue;
 
         // add all adjacent nodes to the solver boundary
@@ -355,6 +355,10 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
 
     auto model = unsolved_drawable;
 
+    glm::vec3 position = s_node->get_world_position() * glm::vec3{1, 0, 1};
+    if (app && b_on_terrain)
+        position.y = app->get_terrain().height_query(position.x, position.z);
+
     if (s_node->domain.size() == 0) {
         // remove nodes with 0 valid objects in their domain from the scene
         s_node->destroy();
@@ -402,8 +406,10 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
                 if (m_args.node_neighborhood == RefreshNeighborhoodRadius::Always)
                     s_node->set_neighborhood_radius(radius * m_args.neighbor_radius_fac);
 
+                position.y += -aabb_scaled.pMin.y;
+
                 s_node->rotate(glm::vec3{0, rotation_y, 0});
-                s_node->set_position(s_node->get_position() * glm::vec3{1, 0, 1} + glm::vec3{0, -aabb_scaled.pMin.y, 0});
+                s_node->set_world_position(position);
                 s_node->set_solved();
 
                 if (scwfc_node.intersects_any_solved_neighbor(Ref{ s_node })) {
@@ -425,6 +431,7 @@ void SCWFCSolver::node_check_and_update(SCWFCGraphNode* s_node) {
         s_node->set_model(model);
         s_node->set_scale(glm::vec3{scale});
         s_node->set_radius(radius);
+        s_node->set_world_position(position);
 
         if (m_args.node_neighborhood == RefreshNeighborhoodRadius::Always)
             s_node->set_neighborhood_radius(radius * m_args.neighbor_radius_fac);
@@ -510,7 +517,8 @@ bool SCWFCSolver::can_continue() const noexcept {
 }
 
 void SCWFCSolver::set_seed_node(Ref<SCWFCGraphNode> node) {
-    m_boundary->push(node);
+    if (node)
+        m_boundary->push(node);
 }
 
 std::size_t SCWFCSolver::get_boundary_size() const noexcept {return m_boundary->size();}
