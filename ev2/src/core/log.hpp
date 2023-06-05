@@ -6,7 +6,7 @@
 
 namespace ev2 {
 
-class log {
+class Log {
 
 private:
     std::ofstream log_file_stream;
