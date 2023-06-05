@@ -13,9 +13,9 @@
 #include <glm/glm.hpp>
 
 #include "reference_counted.hpp"
-#include "renderer/mesh.hpp"
+#include "renderer/opengl_renderer/mesh.hpp"
+#include "renderer/opengl_renderer/texture.hpp"
 #include "renderer/renderer.hpp"
-#include "renderer/texture.hpp"
 #include "renderer/material.hpp"
 #include "io/image.hpp"
 #include "gltf.hpp"

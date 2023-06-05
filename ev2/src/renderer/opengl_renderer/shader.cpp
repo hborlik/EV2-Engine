@@ -10,7 +10,7 @@
  */
 
 #include "engine.hpp"
-#include "renderer/shader.hpp"
+#include "shader.hpp"
 
 using namespace ev2;
 

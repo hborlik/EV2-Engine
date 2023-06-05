@@ -1,10 +1,10 @@
 #include <renderer/terrain_renderer.hpp>
 
 #include "glm/geometric.hpp"
-#include "renderer/ev_gl.hpp"
-#include "renderer/buffer.hpp"
+#include "renderer/opengl_renderer/ev_gl.hpp"
+#include "renderer/opengl_renderer/buffer.hpp"
+#include "renderer/opengl_renderer/shader.hpp"
 #include "renderer/camera.hpp"
-#include "renderer/shader.hpp"
 #include "engine.hpp"
 #include "resource.hpp"
 

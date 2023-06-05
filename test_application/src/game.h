@@ -15,8 +15,6 @@
 #include "player.h"
 #include "tree.h"
 
-#include "miniaudio.h"
-
 using namespace ev2;
 
 class GameState {
@@ -45,7 +43,6 @@ public:
 
     ev2::Ref<TreeNode> selected_tree_1;
     ev2::Ref<TreeNode> selected_tree_2;
-    ma_engine engine;
 
     Application* app = nullptr;
 

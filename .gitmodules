@@ -7,3 +7,6 @@
 [submodule "submodules/libcbt"]
 	path = submodules/libcbt
 	url = git@github.com:jdupuy/libcbt.git
+[submodule "submodules/spdlog"]
+	path = submodules/spdlog
+	url = https://github.com/gabime/spdlog.git

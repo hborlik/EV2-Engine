@@ -10,8 +10,8 @@
 
 #include "evpch.hpp"
 
-#include "renderer/ev_gl.hpp"
-#include "renderer/mesh.hpp"
+#include "ev_gl.hpp"
+#include "mesh.hpp"
 
 namespace ev2::renderer {
 

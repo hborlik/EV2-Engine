@@ -1,4 +1,4 @@
-#include "renderer/texture.hpp"
+#include "texture.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 

@@ -9,7 +9,7 @@
 
 #include "evpch.hpp"
 
-#include "renderer/ev_gl.hpp"
+#include "ev_gl.hpp"
 
 namespace ev2::renderer {
 

@@ -14,7 +14,6 @@
 #include "evpch.hpp"
 
 #include "ev.hpp"
-#include "renderer/ev_gl.hpp"
 #include "delegate.hpp"
 #include "singleton.hpp"
 #include "application.hpp"

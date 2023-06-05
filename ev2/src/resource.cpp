@@ -1,7 +1,7 @@
 #include "resource.hpp"
 
-#include "renderer/buffer.hpp"
-#include "renderer/ev_gl.hpp"
+#include "renderer/opengl_renderer/buffer.hpp"
+#include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/renderer.hpp"
 #include "engine.hpp"
 

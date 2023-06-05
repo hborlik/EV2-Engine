@@ -44,7 +44,7 @@ public:
     fs::path shader_path;
 
 private:
-    std::ofstream log_file_stream;
+    
     std::chrono::time_point<std::chrono::steady_clock> m_engine_init;
 };
 

@@ -11,7 +11,7 @@
 
 #include "renderer.hpp"
 #include "renderer/render_state.hpp"
-#include "renderer/shader.hpp"
+#include "renderer/opengl_renderer/shader.hpp"
 #include "renderer/material.hpp"
 #include "io/image.hpp"
 

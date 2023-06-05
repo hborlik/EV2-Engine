@@ -9,9 +9,9 @@
 
 #include "evpch.hpp"
 
-#include "renderer/buffer.hpp"
-#include "renderer/shader.hpp"
-#include "renderer/texture.hpp"
+#include "buffer.hpp"
+#include "shader.hpp"
+#include "texture.hpp"
 
 namespace ev2::renderer {
 

@@ -11,9 +11,9 @@
 #include "evpch.hpp"
 
 #include "singleton.hpp"
-#include "renderer/mesh.hpp"
-#include "renderer/shader.hpp"
-#include "renderer/texture.hpp"
+#include "renderer/opengl_renderer/mesh.hpp"
+#include "renderer/opengl_renderer/shader.hpp"
+#include "renderer/opengl_renderer/texture.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/material.hpp"
 #include "renderer/render_state.hpp"

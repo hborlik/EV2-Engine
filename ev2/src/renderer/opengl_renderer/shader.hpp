@@ -12,8 +12,8 @@
 #include "evpch.hpp"
 
 #include "ev.hpp"
-#include "renderer/ev_gl.hpp"
-#include "renderer/buffer.hpp"
+#include "ev_gl.hpp"
+#include "buffer.hpp"
 
 namespace ev2::renderer
 {
