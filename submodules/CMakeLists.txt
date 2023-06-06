@@ -8,3 +8,5 @@ target_include_directories(cbt INTERFACE libcbt)
 
 add_library(leb INTERFACE)
 target_include_directories(leb INTERFACE libleb)
+
+add_subdirectory(spdlog)

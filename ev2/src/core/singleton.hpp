@@ -12,7 +12,7 @@
 
 #include "evpch.hpp"
 
-#include "ev.hpp"
+#include "core/base.hpp"
 #include "util.hpp"
 
 namespace ev2 {
@@ -38,8 +38,7 @@ public:
     }
 
     inline static T& get_singleton() {
-        if (!m_singleton)
-            throw engine_exception{"Singleton " + util::type_name<T>() + " is not initialized, or has already been shut down"};
+        EV_CORE_ASSERT(m_singleton, "Singleton " + util::type_name<T>() + " is not initialized, or has already been shut down");
         return *m_singleton.get();
     }
 

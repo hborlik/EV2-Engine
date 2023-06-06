@@ -4,12 +4,16 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
+
 namespace ev2 {
 
 class Log {
-
+    static void Init();
 private:
-    std::ofstream log_file_stream;
+    static std::shared_ptr<spdlog::logger> s_core_logger;
+	static std::shared_ptr<spdlog::logger> s_client_logger;
 };
 
 }

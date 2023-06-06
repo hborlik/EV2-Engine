@@ -20,4 +20,9 @@
 #define EV_EXPAND_MACRO(x) x
 #define EV_STRINGIFY_MACRO(x) #x
 
+#include "core/exceptions.hpp"
+#include "core/log.hpp"
+
+#define EV_CHECK_THROW(expr, message) if(!(expr)) throw ::ev2::engine_exception{"[" + std::filesystem::path(__FILE__).filename().string() + ":" + std::to_string(__LINE__) + "]:" + message}
+
 #endif

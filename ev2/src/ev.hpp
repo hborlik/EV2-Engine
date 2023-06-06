@@ -12,9 +12,9 @@
 
 #include "evpch.hpp"
 
-#include <reference_counted.hpp>
+#include "core/base.hpp"
 
-#define EV2_CHECK_THROW(expr, message) if(!(expr)) throw ev2::engine_exception{"[" + std::string{__FILE__} + ":" + std::to_string(__LINE__) + "]:" + message}
+#include <reference_counted.hpp>
 
 namespace ev2 {
 
@@ -30,17 +30,6 @@ public:
 
 template<typename T>
 class ObjectT : public Object {};
-
-class engine_exception : public std::exception {
-public:
-    engine_exception(std::string description) noexcept;
-    virtual ~engine_exception() = default;
-
-    const char* what() const noexcept override;
-
-protected:
-    std::string description;
-};
 
 class shader_error : public engine_exception {
 public:

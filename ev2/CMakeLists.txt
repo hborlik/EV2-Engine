@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(meltdown VERSION 0.0.1 LANGUAGES CXX)
+project(meltdown VERSION 0.0.2 LANGUAGES CXX)
 
-file(GLOB_RECURSE sources src/*.cpp src/*.h src/*.hpp)
-file(GLOB_RECURSE headers src/*.h src/*.hpp)
+file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)
+file(GLOB_RECURSE headers CONFIGURE_DEPENDS src/*.h src/*.hpp)
 
 add_library(meltdown STATIC ${sources} ${headers})
 
@@ -29,17 +29,18 @@ PRIVATE
 )
 
 target_link_libraries(meltdown PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d nlohmann)
+target_link_libraries(meltdown PRIVATE leb cbt spdlog)
 
 target_include_directories(meltdown PUBLIC ${OPENGL_INCLUDE_DIRS})
-target_link_libraries(meltdown PUBLIC ${OPENGL_LIBRARY})
-target_compile_options(meltdown PRIVATE -Wall -Wno-unused-function -Werror=return-type)
+target_link_libraries(meltdown PRIVATE ${OPENGL_LIBRARY})
 
-target_link_libraries(meltdown PRIVATE leb cbt)
 
 if(WIN32)
 else()
-    target_link_libraries(meltdown PUBLIC dl X11 pthread)
+target_link_libraries(meltdown PUBLIC dl X11 pthread)
 endif()
+
+target_compile_options(meltdown PRIVATE -Wall -Wno-unused-function -Werror=return-type)
 
 message(STATUS "GLFW3 include ${glfw3}")
 message(STATUS "GLFW3 link ${GLFW3_LIBRARY}")

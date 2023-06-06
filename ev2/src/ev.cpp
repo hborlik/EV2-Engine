@@ -35,14 +35,6 @@ Object::~Object() {
 #endif
 }
 
-engine_exception::engine_exception(std::string description) noexcept : description{std::move(description)} {
-
-}
-
-const char* engine_exception::what() const noexcept {
-    return description.data();
-}
-
 shader_error::shader_error(std::string shaderName, std::string errorString) noexcept : 
     engine_exception{"Shader " + shaderName + " caused an error: " + errorString} {
 
