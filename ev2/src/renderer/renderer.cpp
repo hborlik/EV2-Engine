@@ -1203,6 +1203,7 @@ void Renderer::render(const Camera &camera) {
         // get image data from OpenGL
         // have to do it on this thread
         g_buffer.bind();
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glReadBuffer((GLenum)gl::FBOAttachment::COLOR3);
         Image image{(int)width, (int)height, 1, 1};
         GL_CHECKED_CALL(glReadnPixels(0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
