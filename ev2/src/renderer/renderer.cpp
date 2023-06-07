@@ -1245,6 +1245,7 @@ void Renderer::set_wireframe(bool enable) {
 
 void Renderer::screenshot() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadBuffer(GL_BACK);
     Image image{(int)width, (int)height, 3, 1};
     GL_CHECKED_CALL(glReadnPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
@@ -1263,6 +1264,7 @@ std::size_t Renderer::read_obj_fb(const glm::uvec2& screen_point) {
         return 0; // TODO should this throw exception??
     }
     g_buffer.bind();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadBuffer((GLenum)gl::FBOAttachment::COLOR5);
     Image image{2, 1, 3, 1};
     GL_CHECKED_CALL(glReadnPixels(screen_point.x, height-screen_point.y, 1, 1, GL_RGB_INTEGER, GL_UNSIGNED_BYTE, image.memory_requirement(), image.data()));
