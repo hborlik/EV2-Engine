@@ -102,7 +102,7 @@ glm::vec3 SCWFC::node_repulsion(const SCWFCGraphNode* node ) const {
             glm::vec3 c2c = sph.center - bounds.center;
             float r2 = glm::dot(c2c, c2c);
             if (r2 > std::numeric_limits<float>::epsilon()) {
-                net += -glm::normalize(c2c) * (bounds.radius * sph.radius) / (r2 + 1e-5f);
+                net += glm::normalize(c2c) * (bounds.radius * sph.radius) / (r2 + 1e-5f);
             }
         }
     }
