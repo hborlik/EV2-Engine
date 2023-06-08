@@ -14,9 +14,4 @@ double Engine::elapsed_time() {
     return elapsed_seconds.count();
 }
 
-void Engine::log(std::string_view message) {
-    std::string mstr = std::string("[") + get_singleton().formatted_log_elapsed_time() + "]:" + message.data() + "\n";
-    std::cout << mstr;
-}
-
 }

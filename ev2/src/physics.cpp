@@ -217,7 +217,7 @@ void RigidBody::on_init() {
 void RigidBody::on_ready() {
     body->setTransform(get_physics_transform());
     if (colliders.empty())
-        Engine::get_singleton().log_t<RigidBody>( std::string{__FILE__} + ":" + std::to_string(__LINE__) + " " + __FUNCTION__ + " no colliders for RigidBody");
+        Log::warn_core<RigidBody>("no colliders for RigidBody");
 }
 
 void RigidBody::on_process(float delta) {

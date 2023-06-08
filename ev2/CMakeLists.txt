@@ -28,8 +28,8 @@ PRIVATE
     "src/evpch.hpp"
 )
 
-target_link_libraries(meltdown PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d nlohmann)
-target_link_libraries(meltdown PRIVATE leb cbt spdlog)
+target_link_libraries(meltdown PUBLIC glm glad glfw3 tinyobjloader tinygltfloader reactphysics3d nlohmann spdlog)
+target_link_libraries(meltdown PRIVATE leb cbt)
 
 target_include_directories(meltdown PUBLIC ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(meltdown PRIVATE ${OPENGL_LIBRARY})

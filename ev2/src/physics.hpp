@@ -10,7 +10,7 @@
 #include "evpch.hpp"
 
 #include "ev.hpp"
-#include "singleton.hpp"
+#include "core/singleton.hpp"
 #include "geometry.hpp"
 #include "scene/node.hpp"
 

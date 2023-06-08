@@ -101,7 +101,7 @@ std::string load_shader_content(const std::filesystem::path& source_path) {
 
 Shader::Shader(gl::GLSLShaderType type) : type{type} {
     gl_reference = glCreateShader((GLenum)type);
-    EV2_CHECK_THROW(gl_reference != 0, "Failed to create shader");
+    EV_CHECK_THROW(gl_reference != 0, "Failed to create shader");
 }
 
 Shader::~Shader() {
@@ -129,12 +129,12 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
     GLint result;
     glGetShaderiv(gl_reference, GL_COMPILE_STATUS, &result);
     if(result == GL_TRUE) {
-        Engine::get_singleton().log_t<Shader>("Compiled shader " + path.generic_string());
+        Log::info_core<Shader>("Compiled shader " + path.generic_string());
         if (delete_source) {
             source = {};
         }
     } else { // ask for more info on failure
-        Engine::get_singleton().log_t<Shader>("Failed to compile shader " + path.generic_string());
+        Log::error_core<Shader>("Failed to compile shader " + path.generic_string());
 
         GLint logLen;
         glGetShaderiv(gl_reference, GL_INFO_LOG_LENGTH, &logLen);
@@ -145,8 +145,8 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
             GLsizei written;
             glGetShaderInfoLog(gl_reference, logLen, &written, log.data());
 
-            Engine::get_singleton().log_t<Shader>("Shader error log dumped to log file for " + path.generic_string());
-            Engine::get_singleton().log_file<Shader>(
+            Log::error_core<Shader>("Shader error for " + path.generic_string());
+            Log::error_core<Shader>(
                 std::string{log.begin(), log.end() - 1} +
                 "\n------BEGIN SHADER SOURCE-----\n\n" +
                 source +
@@ -243,7 +243,7 @@ void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& p
 
     s->push_source_string("#version " + std::to_string(version) + " core\n");
     s->push_source_string("#line 1\n");
-    s->push_source_file(Engine::get_singleton().shader_path / path);
+    s->push_source_file(preprocessor.get_shader_dir() / path);
     s->compile(preprocessor);
     auto suc = attach_shader(s->getHandle());
     if (!suc)
@@ -275,10 +275,10 @@ void Program::link() {
             GLsizei written;
             glGetProgramInfoLog(gl_reference, logLen, &written, log.data());
 
-            Engine::get_singleton().log_t<Program>("Program error log dumped to log file for " + ProgramName);
+            Log::error_core<Program>("Program error for " + ProgramName);
             std::string log_str{log.begin(), log.end()-1};
             log_str += "\nProgram Log for " + ProgramName + "\n";
-            Engine::get_singleton().log_file<Program>(log_str);
+            Log::error_core<Program>(log_str);
 
             std::cerr << log_str << std::endl;
         }

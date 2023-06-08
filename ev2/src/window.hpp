@@ -15,7 +15,7 @@
 
 #include "ev.hpp"
 #include "delegate.hpp"
-#include "singleton.hpp"
+#include "core/singleton.hpp"
 #include "application.hpp"
 
 namespace ev2::window {

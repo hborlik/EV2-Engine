@@ -10,7 +10,7 @@
 #include <memory>
 #include "evpch.hpp"
 
-#include "singleton.hpp"
+#include "core/singleton.hpp"
 #include "renderer/opengl_renderer/mesh.hpp"
 #include "renderer/opengl_renderer/shader.hpp"
 #include "renderer/opengl_renderer/texture.hpp"

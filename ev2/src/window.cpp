@@ -33,6 +33,7 @@ void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
     std::string output_source{};
     std::string output_type{};
     std::string output_message{message};
+    spdlog::level::level_enum level = spdlog::level::info;
 
     if (severity >= EV_GL_MIN_SEVERITY || (severity == GL_DEBUG_SEVERITY_NOTIFICATION && !EV_GL_ALLOW_NOTIFICATIONS))
         return;
@@ -41,15 +42,19 @@ void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
     {
     case GL_DEBUG_SEVERITY_NOTIFICATION:
         output_severity = "NOTIFICATION";
+        level = spdlog::level::info;
         break;
     case GL_DEBUG_SEVERITY_LOW:
         output_severity = "LOW";
+        level = spdlog::level::warn;
         break;
     case GL_DEBUG_SEVERITY_MEDIUM:
         output_severity = "MEDIUM";
+        level = spdlog::level::warn;
         break;
     case GL_DEBUG_SEVERITY_HIGH:
         output_severity = "HIGH";
+        level = spdlog::level::err;
         break;
     default:
         break;
@@ -110,7 +115,7 @@ void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
         break;
     }
 
-    ev2::Engine::get_singleton().log( "OpenGL[" + output_source + ":" + output_severity + ":" + output_type + "] " + output_message);
+    Log::log_core(level, "OpenGL[{}:{}:{}] {}", output_source, output_severity, output_type, output_message);
 }
 
 

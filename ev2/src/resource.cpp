@@ -285,31 +285,30 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
                                 base_dir.c_str());
     if (!warn.empty())
     {
-        Engine::get_singleton().log("WARN: " + warn);
-    }
-    if (!err.empty())
-    {
-        std::cerr << err << std::endl;
+        Log::warn_core<ResourceManager>("Asset warning {}", warn);
     }
 
     if (!ret)
     {
-        std::cerr << "Failed to load " << filename << std::endl;
+        Log::error_core<ResourceManager>("Asset {} loading error {}", filename, err);
         return false;
     }
 
-    printf("# of vertices  = %d\n", (int)(inattrib.vertices.size()) / 3);
-    printf("# of normals   = %d\n", (int)(inattrib.normals.size()) / 3);
-    printf("# of texcoords = %d\n", (int)(inattrib.texcoords.size()) / 2);
-    printf("# of materials = %d\n", (int)materials.size());
-    printf("# of shapes    = %d\n", (int)inshapes.size());
+    Log::trace_core<ResourceManager>(
+        "Asses Stats: # of vertices {}\n"
+        "# of normals   {}\n"
+        "# of texcoords {}\n"
+        "# of materials {}\n"
+        "# of shapes    {}\n",
+        inattrib.vertices.size() / 3, inattrib.normals.size() / 3,
+        inattrib.texcoords.size() / 2, materials.size(), inshapes.size());
 
     // Append `default` material
     materials.push_back(tinyobj::material_t());
 
     for (size_t i = 0; i < materials.size(); i++)
     {
-        printf("material[%d].diffuse_texname = %s\n", int(i),
+        Log::trace_core<ResourceManager>("material[{}].diffuse_texname = {}\n", int(i),
                materials[i].diffuse_texname.c_str());
     }
 
@@ -402,7 +401,7 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
             std::map<int, glm::vec3> smoothVertexNormals;
             if (!regen_all_normals && (hasSmoothingGroup(shapes[s]) > 0))
             {
-                Engine::get_singleton().log("Compute smoothingNormal for shape [" + std::to_string(s) + "]");
+                Log::info_core("Compute smoothingNormal for shape [" + std::to_string(s) + "]");
                 computeSmoothingNormals(attrib, shapes[s], smoothVertexNormals);
             }
 
@@ -717,7 +716,7 @@ std::shared_ptr<renderer::Drawable> ResourceManager::get_model_relative_path(con
             model_lookup.insert_or_assign(filename.generic_string(), drawable);
         return drawable;
     } else {
-        std::cerr << "Failed to load model " + filename.generic_string() << std::endl;
+        Log::error_core<ResourceManager>("Failed to load model {}", filename.generic_string());
         return {};
     }
 }
@@ -757,7 +756,7 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
                 pixel_format = gl::PixelFormat::RGBA;
                 break;
             default:
-                std::cerr << "Failed to load texture " + filename.generic_string() << "invalid ncomps " << image->comp() << std::endl;
+                Log::error_core<ResourceManager>("unable to load {}. unsupported texture format. Channels: {}", filename, image->comp());
                 return {};
         }
 
@@ -770,10 +769,10 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
         image_res->texture = texture;
 
         images.insert({filename.generic_string(), image_res});
-        Engine::get_singleton().log("Loaded image " + filename.generic_string());
+        Log::info_core<ResourceManager>("Loaded image {}", filename.generic_string());
         return image_res;
     } else {
-        std::cerr << "Failed to load image " + filename.generic_string() << std::endl;
+        Log::error_core<ResourceManager>("Failed to load image {}", filename.generic_string());
         return {};
     }
 }
@@ -795,7 +794,7 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
     std::vector<tinyobj::material_t> materials;
     std::vector<float> buffer;
     std::vector<DrawObject> drawObjects;
-    Engine::get_singleton().log("Loading obj " + (base_dir / filename).generic_string());
+    Log::trace_core("Loading obj " + (base_dir / filename).generic_string());
     bool success = LoadObjAndConvert(bmin, bmax, &drawObjects, materials, buffer, (base_dir / filename).generic_string(), base_dir.generic_string());
     if (success) {
         std::vector<MaterialData> ev_mat(materials.size());
@@ -864,9 +863,10 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
     if(!filename.empty()) {
         std::string file = filename.generic_string();
         int width, height, nrChannels;
+        stbi_set_flip_vertically_on_load(false);
         unsigned char *image = stbi_load(file.c_str(), &width, &height, &nrChannels, 0);
         if(image) {
-            Engine::get_singleton().log("Loaded texture data: " + file + ", w = " + std::to_string(width)
+            Log::trace_core("Loaded texture data: " + file + ", w = " + std::to_string(width)
                 + ", h = " + std::to_string(height) + ", channels = " + std::to_string(nrChannels));
 
             out = std::make_unique<renderer::Texture>(gl::TextureType::TEXTURE_2D);
@@ -879,13 +879,13 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
             } else if(nrChannels == 4) { // rgba
                 out->set_image2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image);
             } else {
-                std::cerr << "unable to load unsupported texture format. " + file + " Channels:" + std::to_string(nrChannels) << std::endl;
+                Log::error_core("unable to load {}. unsupported texture format. Channels: {}", file, nrChannels);
             }
             stbi_image_free(image);
             
             out->generate_mips();
         } else {
-            std::cerr << "Unable to load texture: " + file << std::endl;
+            Log::error_core("Failed to load texture: {}", file);
         }
     }
     
@@ -899,7 +899,7 @@ std::unique_ptr<Image> load_image(const std::string& path) {
 
     if (data) {
         if (ncomps > 4) {
-            std::cerr << "Failed to load texture " + path << "invalid ncomps " << ncomps << std::endl;
+            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
             stbi_image_free(data);
             return {};
         }
@@ -910,7 +910,7 @@ std::unique_ptr<Image> load_image(const std::string& path) {
         stbi_image_free(data);
         return image;
     } else {
-        std::cerr << "Failed to load image " << path << std::endl;
+        Log::error_core("Failed to load image: {}", path);
         return {};
     }
 }
@@ -922,7 +922,7 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
 
     if (data) {
         if (ncomps > 4) {
-            std::cerr << "Failed to load texture " << path << "invalid ncomps " << ncomps << std::endl;
+            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
             stbi_image_free(data);
             return {};
         }
@@ -933,7 +933,7 @@ std::unique_ptr<Image> load_image_16(const std::string& path) {
         stbi_image_free(data);
         return image;
     } else {
-        std::cerr << "Failed to load image " << path << std::endl;
+        Log::error_core("Failed to load image: {}", path);
         return {};
     }
 }

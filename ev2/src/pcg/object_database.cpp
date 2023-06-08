@@ -68,7 +68,7 @@ std::unique_ptr<ObjectMetadataDB> ObjectMetadataDB::load_object_database(std::st
 
         db->check_max_ids();
     } catch (const std::exception& error) {
-        Engine::log_t<ObjectMetadataDB>("Failed to load " + std::string{path.data()} + ": " + error.what());
+        Log::error_core<ObjectMetadataDB>("Failed to load " + std::string{path.data()} + ": " + error.what());
     }
 
     return db;

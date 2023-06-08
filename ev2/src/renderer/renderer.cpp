@@ -1230,9 +1230,9 @@ void Renderer::render(const Camera &camera) {
             std::future_status::ready) {
         try {
             m_id_frame_save_async.get();
-            Engine::log_t<Renderer>("Frame Saved");
+            Log::info_core<Renderer>("Frame Saved");
         } catch (std::exception& e) {
-            Engine::log_t<Renderer>(e.what());
+            Log::error_core<Renderer>(e.what());
         }
     }
 
@@ -1260,9 +1260,9 @@ void Renderer::screenshot() {
     try {
         std::string filename = "Screenshot_" + util::formatted_current_time() + ".png";
         image.write(filename);
-        Engine::log_t<Renderer>("Screenshot " + filename + " Saved");
+        Log::info_core<Renderer>("Screenshot " + filename + " Saved");
     } catch (std::exception& e) {
-        Engine::log_t<Renderer>(e.what());
+        Log::error_core<Renderer>(e.what());
     }
 }
 

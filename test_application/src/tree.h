@@ -8,7 +8,7 @@
 #define PLANT_GAME_TREE_H
 
 #include "scene/visual_nodes.hpp"
-#include "renderer/mesh.hpp"
+#include "renderer/opengl_renderer/mesh.hpp"
 #include "procedural_tree.hpp"
 #include "random_generators.h"
 

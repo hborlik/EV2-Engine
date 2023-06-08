@@ -13,6 +13,7 @@
 #include "evpch.hpp"
 
 #include "core/base.hpp"
+#include "core/assert.hpp"
 #include "util.hpp"
 
 namespace ev2 {

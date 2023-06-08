@@ -31,7 +31,7 @@ Object::Object() :
 
 Object::~Object() {
 #ifndef NDEBUG
-    Engine::log_t<Object>("Object " + uuid + " deconstructed");
+    Log::trace_core<Object>("Object {} deconstructed", uuid);
 #endif
 }
 
@@ -80,14 +80,15 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
     renderer::Renderer::get_singleton().init();
     Physics::initialize();
 
-    Engine::get_singleton().log_file<Engine>("Initialized");
+    EV_INFO("Initialized");
 }
 
 void EV2_shutdown() {
     Physics::shutdown();
     ResourceManager::shutdown();
     renderer::Renderer::shutdown();
-    Engine::get_singleton().log_file<Engine>("Shutdown");
+
+    EV_INFO("Shutdown");
 }
 
 Args::Args(int argc, char* argv[]) {
