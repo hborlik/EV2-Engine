@@ -109,19 +109,8 @@ Shader::~Shader() {
         glDeleteShader(gl_reference);
 }
 
-void Shader::push_source_file(const std::filesystem::path& path) {
-    this->path = path;
-
-    source += load_shader_content(path);
-}
-
-void Shader::push_source_string(const std::string& source_string) {
-    source += source_string;
-}
-
-bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
-    std::string final_source = pre.preprocess(source);
-    const GLchar* codeArray = final_source.c_str();
+bool Shader::compile(std::string_view source) {
+    const GLchar* codeArray = source.data();
     glShaderSource(gl_reference, 1, &codeArray, nullptr);
     glCompileShader(gl_reference);
 
@@ -129,12 +118,9 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
     GLint result;
     glGetShaderiv(gl_reference, GL_COMPILE_STATUS, &result);
     if(result == GL_TRUE) {
-        Log::info_core<Shader>("Compiled shader " + path.generic_string());
-        if (delete_source) {
-            source = {};
-        }
+
     } else { // ask for more info on failure
-        Log::error_core<Shader>("Failed to compile shader " + path.generic_string());
+        Log::error_core<Shader>("Failed to compile shader");
 
         GLint logLen;
         glGetShaderiv(gl_reference, GL_INFO_LOG_LENGTH, &logLen);
@@ -145,11 +131,11 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
             GLsizei written;
             glGetShaderInfoLog(gl_reference, logLen, &written, log.data());
 
-            Log::error_core<Shader>("Shader error for " + path.generic_string());
+            Log::error_core<Shader>("Shader error");
             Log::error_core<Shader>(
                 std::string{log.begin(), log.end() - 1} +
                 "\n------BEGIN SHADER SOURCE-----\n\n" +
-                source +
+                source.data() +
                 "\n------END SHADER SOURCE-----\n\n");
         }
     }
@@ -160,9 +146,7 @@ bool Shader::compile(ShaderPreprocessor pre, bool delete_source) {
 
 void ShaderBuilder::push_source_file(const std::filesystem::path &path) {
     last_shader_begin = source.length();
-#if not NDEBUG
     source += "\n//" + path.generic_string() + "\n";
-#endif
     source += load_shader_content(path);
 }
 
@@ -171,41 +155,49 @@ void ShaderBuilder::push_source_string(const std::string& source_string) {
     source += source_string;
 }
 
-std::unique_ptr<Shader> create_shader_stage(const std::string& stage_define, const std::string& source, gl::GLSLShaderType type, int version) {
-    auto out = std::make_unique<Shader>(type);
-    out->push_source_string("#version " + std::to_string(version) + "\n");
-    out->push_source_string("#define " + stage_define + "\n");
-    out->push_source_string(source);
+void ShaderBuilder::preprocess(const ShaderPreprocessor& pre) {
+    source = pre.preprocess(source);
+}
+
+std::unique_ptr<Shader> ShaderBuilder::make_shader_stage(ShaderType type, int version) {
     
-    return out;
+    std::string out{};
+    out += ("#version " + std::to_string(version) + "\n");
+    out += ("#define " + ShaderTypeName(type) + "\n");
+    out += (source);
+
+    auto shader = std::make_unique<Shader>(glShaderType(type));
+    shader->compile(out);
+    
+    return shader;
 }
 
 std::vector<std::unique_ptr<Shader>> ShaderBuilder::get_shader_stages(int version) {
     std::vector<std::unique_ptr<Shader>> output_shaders{};
-    GLSLShaderTypeFlag stages{};
+    ShaderTypeFlag stages{};
     if (source.find("VERTEX_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::VERTEX_SHADER;
-        output_shaders.push_back(create_shader_stage("VERTEX_SHADER", source, gl::GLSLShaderType::VERTEX_SHADER, version));
+        stages.v |= ShaderTypeFlag::VERTEX_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::VERTEX_SHADER, version));
     }
     if (source.find("FRAGMENT_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::FRAGMENT_SHADER;
-        output_shaders.push_back(create_shader_stage("FRAGMENT_SHADER", source, gl::GLSLShaderType::FRAGMENT_SHADER, version));
+        stages.v |= ShaderTypeFlag::FRAGMENT_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::FRAGMENT_SHADER, version));
     }
     if (source.find("GEOMETRY_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::GEOMETRY_SHADER;
-        output_shaders.push_back(create_shader_stage("GEOMETRY_SHADER", source, gl::GLSLShaderType::GEOMETRY_SHADER, version));
+        stages.v |= ShaderTypeFlag::GEOMETRY_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::GEOMETRY_SHADER, version));
     }
     if (source.find("TESS_CONTROL_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::TESS_CONTROL_SHADER;
-        output_shaders.push_back(create_shader_stage("TESS_CONTROL_SHADER", source, gl::GLSLShaderType::TESS_CONTROL_SHADER, version));
+        stages.v |= ShaderTypeFlag::TESS_CONTROL_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::TESS_CONTROL_SHADER, version));
     }
     if (source.find("TESS_EVALUATION_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::TESS_EVALUATION_SHADER;
-        output_shaders.push_back(create_shader_stage("TESS_EVALUATION_SHADER", source, gl::GLSLShaderType::TESS_EVALUATION_SHADER, version));
+        stages.v |= ShaderTypeFlag::TESS_EVALUATION_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::TESS_EVALUATION_SHADER, version));
     }
     if (source.find("COMPUTE_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= GLSLShaderTypeFlag::COMPUTE_SHADER;
-        output_shaders.push_back(create_shader_stage("COMPUTE_SHADER", source, gl::GLSLShaderType::COMPUTE_SHADER, version));
+        stages.v |= ShaderTypeFlag::COMPUTE_SHADER;
+        output_shaders.push_back(make_shader_stage(ShaderType::COMPUTE_SHADER, version));
     }
     
     return output_shaders;
@@ -238,13 +230,17 @@ void Program::attachShader(const Shader* shader) {
         throw shader_error{ProgramName, "Shader could not be attached"};
 }
 
-void Program::loadShader(gl::GLSLShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor, int version) {
-    std::shared_ptr<Shader> s = std::make_shared<Shader>(type);
+void Program::loadShader(ShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor, int version) {
 
-    s->push_source_string("#version " + std::to_string(version) + " core\n");
-    s->push_source_string("#line 1\n");
-    s->push_source_file(preprocessor.get_shader_dir() / path);
-    s->compile(preprocessor);
+    ShaderBuilder source_builder{};
+
+    source_builder.push_source_string("#version " + std::to_string(version) + " core\n");
+    source_builder.push_source_string("#line 1\n");
+    source_builder.push_source_file(path);
+    source_builder.preprocess(preprocessor);
+    
+    std::shared_ptr<Shader> s = source_builder.make_shader_stage(type, version);
+
     auto suc = attach_shader(s->getHandle());
     if (!suc)
         throw shader_error{ProgramName, "Loaded shader could not be attached " + path.generic_string()};
@@ -264,7 +260,7 @@ void Program::link() {
         // additional configuration
         onBuilt();
     } else {
-        std::cerr << "Failed to link program " << ProgramName << std::endl;
+        Log::error_core<Program>("Failed to link program {}",  ProgramName);
         
         GLint logLen;
         glGetProgramiv(gl_reference, GL_INFO_LOG_LENGTH, &logLen);
@@ -275,12 +271,10 @@ void Program::link() {
             GLsizei written;
             glGetProgramInfoLog(gl_reference, logLen, &written, log.data());
 
-            Log::error_core<Program>("Program error for " + ProgramName);
             std::string log_str{log.begin(), log.end()-1};
             log_str += "\nProgram Log for " + ProgramName + "\n";
+            Log::error_core<Program>("Program error for " + ProgramName);
             Log::error_core<Program>(log_str);
-
-            std::cerr << log_str << std::endl;
         }
         throw shader_error{ProgramName, "Failed to link program"};
     }

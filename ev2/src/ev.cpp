@@ -41,6 +41,7 @@ shader_error::shader_error(std::string shaderName, std::string errorString) noex
 }
 
 void EV2_init(const Args& args, const std::filesystem::path& asset_path, const std::filesystem::path& log_file_dir) {
+    Log::Init();
     Engine::initialize(asset_path, log_file_dir);
 
     #if defined(IMGUI_IMPL_OPENGL_ES2)

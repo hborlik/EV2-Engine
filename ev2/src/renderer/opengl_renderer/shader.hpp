@@ -94,7 +94,7 @@ const std::string ShaderUniformBlockName = "ShaderData";
 
 } // mat_spec
 
-struct GLSLShaderTypeFlag {
+struct ShaderTypeFlag {
     enum : uint8_t {
         VERTEX_SHADER           = 1 << 0,
         FRAGMENT_SHADER         = 1 << 1,
@@ -105,6 +105,49 @@ struct GLSLShaderTypeFlag {
     };
     uint8_t v;
 };
+
+enum class ShaderType {
+    VERTEX_SHADER           = 0,
+    FRAGMENT_SHADER         = 1,
+    GEOMETRY_SHADER         = 2,
+    TESS_EVALUATION_SHADER  = 3,
+    TESS_CONTROL_SHADER     = 4,
+    COMPUTE_SHADER          = 5
+};
+
+inline std::string ShaderTypeName(ShaderType type) {
+    switch (type) {
+        case ShaderType::VERTEX_SHADER:
+            return "VERTEX_SHADER";
+        case ShaderType::FRAGMENT_SHADER:
+            return "FRAGMENT_SHADER";
+        case ShaderType::GEOMETRY_SHADER:
+            return "GEOMETRY_SHADER";
+        case ShaderType::TESS_EVALUATION_SHADER:
+            return "TESS_EVALUATION_SHADER";
+        case ShaderType::TESS_CONTROL_SHADER:
+            return "TESS_CONTROL_SHADER";
+        case ShaderType::COMPUTE_SHADER:
+            return "COMPUTER_SHADER";
+    }
+}
+
+inline gl::GLSLShaderType glShaderType(ShaderType type) {
+    switch (type) {
+        case ShaderType::VERTEX_SHADER:
+            return gl::GLSLShaderType::VERTEX_SHADER;
+        case ShaderType::FRAGMENT_SHADER:
+            return gl::GLSLShaderType::FRAGMENT_SHADER;
+        case ShaderType::GEOMETRY_SHADER:
+            return gl::GLSLShaderType::GEOMETRY_SHADER;
+        case ShaderType::TESS_EVALUATION_SHADER:
+            return gl::GLSLShaderType::TESS_EVALUATION_SHADER;
+        case ShaderType::TESS_CONTROL_SHADER:
+            return gl::GLSLShaderType::TESS_CONTROL_SHADER;
+        case ShaderType::COMPUTE_SHADER:
+            return gl::GLSLShaderType::COMPUTE_SHADER;
+    }
+}
 
 
 /**
@@ -151,35 +194,18 @@ public:
 
     Shader& operator=(Shader &&o) {
         std::swap(gl_reference, o.gl_reference);
-        std::swap(source, o.source);
         std::swap(type, o.type);
-        std::swap(path, o.path);
         return *this;
     }
 
     /**
-     * @brief Read shader source and append it to the source content.
-     *
-     * @param path path to shader code file
-     */
-    void push_source_file(const std::filesystem::path &path);
-
-    /**
-     * @brief append source string to shader content
-     * 
-     * @param source_string 
-     */
-    void push_source_string(const std::string& source_string);
-
-    /**
      * @brief Compile or recompile all current source and return true on success
      * 
-     * @param pre               shader preprocessor to load include files
-     * @param delete_source 
+     * @param source    shader_source
      * @return true     after successful compilation, delete the source string
      * @return false    do not delete the source
      */
-    bool compile(ShaderPreprocessor pre, bool delete_source = true);
+    bool compile(std::string_view source);
 
     /**
      * @brief Get the shader type
@@ -195,8 +221,6 @@ public:
         return compiled == GL_TRUE;
     }
 
-    std::filesystem::path shaderPath() const noexcept { return path; }
-
     /**
      * @brief return opengl reference, for this shader program
      *
@@ -208,7 +232,6 @@ private:
     std::string source;
     GLuint gl_reference;
     gl::GLSLShaderType type;
-    std::filesystem::path path;
 };
 
 /**
@@ -230,6 +253,10 @@ public:
      * @param source_string 
      */
     void push_source_string(const std::string& source_string);
+
+    void preprocess(const ShaderPreprocessor& pre);
+
+    std::unique_ptr<Shader> make_shader_stage(ShaderType type, int version);
 
     /**
      * @brief Get the shader stages for this shader. Does not compile
@@ -423,7 +450,7 @@ public:
      * @param preprocessor 
      * @param version 
      */
-    void loadShader(gl::GLSLShaderType type, const std::filesystem::path &path, const ShaderPreprocessor& preprocessor, int version = 450);
+    void loadShader(ShaderType type, const std::filesystem::path &path, const ShaderPreprocessor& preprocessor, int version = 450);
 
     /**
      * @brief Load, Compile, and Link shader programs
