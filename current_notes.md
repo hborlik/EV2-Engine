@@ -11,11 +11,9 @@
 - [ ] Why game engine -> customize and control.
     - Scenes are informed/assisted by the game engine.
     
-- [ ] Figure 4.3 circle(or highlight) the node being solved for.
+- [x] Figure 4.3 circle(or highlight) the node being solved for.
 
-- [ ] Rendering -> system overview, maybe move it to after backgound?
-
-- [ ] Performance: capture how long the sphere intersection takes:
+- [x] Performance: capture how long the sphere intersection takes:
     - time -> write n spheres + time taken to perf file while i use the program. 
     - graph.
 
