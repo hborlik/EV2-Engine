@@ -905,9 +905,9 @@ public:
     void propagate(DGraphNode* node) override {
         assert(node != nullptr);
         std::queue<DGraphNode*> propagation_stack;
-        std::unordered_set<DGraphNode*> visited_set;
+        // std::unordered_set<DGraphNode*> visited_set; // this is already tracked by a node being "solved"
         propagation_stack.push(node);
-        visited_set.insert(node);
+        // visited_set.insert(node);
         bool f = true; // force propagation on the first node
 
         while (!propagation_stack.empty()) {
@@ -924,10 +924,10 @@ public:
                 for (auto& neighbor_n : neighbor_nodes) {
                     DGraphNode* neighbor = static_cast<DGraphNode*>(neighbor_n);
 
-                    auto itr = visited_set.insert(neighbor);
-                    if (itr.second) { // was inserted
+                    // auto itr = visited_set.insert(neighbor);
+                    // if (itr.second) { // was inserted
                         propagation_stack.push(neighbor);
-                    }
+                    // }
                 }
 
                 if (propagate_callback_func) propagate_callback_func(n);
