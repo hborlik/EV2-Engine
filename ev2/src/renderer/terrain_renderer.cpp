@@ -423,8 +423,8 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
     }
 
     for (auto& shader : cull_shader.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            throw shader_error{"TerrainProgram", "Failed to compile"};
+        // if (!shader->compile(pre))
+        //     throw shader_error{"TerrainProgram", "Failed to compile"};
         djp->attachShader(shader.get());
     }
     djp->link();
@@ -505,8 +505,8 @@ bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
     usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif");
 
     for (auto& shader : usp.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            return {};
+        // if (!shader->compile(pre))
+        //     return {};
         djp->attachShader(shader.get());
     }
     djp->link();
@@ -525,8 +525,8 @@ bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
     usp.push_source_file("./submodules/libcbt/glsl/cbt_SumReductionPrepass.glsl");
     usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif");
     for (auto& shader : usp.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            return {};
+        // if (!shader->compile(pre))
+        //     return {};
         djp->attachShader(shader.get());
     }
     djp->link();
@@ -575,8 +575,8 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
 #endif
     usp.push_source_file("./shaders/terrain/TerrainBatcher.glsl");
     for (auto& shader : usp.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            return {};
+        // if (!shader->compile(pre))
+        //     return {};
         djp->attachShader(shader.get());
     }
     djp->link();
@@ -611,8 +611,8 @@ bool LoadTopViewProgram(const ShaderPreprocessor& pre)
     usp.push_source_file("./shaders/terrain/TerrainRenderCommon.glsl");
     usp.push_source_file("./shaders/terrain/TerrainTopView.glsl");
     for (auto& shader : usp.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            return {};
+        // if (!shader->compile(pre))
+        //     return {};
         djp->attachShader(shader.get());
     }
     djp->link();
@@ -648,8 +648,8 @@ bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
     usp.push_source_file("./shaders/terrain/NodeCount.glsl");
     usp.push_source_string("#ifdef COMPUTE_SHADER\n#endif\n");
     for (auto& shader : usp.get_shader_stages(450)) {
-        if (!shader->compile(pre))
-            return {};
+        // if (!shader->compile(pre))
+        //     return {};
         djp->attachShader(shader.get());
     }
     djp->link();
