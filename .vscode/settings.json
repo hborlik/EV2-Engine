@@ -65,6 +65,21 @@
         "regex": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "csignal": "cpp",
+        "any": "cpp",
+        "hash_map": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp",
+        "charconv": "cpp",
+        "complex": "cpp",
+        "set": "cpp",
+        "source_location": "cpp",
+        "future": "cpp",
+        "ranges": "cpp",
+        "shared_mutex": "cpp",
+        "span": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp"
     }
 }

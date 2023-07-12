@@ -9,10 +9,9 @@
 
 #include "evpch.hpp"
 
-
 #include <glm/glm.hpp>
 
-#include "reference_counted.hpp"
+#include "core/reference_counted.hpp"
 #include "renderer/opengl_renderer/mesh.hpp"
 #include "renderer/opengl_renderer/texture.hpp"
 #include "renderer/renderer.hpp"
@@ -123,6 +122,8 @@ public:
 
     std::shared_ptr<renderer::Material> get_material(const std::string& name);
 
+    std::string get_shader_content(const std::filesystem::path& path);
+
     const auto& get_materials() const {return materials;}
 
 private:
@@ -139,9 +140,7 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
 
 std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& filename);
 
-std::unique_ptr<Image> load_image(const std::string& path);
-
-std::unique_ptr<Image> load_image_16(const std::string& path);
+std::string load_shader_content(const std::filesystem::path& source_path);
 
 }
 

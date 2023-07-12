@@ -11,7 +11,7 @@
 
 #include "evpch.hpp"
 
-#include "ev.hpp"
+#include "core/ev.hpp"
 #include "ev_gl.hpp"
 #include "buffer.hpp"
 
@@ -149,15 +149,6 @@ inline gl::GLSLShaderType glShaderType(ShaderType type) {
     }
 }
 
-
-/**
- * @brief load a shader
- * 
- * @param source_path 
- * @return std::string 
- */
-std::string load_shader_content(const std::filesystem::path& source_path);
-
 class ShaderPreprocessor {
 public:
     explicit ShaderPreprocessor(const std::filesystem::path& shader_include_dir = "shaders") : shader_include_dir{shader_include_dir} {}
@@ -266,8 +257,11 @@ public:
      */
     std::vector<std::unique_ptr<Shader>> get_shader_stages(int version);
 
+    static ShaderBuilder make_default_shader_builder(const std::filesystem::path& shader_asset_path = {"shaders"});
+
 private:
     std::string source{};
+    std::filesystem::path shader_asset_path{};
     std::size_t last_shader_begin;
 };
 

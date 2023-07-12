@@ -8,7 +8,7 @@
 #include "glm/fwd.hpp"
 #include "pcg/sc_wfc.hpp"
 #include "pcg/wfc.hpp"
-#include "reference_counted.hpp"
+#include "core/reference_counted.hpp"
 #include "resource.hpp"
 #include "pcg/distributions.hpp"
 #include "pcg/object_database.hpp"

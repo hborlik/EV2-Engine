@@ -9,9 +9,9 @@
 
 #include "evpch.hpp"
 
-#include "ev.hpp"
+#include "core/ev.hpp"
 #include "transform.hpp"
-#include "reference_counted.hpp"
+#include "core/reference_counted.hpp"
 
 namespace ev2 {
 

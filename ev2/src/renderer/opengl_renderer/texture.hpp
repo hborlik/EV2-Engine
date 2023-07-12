@@ -10,6 +10,7 @@
 #include "evpch.hpp"
 
 #include "ev_gl.hpp"
+#include "io/image.hpp"
 
 namespace ev2::renderer {
 
@@ -23,17 +24,7 @@ public:
     }
 
     Texture(Texture &&o) {
-        std::swap(texture_type, o.texture_type);
-        std::swap(internal_format, o.internal_format);
-        std::swap(pixel_type, o.pixel_type);
-        std::swap(m_wrap_r, o.m_wrap_r);
-        std::swap(m_wrap_s, o.m_wrap_s);
-        std::swap(m_wrap_t, o.m_wrap_t);
-        std::swap(m_mag_filter, o.m_mag_filter);
-        std::swap(m_min_filter, o.m_min_filter);
-        std::swap(width, o.width);
-        std::swap(height, o.height);
-        std::swap(handle, o.handle);
+        swap(*this, o);
     }
 
     Texture(const Texture&) = delete;
@@ -122,6 +113,23 @@ private:
      * 
      */
     void set_params();
+
+private:
+    friend void swap(Texture& first, Texture& second) noexcept {
+        using std::swap;
+
+        std::swap(first.texture_type, second.texture_type);
+        std::swap(first.internal_format, second.internal_format);
+        std::swap(first.pixel_type, second.pixel_type);
+        std::swap(first.m_wrap_r, second.m_wrap_r);
+        std::swap(first.m_wrap_s, second.m_wrap_s);
+        std::swap(first.m_wrap_t, second.m_wrap_t);
+        std::swap(first.m_mag_filter, second.m_mag_filter);
+        std::swap(first.m_min_filter, second.m_min_filter);
+        std::swap(first.width, second.width);
+        std::swap(first.height, second.height);
+        std::swap(first.handle, second.handle);
+    }
 
 protected:
     gl::TextureType texture_type;

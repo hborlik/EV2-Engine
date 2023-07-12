@@ -147,7 +147,7 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     ssao_kernel_buffer{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     width{width}, 
     height{height},
-    m_preprocessor{Engine::get_singleton().asset_path / "shaders"} {
+    m_preprocessor{} {
 
     // material id queue
     for (mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {

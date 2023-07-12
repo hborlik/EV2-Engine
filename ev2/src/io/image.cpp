@@ -3,6 +3,8 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
+#include "core/ev.hpp"
+
 namespace ev2 {
 
 Image::Image(int width, int height, int comp, int pf, uint8_t* data) : 
@@ -54,6 +56,52 @@ void Image::write(const std::filesystem::path& path) {
             "Failed to save " + path.string() + " : " + ext +
                 " is not a supported extension for images."
         };
+    }
+}
+
+std::unique_ptr<Image> load_image(const std::string& path) {
+    int w, h, ncomps;
+    stbi_set_flip_vertically_on_load(false);
+    uint8_t* data = stbi_load(path.c_str(), &w, &h, &ncomps, 0);
+
+    if (data) {
+        if (ncomps > 4) {
+            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
+            stbi_image_free(data);
+            return {};
+        }
+        std::unique_ptr<Image> image = std::make_unique<Image>();
+
+        image->set_image(w, h, ncomps, 1, data);
+        
+        stbi_image_free(data);
+        return image;
+    } else {
+        Log::error_core("Failed to load image: {}", path);
+        return {};
+    }
+}
+
+std::unique_ptr<Image> load_image_16(const std::string& path) {
+    int w, h, ncomps;
+    stbi_set_flip_vertically_on_load(false);
+    uint16_t* data = stbi_load_16(path.c_str(), &w, &h, &ncomps, 0);
+
+    if (data) {
+        if (ncomps > 4) {
+            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
+            stbi_image_free(data);
+            return {};
+        }
+        std::unique_ptr<Image> image = std::make_unique<Image>();
+
+        image->set_image(w, h, ncomps, 2, (uint8_t*)data);
+
+        stbi_image_free(data);
+        return image;
+    } else {
+        Log::error_core("Failed to load image: {}", path);
+        return {};
     }
 }
 

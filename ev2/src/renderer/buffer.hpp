@@ -54,6 +54,8 @@ static uint32_t ShaderDataTypeSize(ShaderDataType type) {
         case ShaderDataType::Int3:     return 4 * 3;
         case ShaderDataType::Int4:     return 4 * 4;
         case ShaderDataType::Bool:     return 1;
+        default:
+            break;
     }
 
     EV_CORE_ASSERT(false, "Unknown ShaderDataType!");

@@ -18,8 +18,8 @@
 #include "glm/geometric.hpp"
 
 #include "util.hpp"
-#include "ev.hpp"
-#include "reference_counted.hpp"
+#include "core/ev.hpp"
+#include "core/reference_counted.hpp"
 
 namespace ev2 {
 

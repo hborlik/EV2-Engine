@@ -13,7 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "reference_counted.hpp"
+#include "core/reference_counted.hpp"
 #include "scene/node.hpp"
 #include "scene/visual_nodes.hpp"
 

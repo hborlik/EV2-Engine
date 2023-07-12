@@ -11,6 +11,7 @@
 
 #include "engine.hpp"
 #include "shader.hpp"
+#include "resource.hpp"
 
 using namespace ev2;
 
@@ -81,20 +82,6 @@ std::string ShaderPreprocessor::preprocess(const std::string& input_source) cons
     return result.str();
 }
 
-std::string load_shader_content(const std::filesystem::path& source_path) {
-    std::ifstream in{source_path};
-
-    if (!in.is_open()) {
-        throw shader_error{"Preprocessor", "Shader File not found at " + source_path.generic_string()};
-    }
-    // copy out file contents
-    std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
-    in.close();
-    content += '\n';
-
-    return content;
-}
-
 
 
 //// SHADER ////
@@ -134,7 +121,7 @@ bool Shader::compile(std::string_view source) {
             Log::error_core<Shader>("Shader error");
             Log::error_core<Shader>(
                 std::string{log.begin(), log.end() - 1} +
-                "\n------BEGIN SHADER SOURCE-----\n\n" +
+                "\n------BEGIN SHADER SOURCE-----\n" +
                 source.data() +
                 "\n------END SHADER SOURCE-----\n\n");
         }
@@ -146,8 +133,9 @@ bool Shader::compile(std::string_view source) {
 
 void ShaderBuilder::push_source_file(const std::filesystem::path &path) {
     last_shader_begin = source.length();
-    source += "\n//" + path.generic_string() + "\n";
-    source += load_shader_content(path);
+    auto shader_path = shader_asset_path / path;
+    source += "\n//" + shader_path.generic_string() + "\n";
+    source += load_shader_content(shader_path);
 }
 
 void ShaderBuilder::push_source_string(const std::string& source_string) {
@@ -203,6 +191,13 @@ std::vector<std::unique_ptr<Shader>> ShaderBuilder::get_shader_stages(int versio
     return output_shaders;
 }
 
+ShaderBuilder ShaderBuilder::make_default_shader_builder(const std::filesystem::path& shader_asset_path) {
+    ShaderBuilder builder{};
+    builder.shader_asset_path = shader_asset_path;
+
+    return builder;
+}
+
 // Program
 
 Program::Program() {
@@ -232,14 +227,14 @@ void Program::attachShader(const Shader* shader) {
 
 void Program::loadShader(ShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor, int version) {
 
-    ShaderBuilder source_builder{};
+    ShaderBuilder shader_builder = ShaderBuilder::make_default_shader_builder();
 
-    source_builder.push_source_string("#version " + std::to_string(version) + " core\n");
-    source_builder.push_source_string("#line 1\n");
-    source_builder.push_source_file(path);
-    source_builder.preprocess(preprocessor);
+    // shader_builder.push_source_string("#version " + std::to_string(version) + " core\n");
+    shader_builder.push_source_string("#line 1\n");
+    shader_builder.push_source_file(path);
+    shader_builder.preprocess(preprocessor);
     
-    std::shared_ptr<Shader> s = source_builder.make_shader_stage(type, version);
+    std::shared_ptr<Shader> s = shader_builder.make_shader_stage(type, version);
 
     auto suc = attach_shader(s->getHandle());
     if (!suc)

@@ -107,6 +107,10 @@ private:
     Image* next = nullptr;
 };
 
+std::unique_ptr<Image> load_image(const std::string& path);
+
+std::unique_ptr<Image> load_image_16(const std::string& path);
+
 }
 
 #endif // EV2_IMAGE_HPP

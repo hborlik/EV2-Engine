@@ -14,7 +14,7 @@
 
 #include "core/base.hpp"
 
-#include <reference_counted.hpp>
+#include "core/reference_counted.hpp"
 
 namespace ev2 {
 

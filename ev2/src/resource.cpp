@@ -8,7 +8,6 @@
 #include <glm/glm.hpp>
 
 #include <tiny_obj_loader.h>
-#include <stb_image.h>
 
 namespace {
 
@@ -727,7 +726,6 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
         return itr->second;
     }
 
-    stbi_set_flip_vertically_on_load(false);
     std::filesystem::path base_path = ignore_asset_path ? "" : asset_path;
     std::string input_file = (base_path / filename).generic_string();
 
@@ -787,6 +785,10 @@ std::shared_ptr<renderer::Material> ResourceManager::get_material(const std::str
         mat = itr->second;
     }
     return mat;
+}
+
+std::string ResourceManager::get_shader_content(const std::filesystem::path& path) {
+    return load_shader_content(asset_path / path);
 }
 
 std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm) {
@@ -862,26 +864,29 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
     bool error = false;
     if(!filename.empty()) {
         std::string file = filename.generic_string();
-        int width, height, nrChannels;
-        stbi_set_flip_vertically_on_load(false);
-        unsigned char *image = stbi_load(file.c_str(), &width, &height, &nrChannels, 0);
+        // stbi_set_flip_vertically_on_load(false);
+        // unsigned char *image = stbi_load(file.c_str(), &width, &height, &nrChannels, 0);
+        auto image = load_image(file);
         if(image) {
+            int width = image->width();
+            int height = image->height();
+            int nrChannels = image->comp();
             Log::trace_core("Loaded texture data: " + file + ", w = " + std::to_string(width)
                 + ", h = " + std::to_string(height) + ", channels = " + std::to_string(nrChannels));
 
             out = std::make_unique<renderer::Texture>(gl::TextureType::TEXTURE_2D);
             if(nrChannels == 1) {
-                out->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, image->data());
             } else if(nrChannels == 2) { // rg
-                out->set_image2D(gl::TextureInternalFormat::RG, width, height, gl::PixelFormat::RG, gl::PixelType::UNSIGNED_BYTE, image); 
+                out->set_image2D(gl::TextureInternalFormat::RG, width, height, gl::PixelFormat::RG, gl::PixelType::UNSIGNED_BYTE, image->data()); 
             } else if(nrChannels == 3) { // rgb
-                out->set_image2D(gl::TextureInternalFormat::RGB, width, height, gl::PixelFormat::RGB, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RGB, width, height, gl::PixelFormat::RGB, gl::PixelType::UNSIGNED_BYTE, image->data());
             } else if(nrChannels == 4) { // rgba
-                out->set_image2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image);
+                out->set_image2D(gl::TextureInternalFormat::RGBA, width, height, gl::PixelFormat::RGBA, gl::PixelType::UNSIGNED_BYTE, image->data());
             } else {
                 Log::error_core("unable to load {}. unsupported texture format. Channels: {}", file, nrChannels);
             }
-            stbi_image_free(image);
+            // stbi_image_free(image);
             
             out->generate_mips();
         } else {
@@ -892,50 +897,20 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
     return out;
 }
 
-std::unique_ptr<Image> load_image(const std::string& path) {
-    int w, h, ncomps;
-    stbi_set_flip_vertically_on_load(false);
-    uint8_t* data = stbi_load(path.c_str(), &w, &h, &ncomps, 0);
 
-    if (data) {
-        if (ncomps > 4) {
-            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
-            stbi_image_free(data);
-            return {};
-        }
-        std::unique_ptr<Image> image = std::make_unique<Image>();
+std::string load_shader_content(const std::filesystem::path& source_path) {
+    std::ifstream in{source_path};
 
-        image->set_image(w, h, ncomps, 1, data);
-        
-        stbi_image_free(data);
-        return image;
-    } else {
-        Log::error_core("Failed to load image: {}", path);
-        return {};
+    if (!in.is_open()) {
+        Log::error_core("Unable to load shader content from {}", source_path);
+        throw std::runtime_error{"Shader File not found at " + source_path.generic_string()};
     }
-}
+    // copy out file contents
+    std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
+    in.close();
+    content += '\n';
 
-std::unique_ptr<Image> load_image_16(const std::string& path) {
-    int w, h, ncomps;
-    stbi_set_flip_vertically_on_load(false);
-    uint16_t* data = stbi_load_16(path.c_str(), &w, &h, &ncomps, 0);
-
-    if (data) {
-        if (ncomps > 4) {
-            Log::error_core("unable to load {}. unsupported texture format. Channels: {}", path, ncomps);
-            stbi_image_free(data);
-            return {};
-        }
-        std::unique_ptr<Image> image = std::make_unique<Image>();
-
-        image->set_image(w, h, ncomps, 2, (uint8_t*)data);
-
-        stbi_image_free(data);
-        return image;
-    } else {
-        Log::error_core("Failed to load image: {}", path);
-        return {};
-    }
+    return content;
 }
 
 } // namespace ev2
