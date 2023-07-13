@@ -140,7 +140,7 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
 
 std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& filename);
 
-std::string load_shader_content(const std::filesystem::path& source_path);
+// std::string load_shader_content(const std::filesystem::path& source_path);
 
 }
 

@@ -20,7 +20,7 @@
 
 namespace ev2::io {
 
-std::string read_file(std::string_view path);
+std::string read_file(const std::filesystem::path& path);
 
 } // namespace ev2::io
 

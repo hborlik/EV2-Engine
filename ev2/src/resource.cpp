@@ -3,6 +3,7 @@
 #include "renderer/opengl_renderer/buffer.hpp"
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/renderer.hpp"
+#include "io/serializers.hpp"
 #include "engine.hpp"
 
 #include <glm/glm.hpp>
@@ -788,7 +789,7 @@ std::shared_ptr<renderer::Material> ResourceManager::get_material(const std::str
 }
 
 std::string ResourceManager::get_shader_content(const std::filesystem::path& path) {
-    return load_shader_content(asset_path / path);
+    return io::read_file(asset_path / path);
 }
 
 std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm) {
@@ -898,19 +899,19 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
 }
 
 
-std::string load_shader_content(const std::filesystem::path& source_path) {
-    std::ifstream in{source_path};
+// std::string load_shader_content(const std::filesystem::path& source_path) {
+//     std::ifstream in{source_path};
 
-    if (!in.is_open()) {
-        Log::error_core("Unable to load shader content from {}", source_path);
-        throw std::runtime_error{"Shader File not found at " + source_path.generic_string()};
-    }
-    // copy out file contents
-    std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
-    in.close();
-    content += '\n';
+//     if (!in.is_open()) {
+//         Log::error_core("Unable to load shader content from {}", source_path);
+//         throw std::runtime_error{"Shader File not found at " + source_path.generic_string()};
+//     }
+//     // copy out file contents
+//     std::string content{std::istreambuf_iterator<char>{in}, std::istreambuf_iterator<char>{}};
+//     in.close();
+//     content += '\n';
 
-    return content;
-}
+//     return content;
+// }
 
 } // namespace ev2

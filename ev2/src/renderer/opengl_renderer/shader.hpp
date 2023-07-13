@@ -6,14 +6,15 @@
  *
  *
  */
-#ifndef EV2_SHADER_H
-#define EV2_SHADER_H
+#ifndef EV2_GL_SHADER_HPP
+#define EV2_GL_SHADER_HPP
 
 #include "evpch.hpp"
 
 #include "core/ev.hpp"
 #include "ev_gl.hpp"
 #include "buffer.hpp"
+#include "renderer/shader.hpp"
 
 namespace ev2::renderer
 {
@@ -94,44 +95,6 @@ const std::string ShaderUniformBlockName = "ShaderData";
 
 } // mat_spec
 
-struct ShaderTypeFlag {
-    enum : uint8_t {
-        VERTEX_SHADER           = 1 << 0,
-        FRAGMENT_SHADER         = 1 << 1,
-        GEOMETRY_SHADER         = 1 << 2,
-        TESS_EVALUATION_SHADER  = 1 << 3,
-        TESS_CONTROL_SHADER     = 1 << 4,
-        COMPUTE_SHADER          = 1 << 5
-    };
-    uint8_t v;
-};
-
-enum class ShaderType {
-    VERTEX_SHADER           = 0,
-    FRAGMENT_SHADER         = 1,
-    GEOMETRY_SHADER         = 2,
-    TESS_EVALUATION_SHADER  = 3,
-    TESS_CONTROL_SHADER     = 4,
-    COMPUTE_SHADER          = 5
-};
-
-inline std::string ShaderTypeName(ShaderType type) {
-    switch (type) {
-        case ShaderType::VERTEX_SHADER:
-            return "VERTEX_SHADER";
-        case ShaderType::FRAGMENT_SHADER:
-            return "FRAGMENT_SHADER";
-        case ShaderType::GEOMETRY_SHADER:
-            return "GEOMETRY_SHADER";
-        case ShaderType::TESS_EVALUATION_SHADER:
-            return "TESS_EVALUATION_SHADER";
-        case ShaderType::TESS_CONTROL_SHADER:
-            return "TESS_CONTROL_SHADER";
-        case ShaderType::COMPUTE_SHADER:
-            return "COMPUTER_SHADER";
-    }
-}
-
 inline gl::GLSLShaderType glShaderType(ShaderType type) {
     switch (type) {
         case ShaderType::VERTEX_SHADER:
@@ -148,24 +111,6 @@ inline gl::GLSLShaderType glShaderType(ShaderType type) {
             return gl::GLSLShaderType::COMPUTE_SHADER;
     }
 }
-
-class ShaderPreprocessor {
-public:
-    explicit ShaderPreprocessor(const std::filesystem::path& shader_include_dir = "shaders") : shader_include_dir{shader_include_dir} {}
-
-    /**
-     * @brief Simple text replacement for loading include files. Note this will ignore all other preprocessor directives
-     * 
-     * @param input_source 
-     * @return std::string 
-     */
-    std::string preprocess(const std::string& input_source) const;
-
-    std::filesystem::path get_shader_dir() const noexcept {return shader_include_dir;}
-
-private:
-    std::filesystem::path shader_include_dir;
-};
 
 /**
  * @brief Container for GPU Shader
@@ -223,46 +168,6 @@ private:
     std::string source;
     GLuint gl_reference;
     gl::GLSLShaderType type;
-};
-
-/**
- * @brief Shader source that contains multiple stages
- * 
- */
-class ShaderBuilder {
-public:
-    /**
-     * @brief Read shader source and append it to the source content.
-     *
-     * @param path path to shader code file
-     */
-    void push_source_file(const std::filesystem::path &path);
-
-    /**
-     * @brief append source string to shader content
-     * 
-     * @param source_string 
-     */
-    void push_source_string(const std::string& source_string);
-
-    void preprocess(const ShaderPreprocessor& pre);
-
-    std::unique_ptr<Shader> make_shader_stage(ShaderType type, int version);
-
-    /**
-     * @brief Get the shader stages for this shader. Does not compile
-     * 
-     * @param version the version for this shader source ex: will put "#version 450" in shader for 450
-     * @return std::vector<std::unique_ptr<Shader>> 
-     */
-    std::vector<std::unique_ptr<Shader>> get_shader_stages(int version);
-
-    static ShaderBuilder make_default_shader_builder(const std::filesystem::path& shader_asset_path = {"shaders"});
-
-private:
-    std::string source{};
-    std::filesystem::path shader_asset_path{};
-    std::size_t last_shader_begin;
 };
 
 class Buffer;
@@ -596,4 +501,4 @@ private:
 
 } // namespace ev2
 
-#endif // EV2_SHADER_H
+#endif // EV2_GL_SHADER_HPP

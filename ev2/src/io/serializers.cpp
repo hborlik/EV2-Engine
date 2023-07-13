@@ -5,10 +5,10 @@
 
 namespace ev2::io {
 
-auto read_file(std::string_view path) -> std::string {
+auto read_file(const std::filesystem::path& path) -> std::string {
     // from https://stackoverflow.com/questions/116038/how-do-i-read-an-entire-file-into-a-stdstring-in-c
     constexpr auto read_size = std::size_t(4096);
-    auto stream = std::ifstream(path.data());
+    auto stream = std::ifstream(path.generic_string());
     stream.exceptions(std::ios_base::badbit);
 
     if (!stream) {

@@ -43,47 +43,6 @@ std::ostream& operator<<(std::ostream& os, const Program& input) {
     return os;
 }
 
-std::string ShaderPreprocessor::preprocess(const std::string& input_source) const {
-    using namespace std;
-    ostringstream result;
-
-    istringstream iss(input_source);
-
-    const string include = "#include";
-    size_t line_num = 0;
-    for (string line; getline(iss, line); ) {
-        auto pos = line.find(include);
-        if (pos != string::npos) {
-            size_t s = string::npos, e = string::npos;
-            while (pos < line.size()) {
-                if (line[pos] == '\"') {
-                    if (s == string::npos) {
-                        s = pos + 1;
-                    } else {
-                        e = pos;
-                        break;
-                    }
-                }
-                pos++;
-            }
-            if (s == string::npos || e == string::npos) {
-                throw shader_error{"Preprocessor", std::to_string(line_num)};
-            }
-            std::filesystem::path filename{line.substr(s, e - s)};
-            filename = shader_include_dir / filename;
-
-            // do not process any includes in the header files
-            result << load_shader_content(filename);
-        } else {
-            result << line << std::endl;
-        }
-        line_num++;
-    }
-    return result.str();
-}
-
-
-
 //// SHADER ////
 
 Shader::Shader(gl::GLSLShaderType type) : type{type} {
@@ -127,37 +86,6 @@ bool Shader::compile(std::string_view source) {
         }
     }
     return result == GL_TRUE;
-}
-
-// UbiquitousShader
-
-void ShaderBuilder::push_source_file(const std::filesystem::path &path) {
-    last_shader_begin = source.length();
-    auto shader_path = shader_asset_path / path;
-    source += "\n//" + shader_path.generic_string() + "\n";
-    source += load_shader_content(shader_path);
-}
-
-void ShaderBuilder::push_source_string(const std::string& source_string) {
-    last_shader_begin = source.length();
-    source += source_string;
-}
-
-void ShaderBuilder::preprocess(const ShaderPreprocessor& pre) {
-    source = pre.preprocess(source);
-}
-
-std::unique_ptr<Shader> ShaderBuilder::make_shader_stage(ShaderType type, int version) {
-    
-    std::string out{};
-    out += ("#version " + std::to_string(version) + "\n");
-    out += ("#define " + ShaderTypeName(type) + "\n");
-    out += (source);
-
-    auto shader = std::make_unique<Shader>(glShaderType(type));
-    shader->compile(out);
-    
-    return shader;
 }
 
 std::vector<std::unique_ptr<Shader>> ShaderBuilder::get_shader_stages(int version) {
