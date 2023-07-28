@@ -11,6 +11,7 @@
 #include "evpch.hpp"
 
 #include "core/singleton.hpp"
+#include "renderer/shader_builder.hpp"
 #include "renderer/opengl_renderer/mesh.hpp"
 #include "renderer/opengl_renderer/shader.hpp"
 #include "renderer/opengl_renderer/texture.hpp"
@@ -267,7 +268,7 @@ class RenderPass {
 public:
     virtual ~RenderPass() = default;
 
-    virtual void init(const RenderState& state, const ShaderPreprocessor& pre) = 0;
+    virtual void init(const RenderState& state, const PreprocessorSettings& pre) = 0;
     virtual void render(const RenderState& state) = 0;
 };
 
@@ -347,7 +348,7 @@ public:
             &g_buffer, // right now only gbuffer passes are supported
             &default_camera
         };
-        pass->init(terrain_target_state, m_preprocessor);
+        pass->init(terrain_target_state, m_preprocessor_settings);
         m_passes.push_back(pass);
     }
 
@@ -537,7 +538,7 @@ private:
 
     std::vector<RenderPass*> m_passes{};
 
-    ShaderPreprocessor m_preprocessor{};
+    PreprocessorSettings m_preprocessor_settings{};
 };
 
 }

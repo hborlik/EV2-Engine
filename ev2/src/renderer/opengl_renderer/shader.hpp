@@ -115,20 +115,20 @@ inline gl::GLSLShaderType glShaderType(ShaderType type) {
 /**
  * @brief Container for GPU Shader
  */
-class Shader
+class GLShader
 {
 public:
-    explicit Shader(gl::GLSLShaderType type);
-    ~Shader();
+    explicit GLShader(gl::GLSLShaderType type);
+    ~GLShader();
 
-    Shader(const Shader &) = delete;
-    Shader &operator=(const Shader &) = delete;
+    GLShader(const GLShader &) = delete;
+    GLShader &operator=(const GLShader &) = delete;
 
-    Shader(Shader &&o) {
+    GLShader(GLShader &&o) {
         *this = std::move(o);
     }
 
-    Shader& operator=(Shader &&o) {
+    GLShader& operator=(GLShader &&o) {
         std::swap(gl_reference, o.gl_reference);
         std::swap(type, o.type);
         return *this;
@@ -339,7 +339,7 @@ public:
      * @param 
      * @param shader 
      */
-    void attachShader(const Shader* shader);
+    void attachShader(const GLShader* shader);
 
     /**
      * @brief  Set path for shader stage in this program
@@ -349,7 +349,7 @@ public:
      * @param preprocessor 
      * @param version 
      */
-    void loadShader(ShaderType type, const std::filesystem::path &path, const ShaderPreprocessor& preprocessor, int version = 450);
+    void loadShader(ShaderType type, const std::filesystem::path &path, const PreprocessorSettings& settings, int version = 450);
 
     /**
      * @brief Load, Compile, and Link shader programs

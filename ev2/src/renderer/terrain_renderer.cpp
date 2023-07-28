@@ -1300,7 +1300,7 @@ TerrainRenderer::~TerrainRenderer() {
     //
 }
 
-void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& pre) {
+void TerrainRenderer::init(const RenderState& state, const PreprocessorSettings& pre) {
     bool v = true;
 
     m_terrain_mat = Renderer::get_singleton().create_material();
@@ -1319,7 +1319,7 @@ void TerrainRenderer::init(const RenderState& state, const ShaderPreprocessor& p
         throw std::runtime_error{"TerrainRenderer::init failure"};
 }
 
-bool TerrainRenderer::load_programs(const RenderState& state, const ShaderPreprocessor& pre) {
+bool TerrainRenderer::load_programs(const RenderState& state, const PreprocessorSettings& pre) {
     GLuint mat_slot = 0;
     if (m_terrain_mat->get_material_id() >= 0)
         mat_slot = m_terrain_mat->get_material_slot();

@@ -25,7 +25,7 @@ public:
 
     ~TerrainRenderer();
 
-    void init(const RenderState& state, const ShaderPreprocessor& pre) override;
+    void init(const RenderState& state, const PreprocessorSettings& pre) override;
 
     void render(const RenderState& state) override;
 
@@ -35,7 +35,7 @@ public:
 
     bool load_vaos();
 
-    bool load_programs(const RenderState& state, const ShaderPreprocessor& pre);
+    bool load_programs(const RenderState& state, const PreprocessorSettings& pre);
 
     bool load_queries();
 

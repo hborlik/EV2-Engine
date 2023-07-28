@@ -43,21 +43,24 @@ public:
      */
     void push_source_string(const std::string& source_string);
 
+
     /**
      * @brief Simple text replacement for loading include files. 
      *  Note: this will ignore all other preprocessor directives
+     * 
+     * @param settings 
      */
-    void preprocess();
+    void preprocess(const PreprocessorSettings& settings);
 
     ShaderSource make_shader_stage_source(ShaderType type, int version);
 
     /**
-     * @brief Get all available shader stage sources for this shader.
+     * @brief Make all available shader stage sources for this shader.
      * 
      * @param version the version for this shader source ex: will put "#version 450" in shader for 450
      * @return std::vector<ShaderSource>
      */
-    std::vector<ShaderSource> get_shader_stages_source(int version);
+    std::vector<ShaderSource> make_shader_stages_source(int version);
 
     static ShaderBuilder make_default_shader_builder(const std::filesystem::path& shader_asset_path = {"shaders"});
 
@@ -65,7 +68,6 @@ private:
     std::string m_source{};
     std::filesystem::path shader_asset_path{};
     std::size_t last_shader_begin{};
-    PreprocessorSettings m_preprocessor_settings{};
 };
 
 }

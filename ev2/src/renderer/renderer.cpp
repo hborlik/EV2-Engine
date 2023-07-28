@@ -147,7 +147,7 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     ssao_kernel_buffer{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     width{width}, 
     height{height},
-    m_preprocessor{} {
+    m_preprocessor_settings{} {
 
     // material id queue
     for (mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {
@@ -296,8 +296,8 @@ void Renderer::init() {
 
     // set up programs
 
-    geometry_program.program.loadShader(ShaderType::VERTEX_SHADER, "geometry.glsl.vert", m_preprocessor);
-    geometry_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor);
+    geometry_program.program.loadShader(ShaderType::VERTEX_SHADER, "geometry.glsl.vert", m_preprocessor_settings);
+    geometry_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
     geometry_program.program.link();
     geometry_program.init();
 
@@ -305,16 +305,16 @@ void Renderer::init() {
     gp_mv_location = geometry_program.program.getUniformInfo("MV").Location;
     gp_g_location = geometry_program.program.getUniformInfo("G").Location;
 
-    geometry_program_instanced.program.loadShader(ShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", m_preprocessor);
-    geometry_program_instanced.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor);
+    geometry_program_instanced.program.loadShader(ShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", m_preprocessor_settings);
+    geometry_program_instanced.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
     geometry_program_instanced.program.link();
     geometry_program_instanced.init();
 
     gpi_m_location = geometry_program_instanced.program.getUniformInfo("M").Location;
 
     // Initialize the GLSL programs
-    depth_program.program.loadShader(ShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", m_preprocessor);
-    depth_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", m_preprocessor);
+    depth_program.program.loadShader(ShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", m_preprocessor_settings);
+    depth_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", m_preprocessor_settings);
     depth_program.program.link();
     depth_program.init();
 
@@ -322,8 +322,8 @@ void Renderer::init() {
     sdp_lpv_location = depth_program.program.getUniformInfo("LPV").Location;
 
 
-    directional_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
-    directional_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "directional.glsl.frag", m_preprocessor);
+    directional_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    directional_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "directional.glsl.frag", m_preprocessor_settings);
     directional_lighting_program.program.link();
     directional_lighting_program.init();
 
@@ -339,8 +339,8 @@ void Renderer::init() {
     lp_lamb_location = directional_lighting_program.program.getUniformInfo("lightAmbient").Location;
 
 
-    point_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", m_preprocessor);
-    point_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", m_preprocessor);
+    point_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", m_preprocessor_settings);
+    point_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", m_preprocessor_settings);
     point_lighting_program.program.link();
     point_lighting_program.init();
 
@@ -354,8 +354,8 @@ void Renderer::init() {
     point_light_data_buffer = std::make_unique<Buffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
 
 
-    ssao_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
-    ssao_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", m_preprocessor);
+    ssao_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    ssao_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", m_preprocessor_settings);
     ssao_program.program.link();
     ssao_program.init();
 
@@ -369,8 +369,8 @@ void Renderer::init() {
     load_ssao_uniforms();
 
 
-    sky_program.program.loadShader(ShaderType::VERTEX_SHADER, "sky.glsl.vert", m_preprocessor);
-    sky_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "sky.glsl.frag", m_preprocessor);
+    sky_program.program.loadShader(ShaderType::VERTEX_SHADER, "sky.glsl.vert", m_preprocessor_settings);
+    sky_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "sky.glsl.frag", m_preprocessor_settings);
     sky_program.program.link();
     sky_program.init();
     sky_time_loc        = sky_program.program.getUniformInfo("time").Location;
@@ -379,23 +379,23 @@ void Renderer::init() {
     sky_sun_position_loc= sky_program.program.getUniformInfo("sun_position").Location;
     sky_output_mul_loc  = sky_program.program.getUniformInfo("output_mul").Location;
 
-    post_fx_bloom_combine_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
-    post_fx_bloom_combine_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", m_preprocessor);
+    post_fx_bloom_combine_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_bloom_combine_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", m_preprocessor_settings);
     post_fx_bloom_combine_program.program.link();
     post_fx_bloom_combine_program.init();
     post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.program.getUniformInfo("hdrBuffer").Location;
     post_fx_bc_emist_loc = post_fx_bloom_combine_program.program.getUniformInfo("emissiveBuffer").Location;
     post_fx_bc_thresh_loc = post_fx_bloom_combine_program.program.getUniformInfo("bloom_threshold").Location;
 
-    post_fx_bloom_blur.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
-    post_fx_bloom_blur.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", m_preprocessor);
+    post_fx_bloom_blur.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_bloom_blur.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", m_preprocessor_settings);
     post_fx_bloom_blur.program.link();
     post_fx_bloom_blur.init();
     post_fx_bb_hor_loc = post_fx_bloom_blur.program.getUniformInfo("horizontal").Location;
     post_fx_bb_bloom_in_loc = post_fx_bloom_blur.program.getUniformInfo("bloom_blur_in").Location;
 
-    post_fx_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor);
-    post_fx_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", m_preprocessor);
+    post_fx_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", m_preprocessor_settings);
     post_fx_program.program.link();
     post_fx_program.init();
     post_fx_gamma_loc           = post_fx_program.program.getUniformInfo("gamma").Location;

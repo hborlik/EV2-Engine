@@ -45,17 +45,17 @@ std::ostream& operator<<(std::ostream& os, const Program& input) {
 
 //// SHADER ////
 
-Shader::Shader(gl::GLSLShaderType type) : type{type} {
+GLShader::GLShader(gl::GLSLShaderType type) : type{type} {
     gl_reference = glCreateShader((GLenum)type);
     EV_CHECK_THROW(gl_reference != 0, "Failed to create shader");
 }
 
-Shader::~Shader() {
+GLShader::~GLShader() {
     if(gl_reference != 0)
         glDeleteShader(gl_reference);
 }
 
-bool Shader::compile(std::string_view source) {
+bool GLShader::compile(std::string_view source) {
     const GLchar* codeArray = source.data();
     glShaderSource(gl_reference, 1, &codeArray, nullptr);
     glCompileShader(gl_reference);
@@ -66,7 +66,7 @@ bool Shader::compile(std::string_view source) {
     if(result == GL_TRUE) {
 
     } else { // ask for more info on failure
-        Log::error_core<Shader>("Failed to compile shader");
+        Log::error_core<GLShader>("Failed to compile shader");
 
         GLint logLen;
         glGetShaderiv(gl_reference, GL_INFO_LOG_LENGTH, &logLen);
@@ -77,8 +77,8 @@ bool Shader::compile(std::string_view source) {
             GLsizei written;
             glGetShaderInfoLog(gl_reference, logLen, &written, log.data());
 
-            Log::error_core<Shader>("Shader error");
-            Log::error_core<Shader>(
+            Log::error_core<GLShader>("GLShader error");
+            Log::error_core<GLShader>(
                 std::string{log.begin(), log.end() - 1} +
                 "\n------BEGIN SHADER SOURCE-----\n" +
                 source.data() +
@@ -88,51 +88,13 @@ bool Shader::compile(std::string_view source) {
     return result == GL_TRUE;
 }
 
-std::vector<std::unique_ptr<Shader>> ShaderBuilder::get_shader_stages(int version) {
-    std::vector<std::unique_ptr<Shader>> output_shaders{};
-    ShaderTypeFlag stages{};
-    if (source.find("VERTEX_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::VERTEX_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::VERTEX_SHADER, version));
-    }
-    if (source.find("FRAGMENT_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::FRAGMENT_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::FRAGMENT_SHADER, version));
-    }
-    if (source.find("GEOMETRY_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::GEOMETRY_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::GEOMETRY_SHADER, version));
-    }
-    if (source.find("TESS_CONTROL_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::TESS_CONTROL_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::TESS_CONTROL_SHADER, version));
-    }
-    if (source.find("TESS_EVALUATION_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::TESS_EVALUATION_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::TESS_EVALUATION_SHADER, version));
-    }
-    if (source.find("COMPUTE_SHADER", last_shader_begin) != std::string::npos) {
-        stages.v |= ShaderTypeFlag::COMPUTE_SHADER;
-        output_shaders.push_back(make_shader_stage(ShaderType::COMPUTE_SHADER, version));
-    }
-    
-    return output_shaders;
-}
-
-ShaderBuilder ShaderBuilder::make_default_shader_builder(const std::filesystem::path& shader_asset_path) {
-    ShaderBuilder builder{};
-    builder.shader_asset_path = shader_asset_path;
-
-    return builder;
-}
-
 // Program
 
 Program::Program() {
 
     gl_reference = glCreateProgram();
     if(gl_reference == 0)
-        throw engine_exception{"Failed to create Shader Program"};
+        throw engine_exception{"Failed to create GLShader Program"};
 }
 
 Program::Program(std::string name) : 
@@ -140,7 +102,7 @@ Program::Program(std::string name) :
 
     gl_reference = glCreateProgram();
     if(gl_reference == 0)
-        throw engine_exception{"Failed to create Shader Program"};
+        throw engine_exception{"Failed to create GLShader Program"};
 }
 
 Program::~Program() {
@@ -148,21 +110,23 @@ Program::~Program() {
         glDeleteProgram(gl_reference);
 }
 
-void Program::attachShader(const Shader* shader) {
+void Program::attachShader(const GLShader* shader) {
     if (!(shader && shader->IsCompiled() && attach_shader(shader->getHandle())))
-        throw shader_error{ProgramName, "Shader could not be attached"};
+        throw shader_error{ProgramName, "GLShader could not be attached"};
 }
 
-void Program::loadShader(ShaderType type, const std::filesystem::path& path, const ShaderPreprocessor& preprocessor, int version) {
+void Program::loadShader(ShaderType type, const std::filesystem::path& path, const PreprocessorSettings& settings, int version) {
 
     ShaderBuilder shader_builder = ShaderBuilder::make_default_shader_builder();
 
     // shader_builder.push_source_string("#version " + std::to_string(version) + " core\n");
     shader_builder.push_source_string("#line 1\n");
     shader_builder.push_source_file(path);
-    shader_builder.preprocess(preprocessor);
+    shader_builder.preprocess(settings);
+
+    ShaderSource source = shader_builder.make_shader_stage_source(type, version);
     
-    std::shared_ptr<Shader> s = shader_builder.make_shader_stage(type, version);
+    std::shared_ptr<GLShader> s = shader_builder.make_shader_stage(type, version);
 
     auto suc = attach_shader(s->getHandle());
     if (!suc)
