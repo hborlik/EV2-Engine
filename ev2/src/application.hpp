@@ -12,7 +12,7 @@
 #include "input.hpp"
 #include "ui/ui.hpp"
 
-#include "renderer/terrain_renderer.hpp"
+#include "renderer/opengl_renderer/terrain_renderer.hpp"
 
 namespace ev2 {
 

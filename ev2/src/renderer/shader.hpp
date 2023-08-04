@@ -56,6 +56,19 @@ struct ShaderSource {
     ShaderType type{};
 };
 
+class Shader {
+public:
+    explicit Shader(ShaderType type);
+    virtual ~Shader() = default;
+};
+
+std::unique_ptr<Shader> make_shader(const ShaderSource& source);
+
+class Program {
+public:
+    
+};
+
 }
 
 #endif 

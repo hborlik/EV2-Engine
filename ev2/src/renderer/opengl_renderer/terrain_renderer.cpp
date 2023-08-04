@@ -1,9 +1,9 @@
-#include <renderer/terrain_renderer.hpp>
+#include <renderer/opengl_renderer/terrain_renderer.hpp>
 
 #include "glm/geometric.hpp"
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/opengl_renderer/buffer.hpp"
-#include "renderer/opengl_renderer/shader.hpp"
+#include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/camera.hpp"
 #include "engine.hpp"
 #include "resource.hpp"
@@ -331,7 +331,7 @@ void ConfigureSkyProgram()
  *
  * This program is responsible for updating and rendering the terrain.
  */
-std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std::string& flag, GLuint uniformOffset, const ShaderPreprocessor& pre, GLuint matid)
+std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std::string& flag, GLuint uniformOffset, const PreprocessorSettings& pre, GLuint matid)
 {
     std::unique_ptr<Program> djp = std::make_unique<Program>("Terrain Program");
 
@@ -422,7 +422,7 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
         cull_shader.push_source_file("./shaders/terrain/TerrainRenderMS.glsl");
     }
 
-    for (auto& shader : cull_shader.get_shader_stages(450)) {
+    for (auto& shader : cull_shader.make_shader_stages_source(450)) {
         // if (!shader->compile(pre))
         //     throw shader_error{"TerrainProgram", "Failed to compile"};
         djp->attachShader(shader.get());
@@ -462,7 +462,7 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
     return djp;
 }
 
-bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre, GLuint matid)
+bool LoadTerrainPrograms(const RenderState& state, const PreprocessorSettings& pre, GLuint matid)
 {
     bool v = true;
 
@@ -493,7 +493,7 @@ bool LoadTerrainPrograms(const RenderState& state, const ShaderPreprocessor& pre
  * subdivision tree. This allows to locate the i-th bit in a bitfield of
  * size N in log(N) operations.
  */
-bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
+bool LoadLebReductionProgram(const PreprocessorSettings& pre)
 {
     ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION] = std::make_unique<Program>("LebReductionProgram");
@@ -514,7 +514,7 @@ bool LoadLebReductionProgram(const ShaderPreprocessor& pre)
     return (glGetError() == GL_NO_ERROR);
 }
 
-bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
+bool LoadLebReductionPrepassProgram(const PreprocessorSettings& pre)
 {
     ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_LEB_REDUCTION_PREPASS] = std::make_unique<Program>("LebReductionPrepass");
@@ -540,7 +540,7 @@ bool LoadLebReductionPrepassProgram(const ShaderPreprocessor& pre)
  *
  * This program is responsible for preparing an indirect draw call
  */
-bool LoadBatchProgram(const ShaderPreprocessor& pre)
+bool LoadBatchProgram(const PreprocessorSettings& pre)
 {
     ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_BATCH] = std::make_unique<Program>("BatchProgram");
@@ -590,7 +590,7 @@ bool LoadBatchProgram(const ShaderPreprocessor& pre)
  *
  * This program is responsible for rendering the terrain in a top view fashion
  */
-bool LoadTopViewProgram(const ShaderPreprocessor& pre)
+bool LoadTopViewProgram(const PreprocessorSettings& pre)
 {
     ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_TOPVIEW] = std::make_unique<Program>("BatchProgram");
@@ -634,7 +634,7 @@ bool LoadTopViewProgram(const ShaderPreprocessor& pre)
  *
  * This program is responsible for retrieving the number of nodes in the CBT
  */
-bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
+bool LoadCbtNodeCountProgram(const PreprocessorSettings& pre)
 {
     ShaderBuilder usp{};
     auto& djp = g_gl->programs[PROGRAM_CBT_NODE_COUNT] = std::make_unique<Program>("BatchProgram");
@@ -663,7 +663,7 @@ bool LoadCbtNodeCountProgram(const ShaderPreprocessor& pre)
  * Load All Programs
  *
  */
-bool LoadPrograms(const RenderState& state, const ShaderPreprocessor& pre, GLuint matid)
+bool LoadPrograms(const RenderState& state, const PreprocessorSettings& pre, GLuint matid)
 {
     bool v = true;
 

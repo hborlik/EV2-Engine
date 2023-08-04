@@ -9,9 +9,9 @@
 
 #include "evpch.hpp"
 
-#include "renderer.hpp"
+#include "renderer/renderer.hpp"
 #include "renderer/render_state.hpp"
-#include "renderer/opengl_renderer/shader.hpp"
+#include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/material.hpp"
 #include "io/image.hpp"
 

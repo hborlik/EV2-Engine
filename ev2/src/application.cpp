@@ -1,4 +1,4 @@
-#include "renderer/terrain_renderer.hpp"
+#include "renderer/opengl_renderer/terrain_renderer.hpp"
 
 #include "application.hpp"
 #include "window.hpp"

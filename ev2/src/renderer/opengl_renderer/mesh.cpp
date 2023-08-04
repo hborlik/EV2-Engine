@@ -107,7 +107,7 @@ VertexBuffer VertexBuffer::vbInitSphereArrayVertexData(const std::vector<float>&
     // glVertexAttribDivisor(mat_spec::INSTANCE_BINDING_LOCATION+3, 1);
 
 
-    return std::move(vb);
+    return vb;
 }
 
 std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitSST() {

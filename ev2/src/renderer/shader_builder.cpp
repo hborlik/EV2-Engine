@@ -20,6 +20,9 @@ void ShaderBuilder::push_source_string(const std::string& source_string) {
 
 void ShaderBuilder::preprocess(const PreprocessorSettings& settings) {
     using namespace std;
+
+    throw std::runtime_error{"Not Implemented"};
+
     ostringstream result;
 
     istringstream iss(m_source);

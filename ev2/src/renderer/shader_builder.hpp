@@ -62,13 +62,15 @@ public:
      */
     std::vector<ShaderSource> make_shader_stages_source(int version);
 
+
     static ShaderBuilder make_default_shader_builder(const std::filesystem::path& shader_asset_path = {"shaders"});
 
 private:
     std::string m_source{};
-    std::filesystem::path shader_asset_path{};
     std::size_t last_shader_begin{};
+    std::filesystem::path shader_asset_path{};
 };
+
 
 }
 

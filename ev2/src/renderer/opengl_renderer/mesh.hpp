@@ -10,7 +10,7 @@
 #include "evpch.hpp"
 
 #include "buffer.hpp"
-#include "shader.hpp"
+#include "gl_shader.hpp"
 #include "texture.hpp"
 
 namespace ev2::renderer {

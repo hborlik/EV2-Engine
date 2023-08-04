@@ -13,7 +13,7 @@
 #include "core/singleton.hpp"
 #include "renderer/shader_builder.hpp"
 #include "renderer/opengl_renderer/mesh.hpp"
-#include "renderer/opengl_renderer/shader.hpp"
+#include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/opengl_renderer/texture.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/material.hpp"
@@ -286,7 +286,7 @@ public:
             diffuse_sampler_loc = program.getUniformInfo("diffuse_tex").Location;
         }
 
-        Program program{};
+        GLProgram program{};
         int mat_loc = -1;
         int obj_id_loc = -1;
         int vert_col_w_loc = -1;
