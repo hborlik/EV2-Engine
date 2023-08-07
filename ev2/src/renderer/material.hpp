@@ -52,6 +52,7 @@ struct Material {
     Material(Material&&) = delete;
     Material& operator=(Material&&) = delete;
 
+    // renderer specific functions
     int32_t get_material_id() const noexcept {return material_id;}
     int32_t get_material_slot() const noexcept {return material_slot;}
     bool is_registered() noexcept {return material_id != -1 && material_slot != -1;}

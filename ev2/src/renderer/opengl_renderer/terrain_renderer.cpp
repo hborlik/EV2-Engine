@@ -422,7 +422,8 @@ std::unique_ptr<Program> LoadTerrainProgram(const RenderState& state, const std:
         cull_shader.push_source_file("./shaders/terrain/TerrainRenderMS.glsl");
     }
 
-    for (auto& shader : cull_shader.make_shader_stages_source(450)) {
+    for (auto& source : cull_shader.make_shader_stages_source(450)) {
+        auto shader = Shader::make_shader(source);
         // if (!shader->compile(pre))
         //     throw shader_error{"TerrainProgram", "Failed to compile"};
         djp->attachShader(shader.get());

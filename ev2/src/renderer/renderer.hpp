@@ -15,9 +15,9 @@
 #include "renderer/opengl_renderer/mesh.hpp"
 #include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/opengl_renderer/texture.hpp"
+#include "renderer/opengl_renderer/render_state.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/material.hpp"
-#include "renderer/render_state.hpp"
 
 #include "geometry.hpp"
 

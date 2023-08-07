@@ -2,7 +2,7 @@
 
 #include "io/serializers.hpp"
 
-namespace ev2 {
+namespace ev2::renderer {
 
 // UbiquitousShader
 

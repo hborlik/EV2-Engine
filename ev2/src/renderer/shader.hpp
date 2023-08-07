@@ -9,7 +9,7 @@
 
 #include "evpch.hpp"
 
-namespace ev2 {
+namespace ev2::renderer {
 
 struct ShaderTypeFlag {
     enum : uint8_t {
@@ -56,19 +56,42 @@ struct ShaderSource {
     ShaderType type{};
 };
 
+
 class Shader {
 public:
     explicit Shader(ShaderType type);
     virtual ~Shader() = default;
-};
 
-std::unique_ptr<Shader> make_shader(const ShaderSource& source);
+    static std::unique_ptr<Shader> make_shader(const ShaderSource& source);
+};
 
 class Program {
 public:
-    
+
+    /**
+     * @brief Set the shader attached to a specific stage. The shader should already be built
+     * 
+     * @param 
+     * @param shader 
+     */
+    virtual void attach_shader(std::shared_ptr<Shader> shader) = 0;
+
+    /**
+     * @brief Link shader programs
+     */
+    virtual void link() = 0;
+
+    /**
+     * @brief get linking status
+     *
+     * @return true
+     * @return false
+     */
+    virtual bool is_linked() const = 0;
+
+    static std::unique_ptr<Program> make_program();
 };
 
-}
+} // namespace ev2
 
 #endif 

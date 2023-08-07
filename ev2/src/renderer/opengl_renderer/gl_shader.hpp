@@ -354,7 +354,7 @@ public:
     void loadShader(ShaderType type, const std::filesystem::path &path, const PreprocessorSettings& settings, int version = 450);
 
     /**
-     * @brief Load, Compile, and Link shader programs
+     * @brief Link shader programs
      */
     void link();
 
@@ -389,12 +389,11 @@ public:
      * @param uniformName
      * @return ProgramUniformDescription zero initialized if it does not exist
      */
-    ProgramUniformDescription getUniformInfo(const std::string &uniformName) const
-    {
+    ProgramUniformDescription getUniformInfo(const std::string& uniformName) const {
         auto itr = uniforms.find(uniformName);
         if (itr != uniforms.end())
             return itr->second;
-        return {-1, 0};
+        return { -1, 0 };
     }
 
     /**
@@ -403,8 +402,7 @@ public:
      * @param inputName
      * @return ProgramInputDescription default initialized if it does not exist
      */
-    ProgramInputDescription getInputInfo(const std::string &inputName) const
-    {
+    ProgramInputDescription getInputInfo(const std::string& inputName) const {
         auto itr = inputs.find(inputName);
         if (itr != inputs.end())
             return itr->second;
@@ -434,8 +432,7 @@ public:
      * @param uboName
      * @return ProgramUniformBlockDescription zero initialized if it does not exist
      */
-    ProgramUniformBlockDescription getUniformBlockInfo(const std::string &uboName) const
-    {
+    ProgramUniformBlockDescription getUniformBlockInfo(const std::string& uboName) const {
         auto itr = uniformBlocks.find(uboName);
         if (itr != uniformBlocks.end())
             return itr->second;

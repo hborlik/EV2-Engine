@@ -11,7 +11,7 @@
 
 #include "renderer/shader.hpp"
 
-namespace ev2 {
+namespace ev2::renderer {
 
 class PreprocessorSettings {
 public:
