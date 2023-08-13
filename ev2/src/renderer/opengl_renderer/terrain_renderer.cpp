@@ -1,8 +1,8 @@
-#include <renderer/opengl_renderer/terrain_renderer.hpp>
+#include "renderer/opengl_renderer/terrain_renderer.hpp"
 
 #include "glm/geometric.hpp"
 #include "renderer/opengl_renderer/ev_gl.hpp"
-#include "renderer/opengl_renderer/buffer.hpp"
+#include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/camera.hpp"
 #include "engine.hpp"
@@ -1304,7 +1304,7 @@ TerrainRenderer::~TerrainRenderer() {
 void TerrainRenderer::init(const RenderState& state, const PreprocessorSettings& pre) {
     bool v = true;
 
-    m_terrain_mat = Renderer::get_singleton().create_material();
+    m_terrain_mat = GLRenderer::get_singleton().create_material();
     m_terrain_mat->specular = 0.f;
     m_terrain_mat->metallic = 0.01f;
     m_terrain_mat->roughness = 0.4f;

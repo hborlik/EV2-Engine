@@ -13,21 +13,12 @@
 
 #include "core/ev.hpp"
 #include "ev_gl.hpp"
-#include "buffer.hpp"
+#include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/shader_builder.hpp"
 
 namespace ev2::renderer
 {
-
-enum class VertexAttributeLabel : int {
-    Vertex = 0,
-    Normal,
-    Color,
-    Texcoord,
-    Tangent,
-    Bitangent
-};
 
 namespace mat_spec
 {
@@ -67,22 +58,22 @@ const std::unordered_map<std::string, uint32_t> AttributeBindings {
 
 inline uint32_t glBindingLocation(const std::string& attribute_name) {return AttributeBindings.at(attribute_name);}
 
-const std::unordered_map<VertexAttributeLabel, uint32_t> DefaultBindings {
-    std::make_pair(VertexAttributeLabel::Vertex,    VERTEX_BINDING_LOCATION),
-    std::make_pair(VertexAttributeLabel::Normal,    NORMAL_BINDING_LOCATION),
-    std::make_pair(VertexAttributeLabel::Color,     COLOR_BINDING_LOCATION),
-    std::make_pair(VertexAttributeLabel::Texcoord,  TEXCOORD_BINDING_LOCATION),
-    std::make_pair(VertexAttributeLabel::Tangent,   TANGENT_BINDING_LOCATION),
-    std::make_pair(VertexAttributeLabel::Bitangent, BITANGENT_BINDING_LOCATION)
+const std::unordered_map<AttributeLabel, uint32_t> DefaultBindings {
+    std::make_pair(AttributeLabel::Vertex,    VERTEX_BINDING_LOCATION),
+    std::make_pair(AttributeLabel::Normal,    NORMAL_BINDING_LOCATION),
+    std::make_pair(AttributeLabel::Color,     COLOR_BINDING_LOCATION),
+    std::make_pair(AttributeLabel::Texcoord,  TEXCOORD_BINDING_LOCATION),
+    std::make_pair(AttributeLabel::Tangent,   TANGENT_BINDING_LOCATION),
+    std::make_pair(AttributeLabel::Bitangent, BITANGENT_BINDING_LOCATION)
 };
 
-const std::unordered_map<std::string, std::tuple<uint32_t, gl::DataType, VertexAttributeLabel>> ShaderVertexAttributes {
-    std::make_pair(VertexAttributeName,     std::make_tuple(VERTEX_BINDING_LOCATION,    VertexAttributeType,        VertexAttributeLabel::Vertex)),
-    std::make_pair(NormalAttributeName,     std::make_tuple(NORMAL_BINDING_LOCATION,    NormalAttributeType,        VertexAttributeLabel::Normal)),
-    std::make_pair(VertexColorAttributeName,std::make_tuple(COLOR_BINDING_LOCATION,     VertexColorAttributeType,   VertexAttributeLabel::Color)),
-    std::make_pair(TextureAttributeName,    std::make_tuple(TEXCOORD_BINDING_LOCATION,  TextureAttributeType,       VertexAttributeLabel::Texcoord)),
-    std::make_pair(TangentAttributeName,    std::make_tuple(TANGENT_BINDING_LOCATION,   TangentAttributeType,       VertexAttributeLabel::Tangent)),
-    std::make_pair(BiTangentAttributeName,  std::make_tuple(BITANGENT_BINDING_LOCATION, BiTangentAttributeType,     VertexAttributeLabel::Bitangent))
+const std::unordered_map<std::string, std::tuple<uint32_t, gl::DataType, AttributeLabel>> ShaderVertexAttributes {
+    std::make_pair(VertexAttributeName,     std::make_tuple(VERTEX_BINDING_LOCATION,    VertexAttributeType,        AttributeLabel::Vertex)),
+    std::make_pair(NormalAttributeName,     std::make_tuple(NORMAL_BINDING_LOCATION,    NormalAttributeType,        AttributeLabel::Normal)),
+    std::make_pair(VertexColorAttributeName,std::make_tuple(COLOR_BINDING_LOCATION,     VertexColorAttributeType,   AttributeLabel::Color)),
+    std::make_pair(TextureAttributeName,    std::make_tuple(TEXCOORD_BINDING_LOCATION,  TextureAttributeType,       AttributeLabel::Texcoord)),
+    std::make_pair(TangentAttributeName,    std::make_tuple(TANGENT_BINDING_LOCATION,   TangentAttributeType,       AttributeLabel::Tangent)),
+    std::make_pair(BiTangentAttributeName,  std::make_tuple(BITANGENT_BINDING_LOCATION, BiTangentAttributeType,     AttributeLabel::Bitangent))
 };
 
 const std::string ModelMatrixUniformName = "M";
@@ -246,15 +237,14 @@ struct ProgramUniformBlockDescription
      * @return false 
      */
     template <typename T>
-    bool set_parameter(const std::string &paramName, const T &data, Buffer &shaderBuffer)
+    bool set_parameter(const std::string &paramName, const T &data, GLBuffer &shaderBuffer)
     {
-        if (is_valid())
-        {
+        if (is_valid()) {
             GLint uoff = get_offset(paramName);
             shaderBuffer.sub_data(data, (uint32_t)uoff);
             return true;
         }
-        std::cerr << "Failed to set shader parameter " << paramName << std::endl;
+        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramName);
         return false;
     }
 
@@ -269,7 +259,7 @@ struct ProgramUniformBlockDescription
      * @return false 
      */
     template <typename T>
-    bool set_parameter(int paramIndex, const T &data, Buffer &shaderBuffer)
+    bool set_parameter(int paramIndex, const T &data, GLBuffer &shaderBuffer)
     {
         if (is_valid())
         {
@@ -277,7 +267,7 @@ struct ProgramUniformBlockDescription
             shaderBuffer.sub_data(data, (uint32_t)uoff);
             return true;
         }
-        std::cerr << "Failed to set shader parameter " << paramIndex << std::endl;
+        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramIndex);
         return false;
     }
 
@@ -292,7 +282,7 @@ struct ProgramUniformBlockDescription
      * @return false 
      */
     template <typename T>
-    bool set_parameter(const std::string &paramName, const std::vector<T> &data, Buffer &shaderBuffer)
+    bool set_parameter(const std::string &paramName, const std::vector<T> &data, GLBuffer &shaderBuffer)
     {
         if (is_valid())
         {
@@ -305,7 +295,7 @@ struct ProgramUniformBlockDescription
                 return true;
             }
         }
-        std::cerr << "Failed to set shader parameter " << paramName << std::endl;
+        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramName);
         return false;
     }
 
@@ -315,7 +305,7 @@ struct ProgramUniformBlockDescription
      * 
      * @param buffer 
      */
-    void bind_buffer(const Buffer &buffer) {
+    void bind_buffer(const GLBuffer &buffer) {
         GL_CHECKED_CALL(
             glBindBufferRange(GL_UNIFORM_BUFFER, location_index, buffer.handle(), 0, buffer.get_capacity())
         );
@@ -414,8 +404,8 @@ public:
      * 
      * @return std::unordered_map<VertexAttributeType, int> mapping attribute identifier to binding location.
      */
-    std::unordered_map<VertexAttributeLabel, uint32_t> getAttributeMap() const {
-        std::unordered_map<VertexAttributeLabel, uint32_t> map;
+    std::unordered_map<AttributeLabel, uint32_t> getAttributeMap() const {
+        std::unordered_map<AttributeLabel, uint32_t> map;
         for (auto& mapping : inputs) {
             auto default_binding = mat_spec::ShaderVertexAttributes.find(mapping.first);
             if (default_binding != mat_spec::ShaderVertexAttributes.end()) {

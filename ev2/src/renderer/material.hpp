@@ -1,5 +1,5 @@
 /**
- * @file material.h
+ * @file material.hpp
  * @author Hunter Borlik
  * @brief 
  * @date 2022-10-27
@@ -11,7 +11,7 @@
 
 #include "evpch.hpp"
 
-#include "renderer/opengl_renderer/texture.hpp"
+#include "renderer/opengl_renderer/gl_texture.hpp"
 #include "core/ev.hpp"
 
 namespace ev2::renderer {
@@ -42,26 +42,10 @@ struct Material {
     std::shared_ptr<Texture> reflection_tex;          // refl
 
     Material() = default;
-    Material(std::string name) : name{std::move(name)} {}
+    explicit Material(std::string name) : name{std::move(name)} {}
 
     virtual ~Material() = default;
 
-    Material(const Material&) = delete;
-    Material& operator=(const Material&) = delete;
-    
-    Material(Material&&) = delete;
-    Material& operator=(Material&&) = delete;
-
-    // renderer specific functions
-    int32_t get_material_id() const noexcept {return material_id;}
-    int32_t get_material_slot() const noexcept {return material_slot;}
-    bool is_registered() noexcept {return material_id != -1 && material_slot != -1;}
-
-private:
-    friend class Renderer;
-
-    int32_t material_id = -1;
-    int32_t material_slot = -1;
 };
 
 } // namespace ev2::renderer

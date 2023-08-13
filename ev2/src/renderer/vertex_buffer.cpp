@@ -1,4 +1,4 @@
-#include "mesh.hpp"
+#include "renderer/vertex_buffer.hpp"
 
 namespace ev2::renderer {
 
@@ -52,13 +52,13 @@ VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffe
 
     constexpr std::size_t vec3Size = sizeof(glm::vec3);
 
-    vb.add_accessor(VertexAttributeLabel::Vertex,   0, 0         , false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(VertexAttributeLabel::Normal,   0, vec3Size*1, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(VertexAttributeLabel::Color,    0, vec3Size*2, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(VertexAttributeLabel::Texcoord, 0, vec3Size*3, false, gl::DataType::FLOAT, 2, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Vertex,   0, 0         , false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Normal,   0, vec3Size*1, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Color,    0, vec3Size*2, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Texcoord, 0, vec3Size*3, false, gl::DataType::FLOAT, 2, sizeof(float) * 11);
 
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
-    return std::move(vb);
+    return vb;
 }
 
 VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const BufferLayout& layout) {
@@ -69,7 +69,7 @@ VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>
 
     vb.buffers.emplace(1, std::make_shared<Buffer>(gl::BindingTarget::ELEMENT_ARRAY, gl::Usage::STATIC_DRAW, indexBuffer));
     vb.indexed = 1;
-    return std::move(vb);
+    return vb;
 }
 
 VertexBuffer VertexBuffer::vbInitSphereArrayVertexData(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer) {
@@ -82,9 +82,9 @@ VertexBuffer VertexBuffer::vbInitSphereArrayVertexData(const std::vector<float>&
 
     // pos(3float), normal(3float), color(3float), texcoord(2float)
 
-    vb.add_accessor(VertexAttributeLabel::Vertex, 0, 0, false, gl::DataType::FLOAT, 3, sizeof(float) * 8);
-    vb.add_accessor(VertexAttributeLabel::Normal, 0, sizeof(float) * 3, false, gl::DataType::FLOAT, 3, sizeof(float) * 8);
-    vb.add_accessor(VertexAttributeLabel::Texcoord, 0, sizeof(float) * 6, false, gl::DataType::FLOAT, 2, sizeof(float) * 8);
+    vb.add_accessor(AttributeLabel::Vertex, 0, 0, false, gl::DataType::FLOAT, 3, sizeof(float) * 8);
+    vb.add_accessor(AttributeLabel::Normal, 0, sizeof(float) * 3, false, gl::DataType::FLOAT, 3, sizeof(float) * 8);
+    vb.add_accessor(AttributeLabel::Texcoord, 0, sizeof(float) * 6, false, gl::DataType::FLOAT, 2, sizeof(float) * 8);
 
     // vb.buffers.emplace(2, Buffer{gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW});
     // // mat4 instance info, note: max size for a vertex attribute is a vec4
@@ -152,14 +152,14 @@ std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitDefault() {
     return std::make_pair(std::move(vb), gl_vao);
 }
 
-GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<VertexAttributeLabel, uint32_t>& attributes, const Buffer* instance_buffer) {
+GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<AttributeLabel, uint32_t>& attributes, const Buffer* instance_buffer) {
     GLuint vao_id;
     glGenVertexArrays(1, &vao_id);
     glBindVertexArray(vao_id);
 
     for (const auto& l : attributes) {
         const int binding = l.second;
-        const VertexAttributeLabel accessor_id = l.first;
+        const AttributeLabel accessor_id = l.first;
 
         auto accessor_itr = accessors.find(accessor_id);
         if(accessor_itr != accessors.end()) {

@@ -1,5 +1,5 @@
 /**
- * @file buffer.h
+ * @file gl_buffer.h
  * @author Hunter Borlik
  * @brief opengl buffer
  * @version 0.2
@@ -7,43 +7,45 @@
  * 
  * 
  */
-#ifndef EV2_BUFFER_H
-#define EV2_BUFFER_H
+#ifndef EV2_GL_BUFFER_HPP
+#define EV2_GL_BUFFER_HPP
 
 #include "evpch.hpp"
 
 #include "ev_gl.hpp"
 #include "util.hpp"
 
+#include "renderer/buffer.hpp"
+
 namespace ev2::renderer {
 
-class Buffer {
+class GLBuffer : public Buffer {
 public:
 
-    Buffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, gl_reference{0}, target{target}, usage{usage} {
+    GLBuffer(gl::BindingTarget target, gl::Usage usage) : capacity{}, gl_reference{0}, target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
     }
 
     template<typename T>
-    Buffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
+    GLBuffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
         copy_data(data);
     }
 
-    Buffer(gl::BindingTarget target, gl::Usage usage, std::size_t size, const void* data) : target{target}, usage{usage} {
+    GLBuffer(gl::BindingTarget target, gl::Usage usage, std::size_t size, const void* data) : target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
         copy_data(size, data);
     }
 
-    virtual ~Buffer() {
+    virtual ~GLBuffer() {
         glDeleteBuffers(1, &gl_reference.v);
     }
 
-    // Buffer(const Buffer& o) = delete;
-    // Buffer& operator=(const Buffer&) = delete;
+    // GLBuffer(const GLBuffer& o) = delete;
+    // GLBuffer& operator=(const GLBuffer&) = delete;
 
-    Buffer(Buffer&& o) = default;
-    Buffer& operator=(Buffer&& o) = default;
+    GLBuffer(GLBuffer&& o) = default;
+    GLBuffer& operator=(GLBuffer&& o) = default;
 
     /**
      * @brief Allocate buffer large enough to contain all data in source and copy data into buffer.
@@ -148,7 +150,7 @@ private:
 };
 
 template<typename T>
-void Buffer::copy_data(const std::vector<T>& source) {
+void GLBuffer::copy_data(const std::vector<T>& source) {
     if(!source.empty()) {
         bool error = false;
         GL_ERROR_CHECK(glNamedBufferData((GLuint)gl_reference, sizeof(T) * source.size(), source.data(), (GLenum)usage), error);
@@ -164,7 +166,7 @@ void Buffer::copy_data(const std::vector<T>& source) {
  * @param offset 
  */
 template<typename T>//, typename>
-void Buffer::sub_data(const T& source, uint32_t offset) {
+void GLBuffer::sub_data(const T& source, uint32_t offset) {
     GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, sizeof(T), &source));
 }
 
@@ -177,7 +179,7 @@ void Buffer::sub_data(const T& source, uint32_t offset) {
  * @param stride 
  */
 template<typename T>
-void Buffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
+void GLBuffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
     if(!source.empty()) {
         for(size_t i = 0; i < source.size(); i++) {
             GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset + i * stride, sizeof(T), &source[i]));
@@ -187,4 +189,4 @@ void Buffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t st
 
 } // ev2
 
-#endif // EV2_BUFFER_H
+#endif // EV2_GL_BUFFER_HPP

@@ -11,7 +11,7 @@
 
 #include "scene/node.hpp"
 #include "renderer/opengl_renderer/mesh.hpp"
-#include "renderer/opengl_renderer/buffer.hpp"
+#include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/renderer.hpp"
 
 namespace ev2 {

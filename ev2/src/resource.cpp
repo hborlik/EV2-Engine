@@ -1,6 +1,6 @@
 #include "resource.hpp"
 
-#include "renderer/opengl_renderer/buffer.hpp"
+#include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/renderer.hpp"
 #include "io/serializers.hpp"
@@ -659,7 +659,7 @@ std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_ma
 }
 
 std::shared_ptr<renderer::Material> MaterialData::create_renderer_material() const {
-    auto mat = renderer::Renderer::get_singleton().create_material();
+    auto mat = renderer::GLRenderer::get_singleton().create_material();
     mat->name           = name;
     mat->diffuse        = diffuse;
     mat->emissive       = emissive;
@@ -759,7 +759,7 @@ std::shared_ptr<ImageResource> ResourceManager::get_image(const std::filesystem:
                 return {};
         }
 
-        auto texture = std::make_shared<renderer::Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR, gl::TextureFilterMode::LINEAR);
+        auto texture = std::make_shared<renderer::GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::LINEAR_MIPMAP_LINEAR, gl::TextureFilterMode::LINEAR);
         texture->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
         texture->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
         texture->set_image2D(internal_format, image->width(), image->height(), pixel_format, gl::PixelType::UNSIGNED_BYTE, image->data());
@@ -780,7 +780,7 @@ std::shared_ptr<renderer::Material> ResourceManager::get_material(const std::str
     std::shared_ptr<renderer::Material> mat = nullptr;
     auto itr = materials.find(name);
     if (itr == materials.end()) {
-        mat = renderer::Renderer::get_singleton().create_material();
+        mat = renderer::GLRenderer::get_singleton().create_material();
         materials.insert({name, mat});
     } else {
         mat = itr->second;
@@ -860,8 +860,8 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
     return {};
 }
 
-std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& filename) {
-    std::unique_ptr<renderer::Texture> out;
+std::unique_ptr<renderer::GLTexture> load_texture2D(const std::filesystem::path& filename) {
+    std::unique_ptr<renderer::GLTexture> out;
     bool error = false;
     if(!filename.empty()) {
         std::string file = filename.generic_string();
@@ -875,7 +875,7 @@ std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& f
             Log::trace_core("Loaded texture data: " + file + ", w = " + std::to_string(width)
                 + ", h = " + std::to_string(height) + ", channels = " + std::to_string(nrChannels));
 
-            out = std::make_unique<renderer::Texture>(gl::TextureType::TEXTURE_2D);
+            out = std::make_unique<renderer::GLTexture>(gl::TextureType::TEXTURE_2D);
             if(nrChannels == 1) {
                 out->set_image2D(gl::TextureInternalFormat::RED, width, height, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, image->data());
             } else if(nrChannels == 2) { // rg

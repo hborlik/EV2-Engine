@@ -47,13 +47,63 @@ inline std::string ShaderTypeName(ShaderType type) {
         case ShaderType::COMPUTE_SHADER:
             return "COMPUTER_SHADER";
         default:
-            return "";
+            return {};
     }
 }
 
 struct ShaderSource {
     std::string source{};
     ShaderType type{};
+};
+
+struct ProgramBlockLayout
+{
+    int location_index = -1;  // Index in Program interface
+    int block_size = -1; // total size in bytes of buffer block
+
+    struct Layout
+    {
+        int Offset = 0;      // offset in bytes from beginning of buffer
+        int ArraySize = 0;   // number of array elements
+        int ArrayStride = 0; // stride in bytes between array elements
+    };
+    std::unordered_map<std::string, int> layout_map;
+    std::vector<Layout> layouts;
+
+    Layout get_layout(std::string_view name)
+    {
+        auto itr = layout_map.find(name.data());
+        if (itr != layout_map.end())
+            return layouts[itr->second];
+        return {-1, -1, -1};
+    }
+
+    Layout get_layout(int ind) {
+        return layouts.at(ind);
+    }
+
+    int get_offset(std::string_view name)
+    {
+        auto itr = layout_map.find(name.data());
+        if (itr != layout_map.end())
+            return layouts[itr->second].Offset;
+        throw std::out_of_range{name.data()};
+    }
+
+    int get_index(std::string_view name) {
+        auto itr = layout_map.find(name.data());
+        if (itr != layout_map.end()) {
+            return itr->second;
+        }
+        throw std::out_of_range{name.data()};
+    }
+
+    int get_offset(int ind) {
+        return layouts.at(ind).Offset;
+    }
+
+    bool is_valid() const noexcept {return location_index != -1;}
+
 };
 
 
@@ -88,6 +138,16 @@ public:
      * @return false
      */
     virtual bool is_linked() const = 0;
+
+    // Program Interface
+
+    /**
+     * @brief Get Uniform Block Layout for uniform block with name uboName
+     * 
+     * @param uboName 
+     * @return ProgramBlockLayout 
+     */
+    virtual ProgramBlockLayout get_uniform_block_layout(const std::string& uboName) const = 0;
 
     static std::unique_ptr<Program> make_program();
 };

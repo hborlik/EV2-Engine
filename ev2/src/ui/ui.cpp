@@ -40,7 +40,7 @@ void show_material_editor_window(bool* p_open) {
 }
 
 void show_settings_window(bool* p_open) {
-    auto& renderer = ev2::renderer::Renderer::get_singleton();
+    auto& renderer = ev2::renderer::GLRenderer::get_singleton();
     if (ImGui::Begin("Render Settings", p_open)) {
         ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         ImGui::Text("N Lights %i", renderer.get_n_pointlights());

@@ -12,8 +12,7 @@
 #include <glm/glm.hpp>
 
 #include "core/reference_counted.hpp"
-#include "renderer/opengl_renderer/mesh.hpp"
-#include "renderer/opengl_renderer/texture.hpp"
+#include "renderer/opengl_renderer/gl_texture.hpp"
 #include "renderer/renderer.hpp"
 #include "renderer/material.hpp"
 #include "io/image.hpp"
@@ -22,7 +21,7 @@
 namespace ev2 {
 
 struct ImageResource {
-    std::shared_ptr<renderer::Texture> texture;
+    std::shared_ptr<renderer::GLTexture> texture;
     std::shared_ptr<Image> image;
 };
 
@@ -138,7 +137,7 @@ private:
 
 std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const std::filesystem::path& base_dir, ResourceManager* rm = nullptr);
 
-std::unique_ptr<renderer::Texture> load_texture2D(const std::filesystem::path& filename);
+std::unique_ptr<renderer::GLTexture> load_texture2D(const std::filesystem::path& filename);
 
 // std::string load_shader_content(const std::filesystem::path& source_path);
 

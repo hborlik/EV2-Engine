@@ -1,35 +1,36 @@
 /**
- * @file texture.h
+ * @file gl_texture.h
  * @brief 
  * @date 2022-04-26
  * 
  */
-#ifndef EV2_TEXTURE_H
-#define EV2_TEXTURE_H
+#ifndef EV2_GL_TEXTURE_HPP
+#define EV2_GL_TEXTURE_HPP
 
 #include "evpch.hpp"
 
+#include "renderer/texture.hpp"
 #include "ev_gl.hpp"
 #include "io/image.hpp"
 
 namespace ev2::renderer {
 
-class Texture {
+class GLTexture : public Texture {
 public:
-    Texture(gl::TextureType texture_type, gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR);
+    GLTexture(gl::TextureType texture_type, gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR);
 
-    ~Texture() {
+    ~GLTexture() {
         if (glIsTexture(handle))
             glDeleteTextures(1, &handle);
     }
 
-    Texture(Texture &&o) {
+    GLTexture(GLTexture &&o) {
         swap(*this, o);
     }
 
-    Texture(const Texture&) = delete;
-    Texture& operator=(const Texture&) = delete;
-    Texture& operator=(Texture&&) = delete;
+    GLTexture(const GLTexture&) = delete;
+    GLTexture& operator=(const GLTexture&) = delete;
+    GLTexture& operator=(GLTexture&&) = delete;
 
     void set_border_color(const glm::vec4& color);
 
@@ -115,7 +116,7 @@ private:
     void set_params();
 
 private:
-    friend void swap(Texture& first, Texture& second) noexcept {
+    friend void swap(GLTexture& first, GLTexture& second) noexcept {
         using std::swap;
 
         std::swap(first.texture_type, second.texture_type);
@@ -254,7 +255,7 @@ public:
      * @return true 
      * @return false 
      */
-    bool attach(std::shared_ptr<Texture> texture, gl::FBOAttachment attachment_point, int location = -1);
+    bool attach(std::shared_ptr<GLTexture> texture, gl::FBOAttachment attachment_point, int location = -1);
 
     bool attach_renderbuffer(gl::RenderBufferInternalFormat format, uint32_t width, uint32_t height, gl::FBOAttachment attachment_point);
 
@@ -281,11 +282,11 @@ private:
     GLuint gl_reference = 0;
     int width = -1, height = -1;
 
-    bool attach_texture(const Texture* texture, gl::FBOAttachment attachment_point);
+    bool attach_texture(const GLTexture* texture, gl::FBOAttachment attachment_point);
 
     struct AttachmentBinding {
         int location = -1;
-        std::shared_ptr<Texture> texture;
+        std::shared_ptr<GLTexture> texture;
     };
 
     std::unordered_map<gl::FBOAttachment, AttachmentBinding> attachments;
@@ -294,4 +295,4 @@ private:
 
 } // namespace ev2::renderer
 
-#endif // EV2_TEXTURE_H
+#endif // EV2_GL_TEXTURE_HPP

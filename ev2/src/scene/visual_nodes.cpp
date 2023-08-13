@@ -6,7 +6,7 @@
 namespace ev2 {
 
 void VisualInstance::on_init() {
-    iid = renderer::Renderer::get_singleton().create_model_instance();
+    iid = renderer::GLRenderer::get_singleton().create_model_instance();
     iid->set_picking_id(uuid_hash);
 }
 
@@ -32,9 +32,9 @@ void VisualInstance::set_material_override(std::shared_ptr<renderer::Material> m
 
 void InstancedGeometry::on_init() {
     renderer::BufferLayout quad_layout;
-    quad_layout .add_attribute(renderer::VertexAttributeLabel::Vertex)
-                .add_attribute(renderer::VertexAttributeLabel::Normal)
-                .add_attribute(renderer::VertexAttributeLabel::Texcoord)
+    quad_layout .add_attribute(renderer::AttributeLabel::Vertex)
+                .add_attribute(renderer::AttributeLabel::Normal)
+                .add_attribute(renderer::AttributeLabel::Texcoord)
                 .finalize();
     geometry = std::make_shared<renderer::Drawable>(
         renderer::VertexBuffer::vbInitArrayVertexSpec(
@@ -66,7 +66,7 @@ void InstancedGeometry::on_init() {
         gl::CullMode::BACK,
         gl::FrontFacing::CCW
     );
-    instance = ev2::renderer::Renderer::get_singleton().create_instanced_drawable();
+    instance = ev2::renderer::GLRenderer::get_singleton().create_instanced_drawable();
     instance->set_drawable(geometry);
 }
 
@@ -123,7 +123,7 @@ void CameraNode::pre_render() {
 }
 
 void CameraNode::update_internal() {
-    float r_aspect = ev2::renderer::Renderer::get_singleton().get_aspect_ratio();
+    float r_aspect = ev2::renderer::GLRenderer::get_singleton().get_aspect_ratio();
     
     camera.set_perspective(fov, aspect * r_aspect, m_near, m_far);
 
@@ -133,7 +133,7 @@ void CameraNode::update_internal() {
 }
 
 void DirectionalLightNode::on_init() {
-    lid = ev2::renderer::Renderer::get_singleton().create_directional_light();
+    lid = ev2::renderer::GLRenderer::get_singleton().create_directional_light();
 }
 
 void DirectionalLightNode::on_ready() {
@@ -145,25 +145,25 @@ void DirectionalLightNode::on_process(float delta) {
 }
 
 void DirectionalLightNode::on_destroy() {
-    ev2::renderer::Renderer::get_singleton().destroy_light(lid);
+    ev2::renderer::GLRenderer::get_singleton().destroy_light(lid);
 }
 
 void DirectionalLightNode::pre_render() {
-    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    ev2::renderer::GLRenderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
 }
 
 void DirectionalLightNode::set_color(const glm::vec3& color) {
-    ev2::renderer::Renderer::get_singleton().set_light_color(lid, color);
+    ev2::renderer::GLRenderer::get_singleton().set_light_color(lid, color);
 }
 
 void DirectionalLightNode::set_ambient(const glm::vec3& color) {
-    ev2::renderer::Renderer::get_singleton().set_light_ambient(lid, color);
+    ev2::renderer::GLRenderer::get_singleton().set_light_ambient(lid, color);
 }
 
 // point
 
 void PointLightNode::on_init() {
-    lid = ev2::renderer::Renderer::get_singleton().create_point_light();
+    lid = ev2::renderer::GLRenderer::get_singleton().create_point_light();
 }
 
 void PointLightNode::on_ready() {
@@ -175,15 +175,15 @@ void PointLightNode::on_process(float delta) {
 }
 
 void PointLightNode::on_destroy() {
-    ev2::renderer::Renderer::get_singleton().destroy_light(lid);
+    ev2::renderer::GLRenderer::get_singleton().destroy_light(lid);
 }
 
 void PointLightNode::pre_render() {
-    ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    ev2::renderer::GLRenderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
 }
 
 void PointLightNode::set_color(const glm::vec3& color) {
-    ev2::renderer::Renderer::get_singleton().set_light_color(lid, color);
+    ev2::renderer::GLRenderer::get_singleton().set_light_color(lid, color);
 }
 
 }

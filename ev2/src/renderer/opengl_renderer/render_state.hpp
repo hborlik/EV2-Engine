@@ -9,7 +9,7 @@
 #ifndef EV2_RENDERER_STATE_H
 #define EV2_RENDERER_STATE_H
 
-#include "renderer/opengl_renderer/texture.hpp"
+#include "renderer/opengl_renderer/gl_texture.hpp"
 #include "renderer/camera.hpp"
 
 namespace ev2::renderer {

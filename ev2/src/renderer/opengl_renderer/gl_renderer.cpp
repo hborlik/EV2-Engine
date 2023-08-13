@@ -1,4 +1,4 @@
-#include "renderer/renderer.hpp"
+#include "renderer/opengl_renderer/gl_renderer.hpp"
 
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/material.hpp"
@@ -40,7 +40,7 @@ void ModelInstance::set_drawable(std::shared_ptr<Drawable> drawable) {
 void ModelInstance::set_picking_id(std::size_t picking_id) {
     m_picking_id = picking_id;
     pack_id((uint32_t)picking_id ^ (picking_id >> 32));
-    Renderer::get_singleton().update_picking_id_model_instance(this);
+    GLRenderer::get_singleton().update_picking_id_model_instance(this);
 }
 
 void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
@@ -52,7 +52,7 @@ void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
-void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
+void GLRenderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
     if (n_instances == 0) {
         return; // nothing to do
     }
@@ -131,7 +131,7 @@ void Renderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, G
     glBindVertexArray(0);
 }
 
-Renderer::Renderer(uint32_t width, uint32_t height) : 
+GLRenderer::GLRenderer(uint32_t width, uint32_t height) : 
     model_instances{},
     geometry_program{"Geometry Program"},
     directional_lighting_program{"Lighting Program"},
@@ -163,12 +163,12 @@ Renderer::Renderer(uint32_t width, uint32_t height) :
     }
 }
 
-Renderer::~Renderer() {
+GLRenderer::~GLRenderer() {
     if (m_id_frame_save_async.valid())
         m_id_frame_save_async.wait();
 }
 
-void Renderer::init() {
+void GLRenderer::init() {
     // precomputed (static) data
     std::uniform_real_distribution<float> randomFloats(0.0, 1.0); // random floats between [0.0, 1.0]
     std::default_random_engine generator;
@@ -205,12 +205,12 @@ void Renderer::init() {
     }
 
     // ssao tiling noise texture
-    ssao_kernel_noise = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    ssao_kernel_noise = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     ssao_kernel_noise->set_image2D(gl::TextureInternalFormat::RGBA16F, 4, 4, gl::PixelFormat::RGB, gl::PixelType::FLOAT, (unsigned char*)ssaoNoise.data());
     ssao_kernel_noise->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
     ssao_kernel_noise->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
 
-    ssao_kernel_color = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    ssao_kernel_color = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     ssao_kernel_color->recreate_storage2D(1, gl::TextureInternalFormat::R8, width, height);
 
     ssao_buffer.attach(ssao_kernel_color, gl::FBOAttachment::COLOR0, 0);
@@ -219,14 +219,14 @@ void Renderer::init() {
         throw engine_exception{"Framebuffer is not complete"};
 
     // black texture
-    one_p_black_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    one_p_black_tex = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     one_p_black_tex->set_image2D(gl::TextureInternalFormat::RED, 1, 1, gl::PixelFormat::RED, gl::PixelType::UNSIGNED_BYTE, nullptr);
     one_p_black_tex->set_texture_wrap_s(gl::TextureWrapMode::REPEAT);
     one_p_black_tex->set_texture_wrap_t(gl::TextureWrapMode::REPEAT);
     one_p_black_tex->generate_mips();
 
     // set up FBO textures
-    shadow_depth_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    shadow_depth_tex = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     shadow_depth_tex->set_image2D(gl::TextureInternalFormat::DEPTH_COMPONENT16, ShadowMapWidth, ShadowMapHeight, gl::PixelFormat::DEPTH_COMPONENT, gl::PixelType::FLOAT, nullptr);
     // edge clamping is required for border color to be used
     shadow_depth_tex->set_texture_wrap_s(gl::TextureWrapMode::CLAMP_TO_EDGE);
@@ -236,27 +236,27 @@ void Renderer::init() {
     if (!depth_fbo.check())
         throw engine_exception{"Framebuffer is not complete"};
     
-    obj_id_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    obj_id_tex = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     obj_id_tex->recreate_storage2D(1, gl::TextureInternalFormat::RGB8UI, width, height);
     g_buffer.attach(obj_id_tex, gl::FBOAttachment::COLOR5, 5);
 
-    material_tex = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    material_tex = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     material_tex->recreate_storage2D(1, gl::TextureInternalFormat::R8UI, width, height);
     g_buffer.attach(material_tex, gl::FBOAttachment::COLOR3, 3);
 
-    albedo_spec = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    albedo_spec = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     albedo_spec->recreate_storage2D(1, gl::TextureInternalFormat::RGBA8, width, height);
     g_buffer.attach(albedo_spec, gl::FBOAttachment::COLOR2, 2);
 
-    normals = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    normals = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     normals->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(normals, gl::FBOAttachment::COLOR1, 1);
 
-    position = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    position = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     position->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(position, gl::FBOAttachment::COLOR0, 0);
 
-    emissive = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    emissive = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     emissive->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     g_buffer.attach(emissive, gl::FBOAttachment::COLOR4, 4);
 
@@ -266,7 +266,7 @@ void Renderer::init() {
         throw engine_exception{"Geometry Framebuffer is not complete"};
 
     // lighting output HDR FBO
-    hdr_texture = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
+    hdr_texture = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST);
     hdr_texture->recreate_storage2D(1, gl::TextureInternalFormat::RGBA16F, width, height);
     lighting_buffer.attach(hdr_texture, gl::FBOAttachment::COLOR0, 0);
 
@@ -276,16 +276,16 @@ void Renderer::init() {
         throw engine_exception{"Framebuffer is not complete"};
 
     // blur pass texture and FBOs
-    bloom_blur_swap_tex[0] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    bloom_blur_swap_tex[0] = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     bloom_blur_swap_tex[0]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[0].attach(bloom_blur_swap_tex[0], gl::FBOAttachment::COLOR0, 0);
 
-    bloom_blur_swap_tex[1] = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    bloom_blur_swap_tex[1] = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     bloom_blur_swap_tex[1]->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_blur_swap_fbo[1].attach(bloom_blur_swap_tex[1], gl::FBOAttachment::COLOR0, 0);
 
     // bloom threshold combine output HDR FBO
-    hdr_combined = std::make_shared<Texture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
+    hdr_combined = std::make_shared<GLTexture>(gl::TextureType::TEXTURE_2D, gl::TextureFilterMode::NEAREST, gl::TextureFilterMode::NEAREST);
     hdr_combined->set_image2D(gl::TextureInternalFormat::RGBA16F, width, height, gl::PixelFormat::RGBA, gl::PixelType::FLOAT, nullptr);
     bloom_thresh_combine.attach(hdr_combined, gl::FBOAttachment::COLOR0, 0);
 
@@ -490,7 +490,7 @@ void Renderer::init() {
 
 }
 
-void Renderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
+void GLRenderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
     material_data_buffer[material_slot] = material;
     lighting_materials.sub_data(material.diffuse,        material.diffuse_offset);
     lighting_materials.sub_data(material.emissive,       material.emissive_offset);
@@ -506,16 +506,16 @@ void Renderer::update_material(mat_slot_t material_slot, const MaterialData& mat
     lighting_materials.sub_data(material.sheenTint,      material.sheenTint_offset);
 }
 
-void Renderer::load_ssao_uniforms() {
+void GLRenderer::load_ssao_uniforms() {
     glProgramUniform1f(ssao_program.program.getHandle(), ssao_bias_loc, ssao_bias);
     glProgramUniform1f(ssao_program.program.getHandle(), ssao_radius_loc, ssao_radius);
     glProgramUniform1ui(ssao_program.program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
-std::shared_ptr<Material> Renderer::create_material() {
+std::shared_ptr<Material> GLRenderer::create_material() {
 
     constexpr auto mat_deleter = [](Material* mat) -> void {
-        renderer::Renderer::get_singleton().destroy_material(mat);
+        renderer::GLRenderer::get_singleton().destroy_material(mat);
     };
 
     int32_t new_mat_slot = alloc_material_slot();
@@ -531,7 +531,7 @@ std::shared_ptr<Material> Renderer::create_material() {
     return {};
 }
 
-int32_t Renderer::alloc_material_slot() {
+int32_t GLRenderer::alloc_material_slot() {
     if (free_material_slots.size() > 0) {
         mat_slot_t slot = free_material_slots.front();
         free_material_slots.pop();
@@ -541,7 +541,7 @@ int32_t Renderer::alloc_material_slot() {
     }
 }
 
-void Renderer::destroy_material(Material* material) {
+void GLRenderer::destroy_material(Material* material) {
     assert(material);
     if (material->material_id < 0 || material->material_slot < 0)
         return; // material not backed
@@ -554,14 +554,14 @@ void Renderer::destroy_material(Material* material) {
     material->material_id = -1;
 }
 
-LID Renderer::create_point_light() {
+LID GLRenderer::create_point_light() {
     int32_t nlid = next_light_id++;
-    Light l{};
+    LightData l{};
     point_lights.insert_or_assign(nlid, l);
     return {LID::Point, nlid};
 }
 
-LID Renderer::create_directional_light() {
+LID GLRenderer::create_directional_light() {
     int32_t nlid = next_light_id++;
     if (shadow_directional_light_id < 0)
         shadow_directional_light_id = nlid;
@@ -570,7 +570,7 @@ LID Renderer::create_directional_light() {
     return {LID::Directional, nlid};
 }
 
-void Renderer::set_light_position(LID lid, const glm::vec3& position) {
+void GLRenderer::set_light_position(LID lid, const glm::vec3& position) {
     if (!lid.is_valid())
         return;
     
@@ -594,7 +594,7 @@ void Renderer::set_light_position(LID lid, const glm::vec3& position) {
     };
 }
 
-void Renderer::set_light_color(LID lid, const glm::vec3& color) {
+void GLRenderer::set_light_color(LID lid, const glm::vec3& color) {
     if (!lid.is_valid())
         return;
     
@@ -618,7 +618,7 @@ void Renderer::set_light_color(LID lid, const glm::vec3& color) {
     };
 }
 
-void Renderer::set_light_ambient(LID lid, const glm::vec3& color) {
+void GLRenderer::set_light_ambient(LID lid, const glm::vec3& color) {
     if (!lid.is_valid())
         return;
     
@@ -635,14 +635,14 @@ void Renderer::set_light_ambient(LID lid, const glm::vec3& color) {
     };
 }
 
-void Renderer::destroy_light(LID lid) {
+void GLRenderer::destroy_light(LID lid) {
     if (!lid.is_valid())
         return;
     directional_lights.erase(lid._v);
     point_lights.erase(lid._v);
 }
 
-ModelInstancePtr Renderer::create_model_instance() {
+ModelInstancePtr GLRenderer::create_model_instance() {
 
     auto model_deleter = [](ModelInstance* mi) {
         get_singleton().destroy_model_instance(mi);
@@ -658,13 +658,13 @@ ModelInstancePtr Renderer::create_model_instance() {
     return model;
 }
 
-void Renderer::destroy_model_instance(ModelInstance* model) {
+void GLRenderer::destroy_model_instance(ModelInstance* model) {
     assert(model);
     model_instances.erase(model->id);
     m_picking_id_map.erase(model->packed_id());
 }
 
-InstancedDrawablePtr Renderer::create_instanced_drawable() {
+InstancedDrawablePtr GLRenderer::create_instanced_drawable() {
 
     auto instanced_drawable_deleter = [](InstancedDrawable* id) {
         get_singleton().destroy_instanced_drawable(id);
@@ -682,18 +682,18 @@ InstancedDrawablePtr Renderer::create_instanced_drawable() {
     return model;
 }
 
-void Renderer::update_picking_id_model_instance(ModelInstance* drawable) {
+void GLRenderer::update_picking_id_model_instance(ModelInstance* drawable) {
     uint32_t dr_p_id = drawable->packed_id();
     m_picking_id_map.erase(dr_p_id);
     m_picking_id_map.insert_or_assign(dr_p_id, drawable->m_picking_id);
 }
 
-void Renderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
+void GLRenderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
     assert(drawable);
     instanced_drawables.erase(drawable->id);
 }
 
-void Renderer::render(const Camera &camera) {
+void GLRenderer::render(const Camera &camera) {
     std::chrono::time_point<std::chrono::system_clock> start, end;
 
     start = std::chrono::system_clock::now();
@@ -1230,9 +1230,9 @@ void Renderer::render(const Camera &camera) {
             std::future_status::ready) {
         try {
             m_id_frame_save_async.get();
-            Log::info_core<Renderer>("Frame Saved");
+            Log::info_core<GLRenderer>("Frame Saved");
         } catch (std::exception& e) {
-            Log::error_core<Renderer>(e.what());
+            Log::error_core<GLRenderer>(e.what());
         }
     }
 
@@ -1246,11 +1246,11 @@ void Renderer::render(const Camera &camera) {
     // std::cout << "render() elapsed time: " << elapsed_seconds.count() << "s\n";
 }
 
-void Renderer::set_wireframe(bool enable) {
+void GLRenderer::set_wireframe(bool enable) {
     wireframe = enable;
 }
 
-void Renderer::screenshot() {
+void GLRenderer::screenshot() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadBuffer(GL_BACK);
@@ -1260,13 +1260,13 @@ void Renderer::screenshot() {
     try {
         std::string filename = "Screenshot_" + util::formatted_current_time() + ".png";
         image.write(filename);
-        Log::info_core<Renderer>("Screenshot " + filename + " Saved");
+        Log::info_core<GLRenderer>("Screenshot " + filename + " Saved");
     } catch (std::exception& e) {
-        Log::error_core<Renderer>(e.what());
+        Log::error_core<GLRenderer>(e.what());
     }
 }
 
-std::size_t Renderer::read_obj_fb(const glm::uvec2& screen_point) {
+std::size_t GLRenderer::read_obj_fb(const glm::uvec2& screen_point) {
     if (screen_point.x > width || screen_point.y > height) {
         return 0; // TODO should this throw exception??
     }
@@ -1286,7 +1286,7 @@ std::size_t Renderer::read_obj_fb(const glm::uvec2& screen_point) {
     return picking_id;
 }
 
-void Renderer::set_resolution(uint32_t width, uint32_t height) {
+void GLRenderer::set_resolution(uint32_t width, uint32_t height) {
     this->width = width;
     this->height = height;
 
@@ -1298,7 +1298,7 @@ void Renderer::set_resolution(uint32_t width, uint32_t height) {
     bloom_blur_swap_fbo[1].resize_all(width, height);
 }
 
-void Renderer::draw_screen_space_triangle() {
+void GLRenderer::draw_screen_space_triangle() {
     glBindVertexArray(sst_vb.second);
     GL_CHECKED_CALL(glDrawArrays(GL_TRIANGLES, 0, 3));
     glBindVertexArray(0);

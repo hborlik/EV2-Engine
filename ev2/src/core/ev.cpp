@@ -76,9 +76,9 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
     ImGui_ImplOpenGL3_Init(glsl_version);
     
     glm::ivec2 screen_size = window::getWindowSize();
-    renderer::Renderer::initialize(screen_size.x, screen_size.y);
+    renderer::GLRenderer::initialize(screen_size.x, screen_size.y);
     ResourceManager::initialize(asset_path);
-    renderer::Renderer::get_singleton().init();
+    renderer::GLRenderer::get_singleton().init();
     Physics::initialize();
 
     EV_INFO("Initialized");
@@ -87,7 +87,7 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
 void EV2_shutdown() {
     Physics::shutdown();
     ResourceManager::shutdown();
-    renderer::Renderer::shutdown();
+    renderer::GLRenderer::shutdown();
 
     EV_INFO("Shutdown");
 }

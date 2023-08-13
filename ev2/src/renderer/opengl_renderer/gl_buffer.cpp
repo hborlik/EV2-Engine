@@ -8,7 +8,7 @@
  * 
  */
 
-#include "buffer.hpp"
+#include "renderer/opengl_renderer/gl_buffer.hpp"
 
 namespace ev2::renderer {
 
