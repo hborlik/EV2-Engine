@@ -855,8 +855,6 @@ void GLRenderer::render(const Camera &camera) {
     }
     geometry_program.program.unbind();
 
-    // std::cout << "Culled " << cull_count << " models" << std::endl;
-
     // render instanced geometry
     geometry_program_instanced.program.use();
     // bind global shader UBO to shader
@@ -957,6 +955,7 @@ void GLRenderer::render(const Camera &camera) {
 
     // stencil lighting areas
     glEnable(GL_STENCIL_TEST);
+    // directional lighting programs discards when pos buffer zero
     glStencilMask(255);
     glStencilFunc(GL_ALWAYS, 1, 0xFF); // value to write in stencil buffer
     glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE); // only write new value when fragment color is written

@@ -27,6 +27,14 @@ class Drawable {
 public:
     virtual void set_mesh(std::shared_ptr<Mesh> mesh) = 0;
     virtual void set_material(std::shared_ptr<Material> material) = 0;
+    virtual void set_transform() = 0;
+};
+
+class InstancedDrawable {
+public:
+    virtual void set_mesh(std::shared_ptr<Mesh> mesh) = 0;
+    virtual void set_material(std::shared_ptr<Material> material) = 0;
+    virtual void set_transform() = 0;
 };
 
 class Renderer {
@@ -35,6 +43,7 @@ public:
     virtual std::shared_ptr<Material> make_material() = 0;
     virtual std::shared_ptr<Light> make_light() = 0;
     virtual std::shared_ptr<Texture> make_texture() = 0;
+    virtual std::shared_ptr<Drawable> make_drawable() = 0;
 };
 
 }

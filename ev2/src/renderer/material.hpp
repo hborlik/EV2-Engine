@@ -11,7 +11,7 @@
 
 #include "evpch.hpp"
 
-#include "renderer/opengl_renderer/gl_texture.hpp"
+#include "renderer/texture.hpp"
 #include "core/ev.hpp"
 
 namespace ev2::renderer {

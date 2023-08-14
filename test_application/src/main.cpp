@@ -120,7 +120,7 @@ public:
     void toggleWireframe() {
         static bool enabled = false;
         enabled = !enabled;
-        ev2::renderer::Renderer::get_singleton().set_wireframe(enabled);
+        ev2::renderer::GLRenderer::get_singleton().set_wireframe(enabled);
     }
 
 
@@ -135,7 +135,7 @@ public:
 
         // object picking
         if (show_debug && (left_mouse_down || ev2::window::getMouseCaptured()) && !io.WantCaptureMouse) {
-            std::size_t id = ev2::renderer::Renderer::get_singleton().read_obj_fb(mouse_p);
+            std::size_t id = ev2::renderer::GLRenderer::get_singleton().read_obj_fb(mouse_p);
             if (id)
                 scene_editor.set_selected_node(get_scene_tree().get_node(id));
         }
@@ -217,7 +217,7 @@ public:
                 break;
             case ev2::input::Key::KeyP:
                 if (down)
-                    ev2::renderer::Renderer::get_singleton().screenshot();
+                    ev2::renderer::GLRenderer::get_singleton().screenshot();
                 break;
             default:
                 break;

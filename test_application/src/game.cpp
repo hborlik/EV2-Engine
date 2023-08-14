@@ -78,7 +78,7 @@ GameState::GameState(Application* app) : app{app} {
     ground_material->sheenTint = 0.5;
     ground_material->diffuse = glm::vec3{22/255.0, 116/255.0, 34/255.0};
 
-    leaf_material = ev2::renderer::Renderer::get_singleton().create_material();
+    leaf_material = ev2::renderer::GLRenderer::get_singleton().create_material();
     leaf_material->diffuse = glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
     leaf_material->emissive = randomFloatRange(0.0001, 1.) * glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
     leaf_material->metallic = randomFloatRange(0.0001, 0.3);
@@ -207,7 +207,7 @@ void GameState::update(float dt) {
 
     //     }
     // }
-    renderer::Renderer::get_singleton().sun_position = sun_rads;
+    renderer::GLRenderer::get_singleton().sun_position = sun_rads;
 
     float sun_brightness = std::pow(std::max<float>(sin(sun_rads), 0), 0.33);
     float sun_scatter = .1f * std::pow(std::max<float>(cos(2 * sun_rads),0), 5);

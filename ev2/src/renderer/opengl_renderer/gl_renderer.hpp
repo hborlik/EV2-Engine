@@ -279,7 +279,7 @@ public:
             diffuse_sampler_loc = program.getUniformInfo("diffuse_tex").Location;
         }
 
-        GLProgram program{};
+        std::unique_ptr<GLProgram> program{};
         int mat_loc = -1;
         int obj_id_loc = -1;
         int vert_col_w_loc = -1;

@@ -167,9 +167,9 @@ TreeNode::TreeNode(GameState* game, const std::string& name, bool has_leafs, int
     has_leafs{has_leafs}, 
     leaf_material{leaf_material} {
 
-    buffer_layout.add_attribute(ev2::renderer::VertexAttributeLabel::Vertex)
-        .add_attribute(ev2::renderer::VertexAttributeLabel::Normal)
-        .add_attribute(ev2::renderer::VertexAttributeLabel::Color)
+    buffer_layout.add_attribute(ev2::renderer::AttributeLabel::Vertex)
+        .add_attribute(ev2::renderer::AttributeLabel::Normal)
+        .add_attribute(ev2::renderer::AttributeLabel::Color)
         .finalize();
     this->plantInfo.ID = u_id;
 
@@ -182,7 +182,7 @@ void TreeNode::on_init() {
     if (has_leafs) {
 
         if (!leaf_material) {
-            leaf_material = ev2::renderer::Renderer::get_singleton().create_material();
+            leaf_material = ev2::renderer::GLRenderer::get_singleton().create_material();
             leaf_material->diffuse = glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
             leaf_material->emissive = randomFloatRange(0.0001, 1.) * glm::vec3{randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.), randomFloatRange(0.0001, 1.)};
             leaf_material->metallic = randomFloatRange(0.0001, 0.3);
