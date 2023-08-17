@@ -16,6 +16,8 @@ namespace ev2::renderer {
 
 class Mesh {
 public:
+    virtual ~Mesh() = default;
+
     virtual void set_vertex_buffer(std::shared_ptr<VertexBuffer> vBuffer) = 0;
     virtual void set_index_buffer(std::shared_ptr<Buffer> buffer) = 0;
 };

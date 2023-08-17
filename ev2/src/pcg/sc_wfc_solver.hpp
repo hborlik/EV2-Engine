@@ -60,7 +60,7 @@ private:
     SCWFCSolver(SCWFC& scwfc_node,
                 std::shared_ptr<ObjectMetadataDB> obj_db,
                 std::unique_ptr<std::mt19937> mt,
-                std::shared_ptr<renderer::Drawable> unsolved_drawable,
+                std::shared_ptr<renderer::Mesh> unsolved_drawable,
                 const SCWFCSolverArgs& args,
                 std::unique_ptr<SCWFCSolver::BoundaryQueue> boundary_queue,
                 std::unique_ptr<wfc::WFCSolver> wfc_solver);
@@ -69,7 +69,7 @@ public:
     static std::unique_ptr<SCWFCSolver> make_solver(
         SCWFC& scwfc_node, std::shared_ptr<ObjectMetadataDB> obj_db,
         std::random_device& rd,
-        std::shared_ptr<renderer::Drawable> unsolved_drawable,
+        std::shared_ptr<renderer::Mesh> unsolved_drawable,
         const SCWFCSolverArgs& args);
 
     void sc_propagate(int n, int brf, float mass);
@@ -136,7 +136,7 @@ private:
     std::unique_ptr<std::mt19937> m_mt;
     std::shared_ptr<ObjectMetadataDB> obj_db;
     std::unique_ptr<wfc::WFCSolver> wfc_solver;
-    std::shared_ptr<renderer::Drawable> unsolved_drawable;
+    std::shared_ptr<renderer::Mesh> unsolved_drawable;
 
     std::unique_ptr<BoundaryQueue> m_boundary;
     std::queue<Ref<SCWFCGraphNode>> m_boundary_expanding{};

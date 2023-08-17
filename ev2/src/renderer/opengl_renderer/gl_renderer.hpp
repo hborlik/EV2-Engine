@@ -32,7 +32,7 @@ using mat_slot_t = uint8_t;
  * @brief light id
  * 
  */
-struct LID {
+struct GLLight : public Light {
     enum LightType {
         Point,
         Directional
@@ -153,9 +153,9 @@ inline uint32_t unpack_uvec3_to_id(const glm::uvec3& vec) noexcept {
  * @brief Renderer Drawable structure
  * 
  */
-struct Drawable {
+struct GLMesh : public Mesh {
 
-    Drawable(VertexBuffer &&vb,
+    GLMesh(VertexBuffer &&vb,
              std::vector<Primitive> primitives,
              std::vector<std::shared_ptr<Material>> materials,
              AABB bounding_box,
@@ -186,15 +186,15 @@ struct Drawable {
     float vertex_color_weight = 0.f;
 };
 
-struct ModelInstance {
-    ~ModelInstance() {
+struct GLDrawable : public Drawable {
+    ~GLDrawable() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
     }
 
     void set_material_override(std::shared_ptr<Material> material);
 
-    void set_drawable(std::shared_ptr<Drawable> drawable);
+    void set_mesh(std::shared_ptr<Mesh> drawable);
 
     void set_picking_id(std::size_t picking_id);
 
@@ -213,19 +213,19 @@ public:
 private:
     friend class GLRenderer;
 
-    ModelInstance() = default;
+    GLDrawable() = default;
 
     std::shared_ptr<Material>               material_override{};
 
     int32_t                     id = -1;
-    std::shared_ptr<Drawable>   drawable = nullptr;
+    std::shared_ptr<Mesh>       drawable = nullptr;
     GLuint                      gl_vao = 0;
 
     glm::uvec3 id_color{};
     std::size_t m_picking_id{};
 };
 
-using ModelInstancePtr = std::shared_ptr<ModelInstance>;
+using ModelInstancePtr = std::shared_ptr<GLDrawable>;
 
 
 struct InstancedDrawable {
@@ -238,7 +238,7 @@ struct InstancedDrawable {
             glDeleteVertexArrays(1, &gl_vao);
     }
 
-    void set_drawable(std::shared_ptr<Drawable> drawable);
+    void set_mesh(std::shared_ptr<Mesh> drawable);
 
 public:
     glm::mat4               instance_world_transform = glm::identity<glm::mat4>();
@@ -251,7 +251,7 @@ private:
     InstancedDrawable() = default;
 
     int32_t                     id = -1;
-    std::shared_ptr<Drawable>   drawable = nullptr;
+    std::shared_ptr<Mesh>       m_mesh = nullptr;
     GLuint                      gl_vao = 0;
 };
 
@@ -353,9 +353,9 @@ public:
 
 private:
     friend Material;
-    friend ModelInstance;
+    friend GLDrawable;
 
-    void draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
+    void draw(Mesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
     void update_material(mat_slot_t material_slot, const MaterialData& material);
 
@@ -370,9 +370,9 @@ private:
      */
     void destroy_material(Material* material);
 
-    void destroy_model_instance(ModelInstance* model);
+    void destroy_model_instance(GLDrawable* model);
 
-    void update_picking_id_model_instance(ModelInstance* drawable);
+    void update_picking_id_model_instance(GLDrawable* drawable);
 
     void destroy_instanced_drawable(InstancedDrawable* drawable);
 
@@ -416,7 +416,7 @@ private:
     std::queue<mat_slot_t> free_material_slots; // queue of free slots in material_data_buffer
 
     // single instance of a drawable
-    std::unordered_map<int32_t, ModelInstance*> model_instances;
+    std::unordered_map<int32_t, GLDrawable*> model_instances;
     uint32_t next_model_instance_id = 100;
 
     // instances of a drawable with instanced draw calls
@@ -527,7 +527,7 @@ private:
     bool draw_bounding_boxes = false;
 
     float point_light_geom_base_scale;
-    std::shared_ptr<Drawable> point_light_drawable;
+    std::shared_ptr<Mesh> point_light_drawable;
     GLuint point_light_gl_vao = 0;
 
     int32_t default_material_slot = 0;

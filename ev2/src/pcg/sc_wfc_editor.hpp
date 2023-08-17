@@ -81,7 +81,7 @@ private:
     std::random_device m_rd{};
     Ref<SCWFC> m_scwfc_node{};
     std::shared_ptr<ObjectMetadataDB> m_obj_db{};
-    std::shared_ptr<renderer::Drawable> m_unsolved_drawable;
+    std::shared_ptr<renderer::Mesh> m_unsolved_drawable;
 
     SCWFCSolverArgs m_solver_args{};
     std::unique_ptr<SCWFCSolver> m_scwfc_solver;

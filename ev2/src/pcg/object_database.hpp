@@ -49,7 +49,7 @@ public:
     XYZ axis_settings{};
 
     // instance members
-    std::shared_ptr<renderer::Drawable> loaded_model{};
+    std::shared_ptr<renderer::Mesh> loaded_model{};
 
 public:
 

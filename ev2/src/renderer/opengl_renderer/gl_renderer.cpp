@@ -19,7 +19,7 @@ struct PointLight {
     float radius;
 };
 
-void ModelInstance::set_material_override(std::shared_ptr<Material> material) {
+void GLDrawable::set_material_override(std::shared_ptr<Material> material) {
     if (!material) {
         material_override = nullptr;
         return;
@@ -28,8 +28,8 @@ void ModelInstance::set_material_override(std::shared_ptr<Material> material) {
     material_override = material;
 }
 
-void ModelInstance::set_drawable(std::shared_ptr<Drawable> drawable) {
-    this->drawable = drawable;
+void GLDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
+    this->m_mesh = drawable;
 
     if (gl_vao != 0)
         glDeleteVertexArrays(1, &gl_vao);
@@ -37,14 +37,14 @@ void ModelInstance::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings);
 }
 
-void ModelInstance::set_picking_id(std::size_t picking_id) {
+void GLDrawable::set_picking_id(std::size_t picking_id) {
     m_picking_id = picking_id;
     pack_id((uint32_t)picking_id ^ (picking_id >> 32));
     GLRenderer::get_singleton().update_picking_id_model_instance(this);
 }
 
-void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
-    this->drawable = drawable;
+void InstancedDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
+    this->m_mesh = drawable;
 
     if (gl_vao != 0)
         glDeleteVertexArrays(1, &gl_vao);
@@ -52,7 +52,7 @@ void InstancedDrawable::set_drawable(std::shared_ptr<Drawable> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
-void GLRenderer::draw(Drawable* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
+void GLRenderer::draw(Mesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
     if (n_instances == 0) {
         return; // nothing to do
     }
@@ -644,12 +644,12 @@ void GLRenderer::destroy_light(LID lid) {
 
 ModelInstancePtr GLRenderer::create_model_instance() {
 
-    auto model_deleter = [](ModelInstance* mi) {
+    auto model_deleter = [](GLDrawable* mi) {
         get_singleton().destroy_model_instance(mi);
     };
 
     int32_t id = next_model_instance_id++;
-    ModelInstancePtr model(new ModelInstance(), model_deleter);
+    ModelInstancePtr model(new GLDrawable(), model_deleter);
     model->id = id;
     auto [mi, inserted] = model_instances.emplace(id, model.get());
 
@@ -658,7 +658,7 @@ ModelInstancePtr GLRenderer::create_model_instance() {
     return model;
 }
 
-void GLRenderer::destroy_model_instance(ModelInstance* model) {
+void GLRenderer::destroy_model_instance(GLDrawable* model) {
     assert(model);
     model_instances.erase(model->id);
     m_picking_id_map.erase(model->packed_id());
@@ -682,7 +682,7 @@ InstancedDrawablePtr GLRenderer::create_instanced_drawable() {
     return model;
 }
 
-void GLRenderer::update_picking_id_model_instance(ModelInstance* drawable) {
+void GLRenderer::update_picking_id_model_instance(GLDrawable* drawable) {
     uint32_t dr_p_id = drawable->packed_id();
     m_picking_id_map.erase(dr_p_id);
     m_picking_id_map.insert_or_assign(dr_p_id, drawable->m_picking_id);
@@ -862,10 +862,10 @@ void GLRenderer::render(const Camera &camera) {
     lighting_materials.bind_range(lighting_materials_desc.location_index);
     for (auto &mPair : instanced_drawables) {
         auto m = mPair.second;
-        if (m->drawable) {
+        if (m->m_mesh) {
             ev2::gl::glUniform(m->instance_world_transform, gpi_m_location);
 
-            draw(m->drawable.get(), geometry_program_instanced, true, m->gl_vao, -1, m->n_instances);
+            draw(m->m_mesh.get(), geometry_program_instanced, true, m->gl_vao, -1, m->n_instances);
         }
     }
     geometry_program_instanced.program.unbind();

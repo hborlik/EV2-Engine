@@ -623,7 +623,7 @@ static bool LoadObjAndConvert(glm::vec3 &bmin, glm::vec3 &bmax,
 
 namespace ev2 {
 
-std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_materials) {
+std::unique_ptr<renderer::Mesh> Model::create_renderer_drawable(bool load_materials) {
     std::vector<renderer::Primitive> ev_prim(draw_objects.size());
     size_t i = 0;
     // convert the loaded object to the model format
@@ -646,7 +646,7 @@ std::unique_ptr<renderer::Drawable> Model::create_renderer_drawable(bool load_ma
             ev_mat.push_back(mat.create_renderer_material());
         }
 
-    return std::make_unique<renderer::Drawable>(
+    return std::make_unique<renderer::Mesh>(
         renderer::VertexBuffer::vbInitArrayVertexData(buffer),
         std::move(ev_prim),
         std::move(ev_mat),
@@ -696,12 +696,12 @@ void ResourceManager::pre_render() {
 
 }
 
-std::shared_ptr<renderer::Drawable> ResourceManager::get_model(const std::filesystem::path& filename, bool cache, bool load_materials) {
+std::shared_ptr<renderer::Mesh> ResourceManager::get_model(const std::filesystem::path& filename, bool cache, bool load_materials) {
     const auto full_path = asset_path / filename;
     return get_model_relative_path(full_path, cache, load_materials);
 }
 
-std::shared_ptr<renderer::Drawable> ResourceManager::get_model_relative_path(const std::filesystem::path& filename, bool cache, bool load_materials) {
+std::shared_ptr<renderer::Mesh> ResourceManager::get_model_relative_path(const std::filesystem::path& filename, bool cache, bool load_materials) {
     auto itr = model_lookup.find(filename.generic_string());
     // check that the cached pointer is still good if it has been deleted
     if (itr != model_lookup.end() && cache && !itr->second.expired()) {

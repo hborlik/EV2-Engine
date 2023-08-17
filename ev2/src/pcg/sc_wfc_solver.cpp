@@ -62,7 +62,7 @@ struct SCWFCSolver::BoundaryQueueFIFO : public SCWFCSolver::BoundaryQueue {
 SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node,
                          std::shared_ptr<ObjectMetadataDB> obj_db,
                          std::unique_ptr<std::mt19937> mt,
-                         std::shared_ptr<renderer::Drawable> unsolved_drawable,
+                         std::shared_ptr<renderer::Mesh> unsolved_drawable,
                          const SCWFCSolverArgs& args,
                          std::unique_ptr<SCWFCSolver::BoundaryQueue> boundary_queue,
                          std::unique_ptr<wfc::WFCSolver> wfc_solver)
@@ -83,7 +83,7 @@ SCWFCSolver::SCWFCSolver(SCWFC& scwfc_node,
 std::unique_ptr<SCWFCSolver> SCWFCSolver::make_solver(
     SCWFC& scwfc_node, std::shared_ptr<ObjectMetadataDB> obj_db,
     std::random_device& rd,
-    std::shared_ptr<renderer::Drawable> unsolved_drawable,
+    std::shared_ptr<renderer::Mesh> unsolved_drawable,
     const SCWFCSolverArgs& args) {
 
     

@@ -10,8 +10,8 @@
 #include "evpch.hpp"
 
 #include "scene/node.hpp"
-#include "renderer/opengl_renderer/mesh.hpp"
-#include "renderer/opengl_renderer/gl_buffer.hpp"
+#include "renderer/mesh.hpp"
+#include "renderer/buffer.hpp"
 #include "renderer/renderer.hpp"
 
 namespace ev2 {
@@ -30,7 +30,7 @@ public:
     void set_material_override(std::shared_ptr<renderer::Material> material_override);
 
 private:
-    std::shared_ptr<renderer::ModelInstance> iid = nullptr;
+    std::shared_ptr<renderer::Drawable> iid = nullptr;
 };
 
 class InstancedGeometry : public Node {
@@ -103,7 +103,7 @@ public:
     void set_color(const glm::vec3& color);
 
 private:
-    renderer::LID lid{};
+    renderer::Light lid{};
 };
 
 class DirectionalLightNode : public Node {
@@ -121,7 +121,7 @@ public:
     void set_ambient(const glm::vec3& color);
 
 private:
-    renderer::LID lid{};
+    renderer::Light lid{};
 };
 
 }

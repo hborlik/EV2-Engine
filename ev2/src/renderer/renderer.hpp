@@ -20,11 +20,16 @@ enum class FrustumCull {
 
 class Light {
 public:
+    virtual ~Light() = default;
+
     virtual void set_color() = 0;
+    virtual void set_position() = 0;
 };
 
 class Drawable {
 public:
+    virtual ~Drawable() = default;
+
     virtual void set_mesh(std::shared_ptr<Mesh> mesh) = 0;
     virtual void set_material(std::shared_ptr<Material> material) = 0;
     virtual void set_transform() = 0;
@@ -32,6 +37,8 @@ public:
 
 class InstancedDrawable {
 public:
+    virtual ~InstancedDrawable() = default;
+
     virtual void set_mesh(std::shared_ptr<Mesh> mesh) = 0;
     virtual void set_material(std::shared_ptr<Material> material) = 0;
     virtual void set_transform() = 0;
