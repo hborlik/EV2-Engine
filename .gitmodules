@@ -1,12 +1,12 @@
 [submodule "submodules/p-tree"]
-	path = submodules/p-tree
+	path = ev2/vendor/p-tree
 	url = git@github.com:hborlik/p-tree.git
 [submodule "submodules/libleb"]
-	path = submodules/libleb
+	path = ev2/vendor/libleb
 	url = git@github.com:jdupuy/libleb.git
 [submodule "submodules/libcbt"]
-	path = submodules/libcbt
+	path = ev2/vendor/libcbt
 	url = git@github.com:jdupuy/libcbt.git
 [submodule "submodules/spdlog"]
-	path = submodules/spdlog
+	path = ev2/vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
