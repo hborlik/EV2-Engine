@@ -11,6 +11,7 @@ namespace ev2::renderer {
 
 class Texture {
 public:
+    virtual ~Texture() = default;
 };
 
 }

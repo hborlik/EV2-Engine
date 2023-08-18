@@ -61,10 +61,10 @@ public:
     float vertex_color_weight = 0.f;
 
 private:
-    std::shared_ptr<VertexBuffer> m_vertex_buffer{};
-    std::shared_ptr<GLBuffer> m_index_buffer{};
+    std::shared_ptr<VertexBuffer>   m_vertex_buffer{};
+    std::shared_ptr<GLBuffer>       m_index_buffer{};
 
-    std::vector<Primitive>      m_primitives;
+    std::vector<Primitive>          m_primitives;
     std::vector<std::shared_ptr<GLMaterial>>  m_materials;
 };
 

@@ -8,6 +8,7 @@
 #define EV2_IO_MATERIAL_HPP
 
 #include "evpch.hpp"
+#include "image.hpp"
 
 #include "glm/glm.hpp"
 
@@ -29,14 +30,14 @@ struct MaterialData {
     float sheen          = 0;
     float sheenTint      = .5f;
 
-    std::shared_ptr<Image> ambient;             // map_Ka
-    std::shared_ptr<Image> diffuse;             // map_Kd
-    std::shared_ptr<Image> specular;            // map_Ks
-    std::shared_ptr<Image> specular_highlight;  // map_Ns
-    std::shared_ptr<Image> bump;                // map_bump, map_Bump, bump
-    std::shared_ptr<Image> displacement;        // disp
-    std::shared_ptr<Image> alpha;               // map_d
-    std::shared_ptr<Image> reflection;          // refl
+    std::shared_ptr<Image> ambient_map;             // map_Ka
+    std::shared_ptr<Image> diffuse_map;             // map_Kd
+    std::shared_ptr<Image> specular_map;            // map_Ks
+    std::shared_ptr<Image> specular_highlight_map;  // map_Ns
+    std::shared_ptr<Image> bump_map;                // map_bump, map_Bump, bump
+    std::shared_ptr<Image> displacement_map;        // disp
+    std::shared_ptr<Image> alpha_map;               // map_d
+    std::shared_ptr<Image> reflection_map;          // refl
 };
 
 }

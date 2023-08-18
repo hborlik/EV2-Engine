@@ -12,18 +12,8 @@
 #include "evpch.hpp"
 
 #include "geometry.hpp"
-#include "pcg/sc_wfc.hpp"
-#include "pcg/wfc.hpp"
-#include "pcg/object_database.hpp"
 
 #include <json.hpp>
-
-namespace ev2::io {
-
-std::string read_file(const std::filesystem::path& path);
-
-} // namespace ev2::io
-
 
 namespace ev2 {
 
