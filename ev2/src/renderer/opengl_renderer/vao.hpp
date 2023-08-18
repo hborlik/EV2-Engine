@@ -11,7 +11,7 @@
 #include "evpch.hpp"
 
 #include "ev_gl.hpp"
-#include "mesh.hpp"
+#include "renderer/mesh.hpp"
 
 namespace ev2::renderer {
 

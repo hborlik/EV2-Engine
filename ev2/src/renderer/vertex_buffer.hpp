@@ -25,8 +25,6 @@ struct VertexBufferAccessor {
 class VertexBuffer {
 public:
     VertexBuffer() = default;
-    
-    int get_indexed() const {return indexed;}
 
     void add_buffer(uint32_t buffer_id, std::shared_ptr<Buffer> buffer) {
         buffers.emplace(buffer_id, std::move(buffer));
@@ -36,11 +34,12 @@ public:
         return buffers.at(buffer_id);
     }
 
-    inline void add_accessor(AttributeLabel accessor, uint32_t buffer_id, size_t byte_offset, bool normalized, gl::DataType type, size_t count, size_t stride) {
+    inline void add_accessor(AttributeLabel accessor, uint32_t buffer_id,
+                             size_t byte_offset, bool normalized,
+                             ShaderDataType type, size_t count, size_t stride) {
         accessors.insert_or_assign(
-            accessor,
-            VertexBufferAccessor{(int)buffer_id, byte_offset, normalized, type, count, stride}
-        );
+            accessor, VertexBufferAccessor{(int)buffer_id, byte_offset,
+                                           normalized, type, count, stride});
     }
 
     inline VertexBufferAccessor& get_accessor(AttributeLabel accessor) {
@@ -53,7 +52,7 @@ public:
      * @param buffer_id buffer that is the target of the layout. Buffer should be in buffers map
      * @param layout vertex buffer layout
      */
-    void add_accessors_from_layout(int buffer_id, const BufferLayout& layout);
+    void add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout);
 
     static VertexBuffer vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors);
     
@@ -81,10 +80,10 @@ public:
      * @param instance_buffer instance buffer to be used with the returned VAO
      * @return VertexBuffer 
      */
-    static VertexBuffer vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const BufferLayout& layout);
+    static VertexBuffer vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const VertexBufferLayout& layout);
 
-    static VertexBuffer vbInitArrayVertexSpec(const std::vector<float>& buffer, const BufferLayout& layout);
-    static VertexBuffer vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const BufferLayout& layout);
+    static VertexBuffer vbInitArrayVertexSpec(const std::vector<float>& buffer, const VertexBufferLayout& layout);
+    static VertexBuffer vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const VertexBufferLayout& layout);
 
     static VertexBuffer vbInitDefault();
 

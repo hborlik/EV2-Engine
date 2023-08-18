@@ -16,36 +16,40 @@
 
 namespace ev2::renderer {
 
-struct Material {
-    std::string name = "default";
-
-    glm::vec3 diffuse   = {1.00f,0.10f,0.85f};
-    glm::vec3 emissive  = {};
-    float metallic       = 0;
-    float subsurface     = 0;
-    float specular       = .5f;
-    float roughness      = .5f;
-    float specularTint   = 0;
-    float clearcoat      = 0;
-    float clearcoatGloss = 1.f;
-    float anisotropic    = 0;
-    float sheen          = 0;
-    float sheenTint      = .5f;
-
-    std::shared_ptr<Texture> ambient_tex;             // map_Ka
-    std::shared_ptr<Texture> diffuse_tex;             // map_Kd
-    std::shared_ptr<Texture> specular_tex;            // map_Ks
-    std::shared_ptr<Texture> specular_highlight_tex;  // map_Ns
-    std::shared_ptr<Texture> bump_tex;                // map_bump, map_Bump, bump
-    std::shared_ptr<Texture> displacement_tex;        // disp
-    std::shared_ptr<Texture> alpha_tex;               // map_d
-    std::shared_ptr<Texture> reflection_tex;          // refl
-
+class Material {
+public:
     Material() = default;
     explicit Material(std::string name) : name{std::move(name)} {}
 
     virtual ~Material() = default;
 
+    virtual void set_diffuse(const glm::vec3& d) = 0;
+    virtual void set_emissive(const glm::vec3& e) = 0;
+
+    virtual void set_metallic(float m) = 0;
+    virtual void set_subsurface(float s) = 0;
+    virtual void set_specular(float s) = 0;
+    virtual void set_roughness(float r) = 0;
+    virtual void set_specularTint(float st) = 0;
+    virtual void set_clearcoat(float c) = 0;
+    virtual void set_clearcoatGloss(float cg) = 0;
+    virtual void set_anisotropic(float a) = 0;
+    virtual void set_sheen(float s) = 0;
+    virtual void set_sheenTint(float st) = 0;
+
+    virtual void set_ambient_tex(std::shared_ptr<Texture> tex) = 0;             // map_Ka
+    virtual void set_diffuse_tex(std::shared_ptr<Texture> tex) = 0;             // map_Kd
+    virtual void set_specular_tex(std::shared_ptr<Texture> tex) = 0;            // map_Ks
+    virtual void set_specular_highlight_tex(std::shared_ptr<Texture> tex) = 0;  // map_Ns
+    virtual void set_bump_tex(std::shared_ptr<Texture> tex) = 0;                // map_bump, map_Bump, bump
+    virtual void set_displacement_tex(std::shared_ptr<Texture> tex) = 0;        // disp
+    virtual void set_alpha_tex(std::shared_ptr<Texture> tex) = 0;               // map_d
+    virtual void set_reflection_tex(std::shared_ptr<Texture> tex) = 0;          // refl
+
+    std::string get_name() const noexcept {return name;}
+
+protected:
+    std::string name = "default";
 };
 
 } // namespace ev2::renderer

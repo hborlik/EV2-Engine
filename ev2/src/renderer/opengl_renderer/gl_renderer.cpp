@@ -28,13 +28,21 @@ void GLDrawable::set_material_override(std::shared_ptr<Material> material) {
     material_override = material;
 }
 
-void GLDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
-    this->m_mesh = drawable;
+void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
+    m_mesh = mesh;
 
     if (gl_vao != 0)
         glDeleteVertexArrays(1, &gl_vao);
     
-    gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings);
+    gl_vao = m_mesh->get_vertex_buffer().gen_vao_for_attributes(mat_spec::DefaultBindings);
+}
+
+void GLDrawable::set_material(std::shared_ptr<Material> material) {
+    material_override = std::dynamic_pointer_cast<GLMaterial>(material);
+}
+
+void GLDrawable::set_transform() {
+
 }
 
 void GLDrawable::set_picking_id(std::size_t picking_id) {
@@ -43,7 +51,7 @@ void GLDrawable::set_picking_id(std::size_t picking_id) {
     GLRenderer::get_singleton().update_picking_id_model_instance(this);
 }
 
-void InstancedDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
+void GLInstancedDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
     this->m_mesh = drawable;
 
     if (gl_vao != 0)
@@ -52,7 +60,7 @@ void InstancedDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
     gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
-void GLRenderer::draw(Mesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
+void GLRenderer::draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
     if (n_instances == 0) {
         return; // nothing to do
     }
@@ -514,7 +522,7 @@ void GLRenderer::load_ssao_uniforms() {
 
 std::shared_ptr<Material> GLRenderer::create_material() {
 
-    constexpr auto mat_deleter = [](Material* mat) -> void {
+    constexpr auto mat_deleter = [](GLMaterial* mat) -> void {
         renderer::GLRenderer::get_singleton().destroy_material(mat);
     };
 
@@ -522,10 +530,11 @@ std::shared_ptr<Material> GLRenderer::create_material() {
     if (new_mat_slot >= 0) {
         int32_t id = next_material_id++;
         auto new_material =
-            std::shared_ptr<Material>(new Material{}, mat_deleter);
+            std::shared_ptr<Material>(new GLMaterial{}, mat_deleter);
         materials[id] = new_material.get();
         new_material->material_id = id;
         new_material->material_slot = new_mat_slot;
+        new_material->m_owner = this;
         return new_material;
     }
     return {};
@@ -541,17 +550,18 @@ int32_t GLRenderer::alloc_material_slot() {
     }
 }
 
-void GLRenderer::destroy_material(Material* material) {
-    assert(material);
-    if (material->material_id < 0 || material->material_slot < 0)
+void GLRenderer::destroy_material(GLMaterial* material) {
+    EV_CORE_ASSERT(material, "Cannot delete null material");
+    if (material->material_id < 0 || material->material_slot < 0 || material->m_owner != this)
         return; // material not backed
     material_data_buffer[material->material_slot] = {};
     free_material_slots.push(material->material_slot);
 
-    assert(materials.erase(material->material_id));
+    EV_CORE_ASSERT(materials.erase(material->material_id), "Failed to erase material");
 
     material->material_slot = -1;
     material->material_id = -1;
+    material->m_owner = nullptr;
 }
 
 LID GLRenderer::create_point_light() {

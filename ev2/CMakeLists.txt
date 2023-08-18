@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
+add_subdirectory(vendor)
+
 project(meltdown VERSION 0.0.2 LANGUAGES CXX)
 
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS src/*.cpp src/*.h src/*.hpp)

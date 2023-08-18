@@ -12,13 +12,13 @@
 
 #include "core/singleton.hpp"
 #include "renderer/shader_builder.hpp"
-#include "renderer/opengl_renderer/mesh.hpp"
-#include "renderer/opengl_renderer/gl_shader.hpp"
-#include "renderer/opengl_renderer/gl_texture.hpp"
-#include "renderer/opengl_renderer/render_state.hpp"
 #include "renderer/camera.hpp"
-#include "renderer/material.hpp"
 #include "renderer/renderer.hpp"
+#include "gl_shader.hpp"
+#include "gl_texture.hpp"
+#include "render_state.hpp"
+#include "gl_material.hpp"
+#include "gl_mesh.hpp"
 
 #include "geometry.hpp"
 
@@ -86,52 +86,6 @@ struct MaterialData {
     GLint sheenTint_offset      = 0;
 
     bool changed = false;
-
-    /**
-     * @brief copy material data attributes from Material
-     * 
-     * @param material 
-     */
-    void update_from(Material* material) noexcept {
-        if (material) {
-            if (
-                material->diffuse          != diffuse ||
-                material->emissive         != emissive ||
-                material->metallic         != metallic ||
-                material->subsurface       != subsurface ||
-                material->specular         != specular ||
-                material->roughness        != roughness ||
-                material->specularTint     != specularTint ||
-                material->clearcoat        != clearcoat ||
-                material->clearcoatGloss   != clearcoatGloss ||
-                material->anisotropic      != anisotropic ||
-                material->sheen            != sheen ||
-                material->sheenTint        != sheenTint
-            ) {
-                changed = true;
-                diffuse          = material->diffuse;
-                emissive         = material->emissive;
-                metallic         = material->metallic;
-                subsurface       = material->subsurface;
-                specular         = material->specular;
-                roughness        = material->roughness;
-                specularTint     = material->specularTint;
-                clearcoat        = material->clearcoat;
-                clearcoatGloss   = material->clearcoatGloss;
-                anisotropic      = material->anisotropic;
-                sheen            = material->sheen;
-                sheenTint        = material->sheenTint;
-            }
-        }
-    }
-};
-
-// instance drawable primitive setup
-
-struct Primitive {
-    size_t      start_index = 0;
-    size_t      num_elements = 0;
-    int32_t     material_ind = 0; // material index in model material list
 };
 
 // picking id packing functions
@@ -149,53 +103,17 @@ inline uint32_t unpack_uvec3_to_id(const glm::uvec3& vec) noexcept {
     return id;
 }
 
-/**
- * @brief Renderer Drawable structure
- * 
- */
-struct GLMesh : public Mesh {
-
-    GLMesh(VertexBuffer &&vb,
-             std::vector<Primitive> primitives,
-             std::vector<std::shared_ptr<Material>> materials,
-             AABB bounding_box,
-             Sphere bounding_sphere,
-             FrustumCull frustum_cull,
-             gl::CullMode cull,
-             gl::FrontFacing ff) : vertex_buffer{std::move(vb)},
-                                   primitives{std::move(primitives)},
-                                   materials{std::move(materials)},
-                                   bounding_box{bounding_box},
-                                   bounding_sphere{bounding_sphere},
-                                   frustum_cull{frustum_cull},
-                                   cull_mode{cull},
-                                   front_facing{ff}
-    {
-    }
-
-    VertexBuffer                vertex_buffer;
-    std::vector<Primitive>      primitives;
-    std::vector<std::shared_ptr<Material>>  materials;
-
-    AABB            bounding_box{};
-    Sphere          bounding_sphere{};
-    FrustumCull     frustum_cull = FrustumCull::None;
-    gl::CullMode    cull_mode = gl::CullMode::BACK;
-    gl::FrontFacing front_facing = gl::FrontFacing::CCW;
-
-    float vertex_color_weight = 0.f;
-};
-
 struct GLDrawable : public Drawable {
     ~GLDrawable() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
     }
 
+    void set_mesh(std::shared_ptr<Mesh> mesh) override;
+    void set_material(std::shared_ptr<Material> material) override;
+    void set_transform() override;
+
     void set_material_override(std::shared_ptr<Material> material);
-
-    void set_mesh(std::shared_ptr<Mesh> drawable);
-
     void set_picking_id(std::size_t picking_id);
 
 private:
@@ -215,10 +133,10 @@ private:
 
     GLDrawable() = default;
 
-    std::shared_ptr<Material>               material_override{};
+    std::shared_ptr<GLMaterial>               material_override{};
 
     int32_t                     id = -1;
-    std::shared_ptr<Mesh>       drawable = nullptr;
+    std::shared_ptr<Mesh>       m_mesh = nullptr;
     GLuint                      gl_vao = 0;
 
     glm::uvec3 id_color{};
@@ -228,12 +146,12 @@ private:
 using ModelInstancePtr = std::shared_ptr<GLDrawable>;
 
 
-struct InstancedDrawable {
-    InstancedDrawable(InstancedDrawable &&o) = default;
+struct GLInstancedDrawable : public InstancedDrawable {
+    GLInstancedDrawable(GLInstancedDrawable &&o) = default;
 
-    InstancedDrawable& operator=(InstancedDrawable &&o) = default;
+    GLInstancedDrawable& operator=(GLInstancedDrawable &&o) = default;
 
-    ~InstancedDrawable() {
+    ~GLInstancedDrawable() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
     }
@@ -248,7 +166,7 @@ public:
 private:
     friend class GLRenderer;
 
-    InstancedDrawable() = default;
+    GLInstancedDrawable() = default;
 
     int32_t                     id = -1;
     std::shared_ptr<Mesh>       m_mesh = nullptr;
@@ -352,7 +270,7 @@ public:
 
 
 private:
-    friend Material;
+    friend GLMaterial;
     friend GLDrawable;
 
     void draw(Mesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
@@ -368,7 +286,7 @@ private:
      * 
      * @param material 
      */
-    void destroy_material(Material* material);
+    void destroy_material(GLMaterial* material);
 
     void destroy_model_instance(GLDrawable* model);
 
@@ -409,7 +327,7 @@ private:
     uint32_t ssao_kernel_samples = 32;
 
     // material management
-    std::unordered_map<int32_t, Material*> materials;
+    std::unordered_map<int32_t, GLMaterial*> materials;
     int32_t next_material_id = 1234;
 
     std::array<MaterialData, MAX_N_MATERIALS> material_data_buffer; // cpu side material data array

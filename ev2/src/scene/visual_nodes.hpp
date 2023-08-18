@@ -11,6 +11,7 @@
 
 #include "scene/node.hpp"
 #include "renderer/mesh.hpp"
+#include "renderer/camera.hpp"
 #include "renderer/buffer.hpp"
 #include "renderer/renderer.hpp"
 
@@ -103,7 +104,7 @@ public:
     void set_color(const glm::vec3& color);
 
 private:
-    renderer::Light lid{};
+    std::shared_ptr<renderer::Light> lid{};
 };
 
 class DirectionalLightNode : public Node {
@@ -121,7 +122,7 @@ public:
     void set_ambient(const glm::vec3& color);
 
 private:
-    renderer::Light lid{};
+    std::shared_ptr<renderer::Light> lid{};
 };
 
 }

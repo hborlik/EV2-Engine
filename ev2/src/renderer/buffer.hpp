@@ -141,6 +141,8 @@ struct VertexBufferLayout {
 
 class Buffer {
 public:
+    virtual ~Buffer() = default;
+
     virtual void allocate(std::size_t bytes);
 };
 

@@ -41,14 +41,14 @@ struct MaterialData {
     float sheen          = 0;
     float sheenTint      = .5f;
 
-    std::shared_ptr<ImageResource> ambient_tex;             // map_Ka
-    std::shared_ptr<ImageResource> diffuse_tex;             // map_Kd
-    std::shared_ptr<ImageResource> specular_tex;            // map_Ks
-    std::shared_ptr<ImageResource> specular_highlight_tex;  // map_Ns
-    std::shared_ptr<ImageResource> bump_tex;                // map_bump, map_Bump, bump
-    std::shared_ptr<ImageResource> displacement_tex;        // disp
-    std::shared_ptr<ImageResource> alpha_tex;               // map_d
-    std::shared_ptr<ImageResource> reflection_tex;          // refl
+    std::shared_ptr<Image> ambient_tex;             // map_Ka
+    std::shared_ptr<Image> diffuse_tex;             // map_Kd
+    std::shared_ptr<Image> specular_tex;            // map_Ks
+    std::shared_ptr<Image> specular_highlight_tex;  // map_Ns
+    std::shared_ptr<Image> bump_tex;                // map_bump, map_Bump, bump
+    std::shared_ptr<Image> displacement_tex;        // disp
+    std::shared_ptr<Image> alpha_tex;               // map_d
+    std::shared_ptr<Image> reflection_tex;          // refl
 
     std::shared_ptr<renderer::Material> create_renderer_material() const;
 };

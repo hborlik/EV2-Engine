@@ -2,11 +2,11 @@
 
 namespace ev2::renderer {
 
-void VertexBuffer::add_accessors_from_layout(int buffer_id, const BufferLayout& layout) {
+void VertexBuffer::add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout) {
     assert(buffers.find(buffer_id) != buffers.end());
-    // map the attributes defined in the layout
-    for (auto& attr : layout.attributes) {
-        accessors.emplace(std::make_pair(attr.attribute, VertexBufferAccessor{
+    // map the elements defined in the layout
+    for (auto& attr : layout.elements) {
+        accessors.emplace(std::make_pair(attr.label, VertexBufferAccessor{
             buffer_id, // id of the target buffer
             attr.offset, // offset in the target buffer
             false,
@@ -17,24 +17,24 @@ void VertexBuffer::add_accessors_from_layout(int buffer_id, const BufferLayout& 
     }
 }
 
-std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors) {
+VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors) {
     VertexBuffer vb;
 
     GLuint gl_vao;
     glGenVertexArrays(1, &gl_vao);
     glBindVertexArray(gl_vao);
 
-    vb.buffers.emplace(mat_spec::VERTEX_BINDING_LOCATION, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertices));
+    vb.buffers.emplace(mat_spec::VERTEX_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertices));
     vb.buffers.at(mat_spec::VERTEX_BINDING_LOCATION)->bind();
     glEnableVertexAttribArray(mat_spec::VERTEX_BINDING_LOCATION);
     glVertexAttribPointer(mat_spec::VERTEX_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
-    vb.buffers.emplace(mat_spec::NORMAL_BINDING_LOCATION, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, normals));
+    vb.buffers.emplace(mat_spec::NORMAL_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, normals));
     vb.buffers.at(mat_spec::NORMAL_BINDING_LOCATION)->bind();
     glEnableVertexAttribArray(mat_spec::NORMAL_BINDING_LOCATION);
     glVertexAttribPointer(mat_spec::NORMAL_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 3));
 
-    vb.buffers.emplace(mat_spec::COLOR_BINDING_LOCATION, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertex_colors));
+    vb.buffers.emplace(mat_spec::COLOR_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertex_colors));
     vb.buffers.at(mat_spec::COLOR_BINDING_LOCATION)->bind();
     glEnableVertexAttribArray(mat_spec::COLOR_BINDING_LOCATION);
     glVertexAttribPointer(mat_spec::COLOR_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 6));
@@ -43,7 +43,7 @@ std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitArrayVertexData(const std::
 
     glBindVertexArray(0);
 
-    return std::make_pair(std::move(vb), gl_vao);
+    return vb;
 }
 
 VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffer) {
@@ -61,7 +61,7 @@ VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffe
     return vb;
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const BufferLayout& layout) {
+VertexBuffer VertexBuffer::vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const VertexBufferLayout& layout) {
     VertexBuffer vb;
     
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
@@ -134,7 +134,7 @@ std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitSST() {
     return std::make_pair(std::move(vb), gl_vao);
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexSpec(const std::vector<float>& buffer, const BufferLayout& layout) {
+VertexBuffer VertexBuffer::vbInitArrayVertexSpec(const std::vector<float>& buffer, const VertexBufferLayout& layout) {
     assert(layout.finalized());
     VertexBuffer vb;
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
