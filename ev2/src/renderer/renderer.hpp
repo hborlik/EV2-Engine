@@ -51,6 +51,7 @@ public:
     virtual std::shared_ptr<Light> make_light() = 0;
     virtual std::shared_ptr<Texture> make_texture() = 0;
     virtual std::shared_ptr<Drawable> make_drawable() = 0;
+    virtual std::shared_ptr<InstancedDrawable> make_instanced_drawable() = 0;
 };
 
 }

@@ -143,9 +143,6 @@ private:
     std::size_t m_picking_id{};
 };
 
-using ModelInstancePtr = std::shared_ptr<GLDrawable>;
-
-
 struct GLInstancedDrawable : public InstancedDrawable {
     GLInstancedDrawable(GLInstancedDrawable &&o) = default;
 
@@ -156,7 +153,9 @@ struct GLInstancedDrawable : public InstancedDrawable {
             glDeleteVertexArrays(1, &gl_vao);
     }
 
-    void set_mesh(std::shared_ptr<Mesh> drawable);
+    void set_mesh(std::shared_ptr<Mesh> drawable) override;
+    void set_material(std::shared_ptr<Material> material) override;
+    void set_transform() override;
 
 public:
     glm::mat4               instance_world_transform = glm::identity<glm::mat4>();
@@ -173,6 +172,7 @@ private:
     GLuint                      gl_vao = 0;
 };
 
+using ModelInstancePtr = std::shared_ptr<GLDrawable>;
 using InstancedDrawablePtr = std::shared_ptr<InstancedDrawable>;
 
 class RenderPass {
@@ -188,13 +188,13 @@ public:
 
     struct ProgramData {
         ProgramData() = default;
-        ProgramData(std::string name) : program{std::move(name)} {}
+        ProgramData(std::string name) : program{std::make_unique<GLProgram>(std::move(name))} {}
 
         void init() {
-            mat_loc = program.getUniformInfo("materialId").Location;
-            obj_id_loc = program.getUniformInfo("id_color").Location;
-            vert_col_w_loc = program.getUniformInfo("vertex_color_weight").Location;
-            diffuse_sampler_loc = program.getUniformInfo("diffuse_tex").Location;
+            mat_loc = program->getUniformInfo("materialId").Location;
+            obj_id_loc = program->getUniformInfo("id_color").Location;
+            vert_col_w_loc = program->getUniformInfo("vertex_color_weight").Location;
+            diffuse_sampler_loc = program->getUniformInfo("diffuse_tex").Location;
         }
 
         std::unique_ptr<GLProgram> program{};
@@ -214,6 +214,8 @@ public:
     std::shared_ptr<Material> make_material() override;
     std::shared_ptr<Light> make_light() override;
     std::shared_ptr<Texture> make_texture() override;
+    std::shared_ptr<Drawable> make_drawable() override;
+    std::shared_ptr<InstancedDrawable> make_instanced_drawable() override;
 
     LID create_point_light();
     LID create_directional_light();
@@ -221,10 +223,6 @@ public:
     void set_light_color(LID lid, const glm::vec3& color);
     void set_light_ambient(LID lid, const glm::vec3& color);
     void destroy_light(LID lid);
-
-    ModelInstancePtr create_model_instance();
-
-    InstancedDrawablePtr create_instanced_drawable();
 
     void render(const Camera &camera);
 
@@ -445,7 +443,7 @@ private:
     bool draw_bounding_boxes = false;
 
     float point_light_geom_base_scale;
-    std::shared_ptr<Mesh> point_light_drawable;
+    std::shared_ptr<GLMesh> point_light_mesh;
     GLuint point_light_gl_vao = 0;
 
     int32_t default_material_slot = 0;

@@ -143,9 +143,23 @@ class Buffer {
 public:
     virtual ~Buffer() = default;
 
-    virtual void allocate(std::size_t bytes);
+    virtual void allocate(std::size_t bytes) = 0;
+
+    /**
+     * @brief write data into buffer starting at offset bytes from beginning of buffer
+     * 
+     * @param data pointer to data
+     * @param size length in bytes of data to write
+     * @param offset offset in bytes from start of buffer to write data
+     */
+    virtual void sub_data(const void* data, std::size_t size, std::size_t offset) = 0;
+
+    template<typename T>
+    void sub_data(const T& source, uint32_t offset) {
+        sub_data(&source, sizeof(T), offset);
+    }
 };
 
-}
+} // namespace ev2::renderer
 
 #endif // EV2_BUFFER_HPP

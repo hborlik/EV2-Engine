@@ -65,18 +65,8 @@ public:
      * @param source 
      * @param offset 
      */
-    template<typename T>//, typename = typename std::enable_if<std::is_integral<T>::value, T>::type>
-    void sub_data(const T& source, uint32_t offset);
-
-    /**
-     * @brief Update part of data in buffer. Buffer should have data allocated before call is made to sub data
-     * 
-     * @tparam T 
-     * @param source 
-     * @param offset 
-     */
-    template<typename T>
-    void sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride);
+    // template<typename T>
+    // void sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride);
 
     /**
      * @brief Allocate buffer data
@@ -159,18 +149,6 @@ void GLBuffer::copy_data(const std::vector<T>& source) {
 }
 
 /**
- * @brief single element update in buffer data, offset and size must define a range lying entirely within the buffer object's data store
- * 
- * @tparam T 
- * @param source 
- * @param offset 
- */
-template<typename T>//, typename>
-void GLBuffer::sub_data(const T& source, uint32_t offset) {
-    GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, sizeof(T), &source));
-}
-
-/**
  * @brief update array, offset and size must define a range lying entirely within the buffer object's data store
  * 
  * @tparam T 
@@ -178,14 +156,14 @@ void GLBuffer::sub_data(const T& source, uint32_t offset) {
  * @param offset 
  * @param stride 
  */
-template<typename T>
-void GLBuffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
-    if(!source.empty()) {
-        for(size_t i = 0; i < source.size(); i++) {
-            GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset + i * stride, sizeof(T), &source[i]));
-        }
-    }
-}
+// template<typename T>
+// void GLBuffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
+//     if(!source.empty()) {
+//         for(size_t i = 0; i < source.size(); i++) {
+//             GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset + i * stride, sizeof(T), &source[i]));
+//         }
+//     }
+// }
 
 } // ev2
 

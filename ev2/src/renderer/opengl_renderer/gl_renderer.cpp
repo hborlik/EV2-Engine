@@ -304,116 +304,116 @@ void GLRenderer::init() {
 
     // set up programs
 
-    geometry_program.program.loadShader(ShaderType::VERTEX_SHADER, "geometry.glsl.vert", m_preprocessor_settings);
-    geometry_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
-    geometry_program.program.link();
+    geometry_program.program->loadShader(ShaderType::VERTEX_SHADER, "geometry.glsl.vert", m_preprocessor_settings);
+    geometry_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
+    geometry_program.program->link();
     geometry_program.init();
 
-    gp_m_location = geometry_program.program.getUniformInfo("M").Location;
-    gp_mv_location = geometry_program.program.getUniformInfo("MV").Location;
-    gp_g_location = geometry_program.program.getUniformInfo("G").Location;
+    gp_m_location = geometry_program.program->getUniformInfo("M").Location;
+    gp_mv_location = geometry_program.program->getUniformInfo("MV").Location;
+    gp_g_location = geometry_program.program->getUniformInfo("G").Location;
 
-    geometry_program_instanced.program.loadShader(ShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", m_preprocessor_settings);
-    geometry_program_instanced.program.loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
-    geometry_program_instanced.program.link();
+    geometry_program_instanced.program->loadShader(ShaderType::VERTEX_SHADER, "geometry_instanced.glsl.vert", m_preprocessor_settings);
+    geometry_program_instanced.program->loadShader(ShaderType::FRAGMENT_SHADER, "geometry.glsl.frag", m_preprocessor_settings);
+    geometry_program_instanced.program->link();
     geometry_program_instanced.init();
 
-    gpi_m_location = geometry_program_instanced.program.getUniformInfo("M").Location;
+    gpi_m_location = geometry_program_instanced.program->getUniformInfo("M").Location;
 
     // Initialize the GLSL programs
-    depth_program.program.loadShader(ShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", m_preprocessor_settings);
-    depth_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", m_preprocessor_settings);
-    depth_program.program.link();
+    depth_program.program->loadShader(ShaderType::VERTEX_SHADER, "simpleDepth.glsl.vert", m_preprocessor_settings);
+    depth_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "simpleDepth.glsl.frag", m_preprocessor_settings);
+    depth_program.program->link();
     depth_program.init();
 
-    sdp_m_location = depth_program.program.getUniformInfo("M").Location;
-    sdp_lpv_location = depth_program.program.getUniformInfo("LPV").Location;
+    sdp_m_location = depth_program.program->getUniformInfo("M").Location;
+    sdp_lpv_location = depth_program.program->getUniformInfo("LPV").Location;
 
 
-    directional_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
-    directional_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "directional.glsl.frag", m_preprocessor_settings);
-    directional_lighting_program.program.link();
+    directional_lighting_program.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    directional_lighting_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "directional.glsl.frag", m_preprocessor_settings);
+    directional_lighting_program.program->link();
     directional_lighting_program.init();
 
-    lp_p_location = directional_lighting_program.program.getUniformInfo("gPosition").Location;
-    lp_n_location = directional_lighting_program.program.getUniformInfo("gNormal").Location;
-    lp_as_location = directional_lighting_program.program.getUniformInfo("gAlbedoSpec").Location;
-    lp_mt_location = directional_lighting_program.program.getUniformInfo("gMaterialTex").Location;
-    lp_gao_location = directional_lighting_program.program.getUniformInfo("gAO").Location;
-    lp_ls_location = directional_lighting_program.program.getUniformInfo("LS").Location;
-    lp_sdt_location = directional_lighting_program.program.getUniformInfo("shadowDepth").Location;
-    lp_ldir_location = directional_lighting_program.program.getUniformInfo("lightDir").Location;
-    lp_lcol_location = directional_lighting_program.program.getUniformInfo("lightColor").Location;
-    lp_lamb_location = directional_lighting_program.program.getUniformInfo("lightAmbient").Location;
+    lp_p_location = directional_lighting_program.program->getUniformInfo("gPosition").Location;
+    lp_n_location = directional_lighting_program.program->getUniformInfo("gNormal").Location;
+    lp_as_location = directional_lighting_program.program->getUniformInfo("gAlbedoSpec").Location;
+    lp_mt_location = directional_lighting_program.program->getUniformInfo("gMaterialTex").Location;
+    lp_gao_location = directional_lighting_program.program->getUniformInfo("gAO").Location;
+    lp_ls_location = directional_lighting_program.program->getUniformInfo("LS").Location;
+    lp_sdt_location = directional_lighting_program.program->getUniformInfo("shadowDepth").Location;
+    lp_ldir_location = directional_lighting_program.program->getUniformInfo("lightDir").Location;
+    lp_lcol_location = directional_lighting_program.program->getUniformInfo("lightColor").Location;
+    lp_lamb_location = directional_lighting_program.program->getUniformInfo("lightAmbient").Location;
 
 
-    point_lighting_program.program.loadShader(ShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", m_preprocessor_settings);
-    point_lighting_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", m_preprocessor_settings);
-    point_lighting_program.program.link();
+    point_lighting_program.program->loadShader(ShaderType::VERTEX_SHADER, "point_lighting.glsl.vert", m_preprocessor_settings);
+    point_lighting_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "point_lighting.glsl.frag", m_preprocessor_settings);
+    point_lighting_program.program->link();
     point_lighting_program.init();
 
-    plp_p_location       = point_lighting_program.program.getUniformInfo("gPosition").Location;
-    plp_n_location       = point_lighting_program.program.getUniformInfo("gNormal").Location;
-    plp_as_location      = point_lighting_program.program.getUniformInfo("gAlbedoSpec").Location;
-    plp_mt_location      = point_lighting_program.program.getUniformInfo("gMaterialTex").Location;
+    plp_p_location       = point_lighting_program.program->getUniformInfo("gPosition").Location;
+    plp_n_location       = point_lighting_program.program->getUniformInfo("gNormal").Location;
+    plp_as_location      = point_lighting_program.program->getUniformInfo("gAlbedoSpec").Location;
+    plp_mt_location      = point_lighting_program.program->getUniformInfo("gMaterialTex").Location;
 
-    plp_ssbo_light_data_location = point_lighting_program.program.getProgramResourceLocation(GL_SHADER_STORAGE_BLOCK, "lights_in");
+    plp_ssbo_light_data_location = point_lighting_program.program->getProgramResourceLocation(GL_SHADER_STORAGE_BLOCK, "lights_in");
 
     point_light_data_buffer = std::make_unique<Buffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
 
 
-    ssao_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
-    ssao_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", m_preprocessor_settings);
-    ssao_program.program.link();
+    ssao_program.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    ssao_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "ssao.glsl.frag", m_preprocessor_settings);
+    ssao_program.program->link();
     ssao_program.init();
 
-    ssao_p_loc         = ssao_program.program.getUniformInfo("gPosition").Location;
-    ssao_n_loc         = ssao_program.program.getUniformInfo("gNormal").Location;
-    ssao_tex_noise_loc = ssao_program.program.getUniformInfo("texNoise").Location;
-    ssao_radius_loc    = ssao_program.program.getUniformInfo("radius").Location;
-    ssao_bias_loc      = ssao_program.program.getUniformInfo("bias").Location;
-    ssao_nSamples_loc  = ssao_program.program.getUniformInfo("nSamples").Location;
+    ssao_p_loc         = ssao_program.program->getUniformInfo("gPosition").Location;
+    ssao_n_loc         = ssao_program.program->getUniformInfo("gNormal").Location;
+    ssao_tex_noise_loc = ssao_program.program->getUniformInfo("texNoise").Location;
+    ssao_radius_loc    = ssao_program.program->getUniformInfo("radius").Location;
+    ssao_bias_loc      = ssao_program.program->getUniformInfo("bias").Location;
+    ssao_nSamples_loc  = ssao_program.program->getUniformInfo("nSamples").Location;
 
     load_ssao_uniforms();
 
 
-    sky_program.program.loadShader(ShaderType::VERTEX_SHADER, "sky.glsl.vert", m_preprocessor_settings);
-    sky_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "sky.glsl.frag", m_preprocessor_settings);
-    sky_program.program.link();
+    sky_program.program->loadShader(ShaderType::VERTEX_SHADER, "sky.glsl.vert", m_preprocessor_settings);
+    sky_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "sky.glsl.frag", m_preprocessor_settings);
+    sky_program.program->link();
     sky_program.init();
-    sky_time_loc        = sky_program.program.getUniformInfo("time").Location;
-    sky_cirrus_loc      = sky_program.program.getUniformInfo("cirrus").Location;
-    sky_cumulus_loc     = sky_program.program.getUniformInfo("cumulus").Location;
-    sky_sun_position_loc= sky_program.program.getUniformInfo("sun_position").Location;
-    sky_output_mul_loc  = sky_program.program.getUniformInfo("output_mul").Location;
+    sky_time_loc        = sky_program.program->getUniformInfo("time").Location;
+    sky_cirrus_loc      = sky_program.program->getUniformInfo("cirrus").Location;
+    sky_cumulus_loc     = sky_program.program->getUniformInfo("cumulus").Location;
+    sky_sun_position_loc= sky_program.program->getUniformInfo("sun_position").Location;
+    sky_output_mul_loc  = sky_program.program->getUniformInfo("output_mul").Location;
 
-    post_fx_bloom_combine_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
-    post_fx_bloom_combine_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", m_preprocessor_settings);
-    post_fx_bloom_combine_program.program.link();
+    post_fx_bloom_combine_program.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_bloom_combine_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_combine.glsl.frag", m_preprocessor_settings);
+    post_fx_bloom_combine_program.program->link();
     post_fx_bloom_combine_program.init();
-    post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.program.getUniformInfo("hdrBuffer").Location;
-    post_fx_bc_emist_loc = post_fx_bloom_combine_program.program.getUniformInfo("emissiveBuffer").Location;
-    post_fx_bc_thresh_loc = post_fx_bloom_combine_program.program.getUniformInfo("bloom_threshold").Location;
+    post_fx_bc_hdrt_loc = post_fx_bloom_combine_program.program->getUniformInfo("hdrBuffer").Location;
+    post_fx_bc_emist_loc = post_fx_bloom_combine_program.program->getUniformInfo("emissiveBuffer").Location;
+    post_fx_bc_thresh_loc = post_fx_bloom_combine_program.program->getUniformInfo("bloom_threshold").Location;
 
-    post_fx_bloom_blur.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
-    post_fx_bloom_blur.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", m_preprocessor_settings);
-    post_fx_bloom_blur.program.link();
+    post_fx_bloom_blur.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_bloom_blur.program->loadShader(ShaderType::FRAGMENT_SHADER, "post_fx_bloom_blur.glsl.frag", m_preprocessor_settings);
+    post_fx_bloom_blur.program->link();
     post_fx_bloom_blur.init();
-    post_fx_bb_hor_loc = post_fx_bloom_blur.program.getUniformInfo("horizontal").Location;
-    post_fx_bb_bloom_in_loc = post_fx_bloom_blur.program.getUniformInfo("bloom_blur_in").Location;
+    post_fx_bb_hor_loc = post_fx_bloom_blur.program->getUniformInfo("horizontal").Location;
+    post_fx_bb_bloom_in_loc = post_fx_bloom_blur.program->getUniformInfo("bloom_blur_in").Location;
 
-    post_fx_program.program.loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
-    post_fx_program.program.loadShader(ShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", m_preprocessor_settings);
-    post_fx_program.program.link();
+    post_fx_program.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
+    post_fx_program.program->loadShader(ShaderType::FRAGMENT_SHADER, "post_fx.glsl.frag", m_preprocessor_settings);
+    post_fx_program.program->link();
     post_fx_program.init();
-    post_fx_gamma_loc           = post_fx_program.program.getUniformInfo("gamma").Location;
-    post_fx_exposure_loc        = post_fx_program.program.getUniformInfo("exposure").Location;
-    post_fx_bloom_falloff_loc   = post_fx_program.program.getUniformInfo("bloom_falloff").Location;
-    post_fx_hdrt_loc            = post_fx_program.program.getUniformInfo("hdrBuffer").Location;
-    post_fx_bloomt_loc          = post_fx_program.program.getUniformInfo("bloomBuffer").Location;
+    post_fx_gamma_loc           = post_fx_program.program->getUniformInfo("gamma").Location;
+    post_fx_exposure_loc        = post_fx_program.program->getUniformInfo("exposure").Location;
+    post_fx_bloom_falloff_loc   = post_fx_program.program->getUniformInfo("bloom_falloff").Location;
+    post_fx_hdrt_loc            = post_fx_program.program->getUniformInfo("hdrBuffer").Location;
+    post_fx_bloomt_loc          = post_fx_program.program->getUniformInfo("bloomBuffer").Location;
 
     // program block inputs
-    globals_desc = geometry_program.program.getUniformBlockInfo("Globals");
+    globals_desc = geometry_program.program->getUniformBlockInfo("Globals");
     goffsets.P_ind = globals_desc.get_index("P");
     goffsets.PInv_ind = globals_desc.get_index("PInv");
     goffsets.View_ind = globals_desc.get_index("View");
@@ -424,7 +424,7 @@ void GLRenderer::init() {
 
     shader_globals.allocate(globals_desc.block_size);
 
-    lighting_materials_desc = directional_lighting_program.program.getUniformBlockInfo("MaterialsInfo");
+    lighting_materials_desc = directional_lighting_program.program->getUniformBlockInfo("MaterialsInfo");
     lighting_materials.allocate(lighting_materials_desc.block_size);
 
     // extract all offsets for material buffer
@@ -468,7 +468,7 @@ void GLRenderer::init() {
         }
     }
 
-    ssao_kernel_desc = ssao_program.program.getUniformBlockInfo("Samples");
+    ssao_kernel_desc = ssao_program.program->getUniformBlockInfo("Samples");
     ssao_kernel_buffer.allocate(ssao_kernel_desc.block_size);
     auto tgt_layout = ssao_kernel_desc.get_layout("samples[0]");
     ssao_kernel_buffer.sub_data(ssaoKernel, tgt_layout.Offset, tgt_layout.ArrayStride);
@@ -479,24 +479,79 @@ void GLRenderer::init() {
     }
 
     // light geometry
-    point_light_drawable =
+    point_light_mesh =
         load_model(std::filesystem::path("models") / "cube.obj",
-                   Engine::get_singleton().asset_path, nullptr)
+                   Engine::get_singleton().asset_path)
             ->create_renderer_drawable(false);
 
     // render back facing only
-    point_light_drawable->front_facing =
+    point_light_mesh->front_facing =
         gl::FrontFacing::CW;
     
     const glm::vec3 scaling =
-        glm::vec3{2} / (point_light_drawable->bounding_box.pMax -
-                        point_light_drawable->bounding_box.pMin);
+        glm::vec3{2} / (point_light_mesh->bounding_box.pMax -
+                        point_light_mesh->bounding_box.pMin);
 
     point_light_geom_base_scale = scaling.x;
 
-    point_light_gl_vao = point_light_drawable->vertex_buffer.gen_vao_for_attributes(point_lighting_program.program.getAttributeMap());
+    point_light_gl_vao = point_light_mesh->get_vertex_buffer().gen_vao_for_attributes(point_lighting_program.program.getAttributeMap());
 
 }
+
+std::shared_ptr<Mesh> GLRenderer::make_mesh() {
+
+}
+
+std::shared_ptr<Material> GLRenderer::make_material() {
+
+}
+
+std::shared_ptr<Light> GLRenderer::make_light() {
+
+}
+
+std::shared_ptr<Texture> GLRenderer::make_texture() {
+
+}
+
+std::shared_ptr<Drawable> GLRenderer::make_drawable() {
+    auto model_deleter = [](GLDrawable* mi) {
+        get_singleton().destroy_model_instance(mi);
+    };
+
+    int32_t id = next_model_instance_id++;
+    ModelInstancePtr model(new GLDrawable(), model_deleter);
+    model->id = id;
+    auto [mi, inserted] = model_instances.emplace(id, model.get());
+
+    assert(inserted);
+
+    return model;
+}
+
+std::shared_ptr<InstancedDrawable> GLRenderer::make_instanced_drawable() {
+    auto instanced_drawable_deleter = [](InstancedDrawable* id) {
+        get_singleton().destroy_instanced_drawable(id);
+    };
+
+    int32_t id = next_instanced_drawable_id++;
+    InstancedDrawablePtr model(new GLInstancedDrawable(), instanced_drawable_deleter);
+    model->id = id;
+    model->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
+
+    auto [mi, inserted] = instanced_drawables.emplace(id, model.get());
+    
+    assert(inserted);
+
+    return model;
+}
+
+void GLRenderer::destroy_model_instance(GLDrawable* model) {
+    assert(model);
+    model_instances.erase(model->id);
+    m_picking_id_map.erase(model->packed_id());
+}
+
 
 void GLRenderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
     material_data_buffer[material_slot] = material;
@@ -515,12 +570,12 @@ void GLRenderer::update_material(mat_slot_t material_slot, const MaterialData& m
 }
 
 void GLRenderer::load_ssao_uniforms() {
-    glProgramUniform1f(ssao_program.program.getHandle(), ssao_bias_loc, ssao_bias);
-    glProgramUniform1f(ssao_program.program.getHandle(), ssao_radius_loc, ssao_radius);
-    glProgramUniform1ui(ssao_program.program.getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
+    glProgramUniform1f(ssao_program.program->getHandle(), ssao_bias_loc, ssao_bias);
+    glProgramUniform1f(ssao_program.program->getHandle(), ssao_radius_loc, ssao_radius);
+    glProgramUniform1ui(ssao_program.program->getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
-std::shared_ptr<Material> GLRenderer::create_material() {
+std::shared_ptr<Material> GLRenderer::make_material() {
 
     constexpr auto mat_deleter = [](GLMaterial* mat) -> void {
         renderer::GLRenderer::get_singleton().destroy_material(mat);
@@ -530,7 +585,7 @@ std::shared_ptr<Material> GLRenderer::create_material() {
     if (new_mat_slot >= 0) {
         int32_t id = next_material_id++;
         auto new_material =
-            std::shared_ptr<Material>(new GLMaterial{}, mat_deleter);
+            std::shared_ptr<GLMaterial>(new GLMaterial{}, mat_deleter);
         materials[id] = new_material.get();
         new_material->material_id = id;
         new_material->material_slot = new_mat_slot;
@@ -650,46 +705,6 @@ void GLRenderer::destroy_light(LID lid) {
         return;
     directional_lights.erase(lid._v);
     point_lights.erase(lid._v);
-}
-
-ModelInstancePtr GLRenderer::create_model_instance() {
-
-    auto model_deleter = [](GLDrawable* mi) {
-        get_singleton().destroy_model_instance(mi);
-    };
-
-    int32_t id = next_model_instance_id++;
-    ModelInstancePtr model(new GLDrawable(), model_deleter);
-    model->id = id;
-    auto [mi, inserted] = model_instances.emplace(id, model.get());
-
-    assert(inserted);
-
-    return model;
-}
-
-void GLRenderer::destroy_model_instance(GLDrawable* model) {
-    assert(model);
-    model_instances.erase(model->id);
-    m_picking_id_map.erase(model->packed_id());
-}
-
-InstancedDrawablePtr GLRenderer::create_instanced_drawable() {
-
-    auto instanced_drawable_deleter = [](InstancedDrawable* id) {
-        get_singleton().destroy_instanced_drawable(id);
-    };
-
-    int32_t id = next_instanced_drawable_id++;
-    InstancedDrawablePtr model(new InstancedDrawable(), instanced_drawable_deleter);
-    model->id = id;
-    model->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
-
-    auto [mi, inserted] = instanced_drawables.emplace(id, model.get());
-    
-    assert(inserted);
-
-    return model;
 }
 
 void GLRenderer::update_picking_id_model_instance(GLDrawable* drawable) {
@@ -1089,7 +1104,7 @@ void GLRenderer::render(const Camera &camera) {
     // bind the point light data buffer to SSBO
     point_light_data_buffer->bind(plp_ssbo_light_data_location);
 
-    draw(point_light_drawable.get(), point_lighting_program, false, point_light_gl_vao, -1, point_lights.size());
+    draw(point_light_mesh.get(), point_lighting_program, false, point_light_gl_vao, -1, point_lights.size());
 
     point_light_data_buffer->unbind();
 
