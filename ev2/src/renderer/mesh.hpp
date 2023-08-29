@@ -33,6 +33,7 @@ public:
 
     virtual std::shared_ptr<VertexBuffer> get_vertex_buffer() const = 0;
     virtual std::shared_ptr<Buffer> get_index_buffer() const = 0;
+    virtual std::vector<Primitive> get_primitives() const = 0;
 };
 
 } // namespace ev2::renderer

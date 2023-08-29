@@ -3,12 +3,12 @@
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/material.hpp"
 #include "resource.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 
 namespace ev2::renderer {
 
 // data structure matching GPU point light data definition
-struct PointLight {
+struct PointLightData {
     glm::vec3 position;
     float pad;
     glm::vec3 lightColor;
@@ -19,17 +19,37 @@ struct PointLight {
     float radius;
 };
 
-void GLDrawable::set_material_override(std::shared_ptr<Material> material) {
-    if (!material) {
-        material_override = nullptr;
-        return;
+void GLPointLight::set_color(const glm::vec3& color) {
+    auto& point_lights = m_owner->point_lights;
+    auto mi = point_lights.find(light_id);
+    EV_CORE_ASSERT(mi != point_lights.end(), "GLPointLight invalid light_id!");
+    if (mi != point_lights.end()) {
+        mi->second.color = color;
     }
-    assert (material->is_registered());
-    material_override = material;
+}
+
+void GLPointLight::set_position(const glm::vec3& position) {
+    auto& point_lights = m_owner->point_lights;
+    auto mi = point_lights.find(light_id);
+    EV_CORE_ASSERT(mi != point_lights.end(), "GLPointLight invalid light_id!");
+    if (mi != point_lights.end()) {
+        mi->second.position = position;
+    }
+}
+
+void GLPointLight::set_k(const glm::vec3& k) {
+    auto& point_lights = m_owner->point_lights;
+    auto mi = point_lights.find(light_id);
+    EV_CORE_ASSERT(mi != point_lights.end(), "GLPointLight invalid light_id!");
+    if (mi != point_lights.end()) {
+        mi->second.k = k;
+    }
 }
 
 void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
-    m_mesh = mesh;
+    auto gl_mesh = std::dynamic_pointer_cast<GLMesh>(mesh);
+    EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
+    m_mesh = gl_mesh;
 
     if (gl_vao != 0)
         glDeleteVertexArrays(1, &gl_vao);
@@ -38,26 +58,34 @@ void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
 }
 
 void GLDrawable::set_material(std::shared_ptr<Material> material) {
-    material_override = std::dynamic_pointer_cast<GLMaterial>(material);
+    std::shared_ptr<GLMaterial> gl_material = std::dynamic_pointer_cast<GLMaterial>(material);
+    if (!gl_material) {
+        material_override = nullptr;
+        return;
+    }
+    EV_CORE_ASSERT(gl_material->is_registered(), "Material must be registered");
+    material_override = gl_material;
 }
 
-void GLDrawable::set_transform() {
-
+void GLDrawable::set_transform(const glm::mat4& transform) {
+    this->transform = transform;
 }
 
 void GLDrawable::set_picking_id(std::size_t picking_id) {
     m_picking_id = picking_id;
     pack_id((uint32_t)picking_id ^ (picking_id >> 32));
-    GLRenderer::get_singleton().update_picking_id_model_instance(this);
+    m_owner->update_picking_id_model_instance(this);
 }
 
-void GLInstancedDrawable::set_mesh(std::shared_ptr<Mesh> drawable) {
-    this->m_mesh = drawable;
+void GLInstancedDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
+    auto gl_mesh = std::dynamic_pointer_cast<GLMesh>(mesh);
+    EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
+    this->m_mesh = gl_mesh;
 
     if (gl_vao != 0)
         glDeleteVertexArrays(1, &gl_vao);
 
-    gl_vao = drawable->vertex_buffer.gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
+    gl_vao = m_mesh->get_vertex_buffer().gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
 void GLRenderer::draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
@@ -75,15 +103,15 @@ void GLRenderer::draw(GLMesh* dr, const ProgramData& prog, bool use_materials, G
     const int mat_loc = prog.mat_loc;
     const int vert_col_w_loc = prog.vert_col_w_loc;
     const int diffuse_sampler_loc = prog.diffuse_sampler_loc;
-    const bool indexed = dr->vertex_buffer.get_indexed() != -1;
+    const bool indexed = dr->m_index_buffer != nullptr;
 
     glBindVertexArray(gl_vao);
-    for (auto& m : dr->primitives) {
-        Material* material_ptr = nullptr;
+    for (auto& m : dr->m_primitives) {
+        GLMaterial* material_ptr = nullptr;
         if (use_materials) {
             mat_slot_t material_slot = 0;
             if (m.material_ind >= 0 && material_override < 0) {
-                material_ptr = dr->materials[m.material_ind].get();
+                material_ptr = dr->m_materials[m.material_ind].get();
                 material_slot = material_ptr->material_slot;
             } else if (material_override >= 0) {
                 material_ptr = materials.at(material_override);
@@ -359,7 +387,7 @@ void GLRenderer::init() {
 
     plp_ssbo_light_data_location = point_lighting_program.program->getProgramResourceLocation(GL_SHADER_STORAGE_BLOCK, "lights_in");
 
-    point_light_data_buffer = std::make_unique<Buffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
+    point_light_data_buffer = std::make_unique<GLBuffer>(gl::BindingTarget::SHADER_STORAGE, gl::Usage::DYNAMIC_DRAW);
 
 
     ssao_program.program->loadShader(ShaderType::VERTEX_SHADER, "sst.glsl.vert", m_preprocessor_settings);
@@ -479,10 +507,9 @@ void GLRenderer::init() {
     }
 
     // light geometry
-    point_light_mesh =
-        load_model(std::filesystem::path("models") / "cube.obj",
-                   Engine::get_singleton().asset_path)
-            ->create_renderer_drawable(false);
+    auto point_light_cube = load_model(std::filesystem::path("models") / "cube.obj",
+        Engine::get_singleton().asset_path);
+    point_light_mesh = std::dynamic_pointer_cast<GLMesh>(make_mesh(point_light_cube.get()));
 
     // render back facing only
     point_light_mesh->front_facing =
@@ -498,7 +525,7 @@ void GLRenderer::init() {
 
 }
 
-std::shared_ptr<Mesh> GLRenderer::make_mesh() {
+std::shared_ptr<Mesh> GLRenderer::make_mesh(const Model* model) {
 
 }
 
@@ -506,8 +533,27 @@ std::shared_ptr<Material> GLRenderer::make_material() {
 
 }
 
-std::shared_ptr<Light> GLRenderer::make_light() {
+std::shared_ptr<PointLight> GLRenderer::make_point_light() {
+    const auto light_deleter = [this](GLPointLight* light) {
+        this->destroy_light(light);
+    };
+    int32_t nlid = next_light_id++;
+    std::shared_ptr<GLPointLight> light(new GLPointLight{}, light_deleter);
+    light->light_id = nlid;
+    point_lights.insert_or_assign(nlid, LightData{});
+    return light;
+}
 
+std::shared_ptr<DirectionalLight> GLRenderer::make_directional_light() {
+    const auto light_deleter = [this](DirectionalLight* light) {
+        this->destroy_light(light);
+    };
+    int32_t nlid = next_light_id++;
+    if (shadow_directional_light_id < 0)
+        shadow_directional_light_id = nlid;
+    DirectionalLight l{};
+    directional_lights.insert_or_assign(nlid, l);
+    return {LID::Directional, nlid};
 }
 
 std::shared_ptr<Texture> GLRenderer::make_texture() {
@@ -515,8 +561,8 @@ std::shared_ptr<Texture> GLRenderer::make_texture() {
 }
 
 std::shared_ptr<Drawable> GLRenderer::make_drawable() {
-    auto model_deleter = [](GLDrawable* mi) {
-        get_singleton().destroy_model_instance(mi);
+    const auto model_deleter = [this](GLDrawable* mi) {
+        this->destroy_model_instance(mi);
     };
 
     int32_t id = next_model_instance_id++;
@@ -530,8 +576,8 @@ std::shared_ptr<Drawable> GLRenderer::make_drawable() {
 }
 
 std::shared_ptr<InstancedDrawable> GLRenderer::make_instanced_drawable() {
-    auto instanced_drawable_deleter = [](InstancedDrawable* id) {
-        get_singleton().destroy_instanced_drawable(id);
+    const auto instanced_drawable_deleter = [this](InstancedDrawable* id) {
+        this->destroy_instanced_drawable(id);
     };
 
     int32_t id = next_instanced_drawable_id++;
@@ -547,7 +593,7 @@ std::shared_ptr<InstancedDrawable> GLRenderer::make_instanced_drawable() {
 }
 
 void GLRenderer::destroy_model_instance(GLDrawable* model) {
-    assert(model);
+    EV_CORE_ASSERT(model, "Cannot destroy null drawable");
     model_instances.erase(model->id);
     m_picking_id_map.erase(model->packed_id());
 }
@@ -577,8 +623,8 @@ void GLRenderer::load_ssao_uniforms() {
 
 std::shared_ptr<Material> GLRenderer::make_material() {
 
-    constexpr auto mat_deleter = [](GLMaterial* mat) -> void {
-        renderer::GLRenderer::get_singleton().destroy_material(mat);
+    const auto mat_deleter = [this](GLMaterial* mat) -> void {
+        this->destroy_material(mat);
     };
 
     int32_t new_mat_slot = alloc_material_slot();
@@ -619,92 +665,11 @@ void GLRenderer::destroy_material(GLMaterial* material) {
     material->m_owner = nullptr;
 }
 
-LID GLRenderer::create_point_light() {
-    int32_t nlid = next_light_id++;
-    LightData l{};
-    point_lights.insert_or_assign(nlid, l);
-    return {LID::Point, nlid};
-}
+void GLRenderer::destroy_light(GLPointLight* light) {
+    EV_CORE_ASSERT(light && light->is_valid());
 
-LID GLRenderer::create_directional_light() {
-    int32_t nlid = next_light_id++;
-    if (shadow_directional_light_id < 0)
-        shadow_directional_light_id = nlid;
-    DirectionalLight l{};
-    directional_lights.insert_or_assign(nlid, l);
-    return {LID::Directional, nlid};
-}
-
-void GLRenderer::set_light_position(LID lid, const glm::vec3& position) {
-    if (!lid.is_valid())
-        return;
-    
-    switch(lid._type) {
-        case LID::Point:
-        {
-            auto mi = point_lights.find(lid._v);
-            if (mi != point_lights.end()) {
-                mi->second.position = position;
-            }
-        }
-        break;
-        case LID::Directional:
-        {
-            auto mi = directional_lights.find(lid._v);
-            if (mi != directional_lights.end()) {
-                mi->second.position = position;
-            }
-        }
-        break;
-    };
-}
-
-void GLRenderer::set_light_color(LID lid, const glm::vec3& color) {
-    if (!lid.is_valid())
-        return;
-    
-    switch(lid._type) {
-        case LID::Point:
-        {
-            auto mi = point_lights.find(lid._v);
-            if (mi != point_lights.end()) {
-                mi->second.color = color;
-            }
-        }
-        break;
-        case LID::Directional:
-        {
-            auto mi = directional_lights.find(lid._v);
-            if (mi != directional_lights.end()) {
-                mi->second.color = color;
-            }
-        }
-        break;
-    };
-}
-
-void GLRenderer::set_light_ambient(LID lid, const glm::vec3& color) {
-    if (!lid.is_valid())
-        return;
-    
-    switch(lid._type) {
-        case LID::Directional:
-        {
-            auto mi = directional_lights.find(lid._v);
-            if (mi != directional_lights.end()) {
-                mi->second.ambient = color;
-            }
-        }
-        case LID::Point:
-        break;
-    };
-}
-
-void GLRenderer::destroy_light(LID lid) {
-    if (!lid.is_valid())
-        return;
-    directional_lights.erase(lid._v);
-    point_lights.erase(lid._v);
+    directional_lights.erase(light->light_id);
+    point_lights.erase(light->light_id);
 }
 
 void GLRenderer::update_picking_id_model_instance(GLDrawable* drawable) {
@@ -713,8 +678,8 @@ void GLRenderer::update_picking_id_model_instance(GLDrawable* drawable) {
     m_picking_id_map.insert_or_assign(dr_p_id, drawable->m_picking_id);
 }
 
-void GLRenderer::destroy_instanced_drawable(InstancedDrawable* drawable) {
-    assert(drawable);
+void GLRenderer::destroy_instanced_drawable(GLInstancedDrawable* drawable) {
+    EV_CORE_ASSERT(drawable);
     instanced_drawables.erase(drawable->id);
 }
 
@@ -768,7 +733,7 @@ void GLRenderer::render(const Camera &camera) {
 
     if (shadow_directional_light_id >= 0) {
         //set up shadow shader
-        depth_program.program.use();
+        depth_program.program->use();
         depth_fbo.bind();
         //set up light's depth map
         glViewport(0, 0, ShadowMapWidth, ShadowMapHeight);
@@ -811,13 +776,13 @@ void GLRenderer::render(const Camera &camera) {
         ev2::gl::glUniform(LOV, sdp_lpv_location);
         for (auto &mPair : model_instances) {
             auto m = mPair.second;
-            if (m->drawable) {
+            if (m->m_mesh) {
                 ev2::gl::glUniform(m->transform, sdp_m_location);
 
-                draw(m->drawable.get(), depth_program, false, m->gl_vao);
+                draw(m->m_mesh.get(), depth_program, false, m->gl_vao);
             }
         }
-        depth_program.program.unbind();
+        depth_program.program->unbind();
         depth_fbo.unbind();
     }
 
@@ -827,7 +792,7 @@ void GLRenderer::render(const Camera &camera) {
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, __LINE__, -1, "Geometry Pass");
 
     g_buffer.bind();
-    geometry_program.program.use();
+    geometry_program.program->use();
 
     glViewport(0, 0, width, height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -846,16 +811,16 @@ void GLRenderer::render(const Camera &camera) {
     int cull_count = 0;
     for (auto &mPair : model_instances) {
         auto m = mPair.second;
-        if (m->drawable) {
+        if (m->m_mesh) {
             bool visible = true;
-            switch(m->drawable->frustum_cull) {
+            switch(m->m_mesh->frustum_cull) {
                 case FrustumCull::None:
                     break;
                 case FrustumCull::Sphere:
-                    visible = intersect(cull_frustum, m->transform *m->drawable->bounding_sphere);
+                    visible = intersect(cull_frustum, m->transform *m->m_mesh->bounding_sphere);
                     break;
                 case FrustumCull::AABB:
-                    visible = intersect(cull_frustum, m->transform * m->drawable->bounding_box);
+                    visible = intersect(cull_frustum, m->transform * m->m_mesh->bounding_box);
                     break;
             }
             if (!visible && culling_enabled) {
@@ -875,13 +840,13 @@ void GLRenderer::render(const Camera &camera) {
 
             int32_t mat_id_override = m->material_override ? m->material_override->get_material_id() : -1;
 
-            draw(m->drawable.get(), geometry_program, true, m->gl_vao, mat_id_override);
+            draw(m->m_mesh.get(), geometry_program, true, m->gl_vao, mat_id_override);
         }
     }
-    geometry_program.program.unbind();
+    geometry_program.program->unbind();
 
     // render instanced geometry
-    geometry_program_instanced.program.use();
+    geometry_program_instanced.program->use();
     // bind global shader UBO to shader
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
@@ -893,7 +858,7 @@ void GLRenderer::render(const Camera &camera) {
             draw(m->m_mesh.get(), geometry_program_instanced, true, m->gl_vao, -1, m->n_instances);
         }
     }
-    geometry_program_instanced.program.unbind();
+    geometry_program_instanced.program->unbind();
 
     // terrain render
     const RenderState current_state{
@@ -925,7 +890,7 @@ void GLRenderer::render(const Camera &camera) {
     glDisable(GL_DEPTH_TEST); // overdraw
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL );
     
-    ssao_program.program.use();
+    ssao_program.program->use();
 
     if (ssao_p_loc >= 0) {
         glActiveTexture(GL_TEXTURE0);
@@ -958,7 +923,7 @@ void GLRenderer::render(const Camera &camera) {
     normals->unbind();
     ssao_kernel_noise->unbind();
 
-    ssao_program.program.unbind();
+    ssao_program.program->unbind();
     ssao_buffer.unbind();
 
     glPopDebugGroup();
@@ -989,7 +954,7 @@ void GLRenderer::render(const Camera &camera) {
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     // setup lighting program
-    directional_lighting_program.program.use();
+    directional_lighting_program.program->use();
     shader_globals.bind_range(globals_desc.location_index);
     lighting_materials.bind_range(lighting_materials_desc.location_index);
 
@@ -1049,10 +1014,10 @@ void GLRenderer::render(const Camera &camera) {
     ssao_kernel_color->unbind();
     shadow_depth_tex->unbind();
 
-    directional_lighting_program.program.unbind();
+    directional_lighting_program.program->unbind();
 
     // pointlight pass
-    point_lighting_program.program.use();
+    point_lighting_program.program->use();
     shader_globals.bind_range(globals_desc.location_index);
 
     if (plp_n_location >= 0) {
@@ -1074,7 +1039,7 @@ void GLRenderer::render(const Camera &camera) {
     }
 
     int index = 0;
-    std::vector<PointLight> point_light_data(point_lights.size());
+    std::vector<PointLightData> point_light_data(point_lights.size());
     for (auto& litr : point_lights) {
         auto& l = litr.second;
 
@@ -1087,7 +1052,7 @@ void GLRenderer::render(const Camera &camera) {
         (-linear +  sqrtf(linear * linear - 4 * quadratic * (constant - (256.0 / 5.0) * lightMax))) 
         / (2 * quadratic);
 
-        PointLight light_data;
+        PointLightData light_data;
         light_data.position = l.position;
         light_data.radius = radius;
         light_data.lightColor = l.color;
@@ -1112,7 +1077,7 @@ void GLRenderer::render(const Camera &camera) {
     albedo_spec->unbind();
     material_tex->unbind();
 
-    point_lighting_program.program.unbind();
+    point_lighting_program.program->unbind();
 
     // sky program
     // draw into non lit pixels in hdr fbo
@@ -1126,15 +1091,15 @@ void GLRenderer::render(const Camera &camera) {
 
 
     float time = (float)glfwGetTime() - 0.0f;
-    glProgramUniform1f(sky_program.program.getHandle(), sky_time_loc, time*cloud_speed);
-    glProgramUniform1f(sky_program.program.getHandle(), sky_sun_position_loc, sun_position);
-    glProgramUniform1f(sky_program.program.getHandle(), sky_output_mul_loc, sky_brightness);
+    glProgramUniform1f(sky_program.program->getHandle(), sky_time_loc, time*cloud_speed);
+    glProgramUniform1f(sky_program.program->getHandle(), sky_sun_position_loc, sun_position);
+    glProgramUniform1f(sky_program.program->getHandle(), sky_output_mul_loc, sky_brightness);
 
-    sky_program.program.use();
-    shader_globals.bind_range(globals_desc.location_index);
+    sky_program.program->use();
+    shader_globals->bind_range(globals_desc.location_index);
     draw_screen_space_triangle();
 
-    sky_program.program.unbind();
+    sky_program.program->unbind();
     lighting_buffer.unbind();
 
     glPopDebugGroup();
@@ -1167,12 +1132,12 @@ void GLRenderer::render(const Camera &camera) {
 
     draw_screen_space_triangle();
 
-    post_fx_bloom_combine_program.program.unbind();
+    post_fx_bloom_combine_program.program->unbind();
     bloom_thresh_combine.unbind();
 
     // bloom blur
     int bloom_output_tex_ind = 0;
-    post_fx_bloom_blur.program.use();
+    post_fx_bloom_blur.program->use();
     for (int i = 0; i < bloom_iterations * 2; i++) {
         bloom_output_tex_ind = (i + 1) % 2;
 
@@ -1188,7 +1153,7 @@ void GLRenderer::render(const Camera &camera) {
 
         bloom_blur_swap_fbo[bloom_output_tex_ind].unbind();
     }
-    post_fx_bloom_blur.program.unbind();
+    post_fx_bloom_blur.program->unbind();
 
     glPopDebugGroup();
     glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, __LINE__, -1, "Post Pass");
@@ -1198,7 +1163,7 @@ void GLRenderer::render(const Camera &camera) {
     glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    post_fx_program.program.use();
+    post_fx_program.program->use();
 
     gl::glUniformf(exposure, post_fx_exposure_loc);
     gl::glUniformf(bloom_falloff, post_fx_bloom_falloff_loc);
@@ -1220,7 +1185,7 @@ void GLRenderer::render(const Camera &camera) {
 
     hdr_texture->unbind();
 
-    post_fx_program.program.unbind();
+    post_fx_program.program->unbind();
 
     glPopDebugGroup();
 

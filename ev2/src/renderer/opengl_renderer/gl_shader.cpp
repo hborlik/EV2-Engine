@@ -9,7 +9,7 @@
  * 
  */
 
-#include "engine.hpp"
+#include "core/engine.hpp"
 #include "gl_shader.hpp"
 #include "resource.hpp"
 

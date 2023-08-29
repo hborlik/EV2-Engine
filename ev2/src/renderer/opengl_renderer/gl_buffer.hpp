@@ -32,7 +32,7 @@ public:
         copy_data(data);
     }
 
-    GLBuffer(gl::BindingTarget target, gl::Usage usage, std::size_t size, const void* data) : target{target}, usage{usage} {
+    GLBuffer(gl::BindingTarget target, gl::Usage usage, const void* data, std::size_t size) : target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
         copy_data(size, data);
     }
@@ -47,6 +47,8 @@ public:
     GLBuffer(GLBuffer&& o) = default;
     GLBuffer& operator=(GLBuffer&& o) = default;
 
+    void sub_bytes(const void* data, std::size_t size, std::size_t offset) override;
+
     /**
      * @brief Allocate buffer large enough to contain all data in source and copy data into buffer.
      * 
@@ -59,21 +61,11 @@ public:
     void copy_data(std::size_t size, const void* data);
 
     /**
-     * @brief Update part of data in buffer. Buffer should have data allocated before call is made to sub data
-     * 
-     * @tparam T 
-     * @param source 
-     * @param offset 
-     */
-    // template<typename T>
-    // void sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride);
-
-    /**
      * @brief Allocate buffer data
      * 
      * @param bytes number of bytes to allocate
      */
-    void allocate(std::size_t bytes);
+    void allocate(std::size_t bytes) override;
 
     /**
      * @brief Bind this buffer to its target
@@ -148,22 +140,11 @@ void GLBuffer::copy_data(const std::vector<T>& source) {
     }
 }
 
-/**
- * @brief update array, offset and size must define a range lying entirely within the buffer object's data store
- * 
- * @tparam T 
- * @param source 
- * @param offset 
- * @param stride 
- */
-// template<typename T>
-// void GLBuffer::sub_data(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
-//     if(!source.empty()) {
-//         for(size_t i = 0; i < source.size(); i++) {
-//             GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset + i * stride, sizeof(T), &source[i]));
-//         }
-//     }
-// }
+void GLBuffer::sub_bytes(const void* data, std::size_t size, std::size_t offset) {
+    if(data && size > 0) {
+        GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, size, data));
+    }
+}
 
 } // ev2
 

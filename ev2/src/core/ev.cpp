@@ -15,7 +15,7 @@
 #include "renderer/renderer.hpp"
 #include "resource.hpp"
 #include "physics.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 
 #include "ui/imgui.hpp"
 #include "ui/imgui_impl_glfw.hpp"
@@ -42,7 +42,7 @@ shader_error::shader_error(std::string shaderName, std::string errorString) noex
 
 void EV2_init(const Args& args, const std::filesystem::path& asset_path, const std::filesystem::path& log_file_dir) {
     Log::Init();
-    Engine::initialize(asset_path, log_file_dir);
+    Engine::initialize<Engine>(asset_path, log_file_dir);
 
     #if defined(IMGUI_IMPL_OPENGL_ES2)
         // GL ES 2.0 + GLSL 100
@@ -76,10 +76,10 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
     ImGui_ImplOpenGL3_Init(glsl_version);
     
     glm::ivec2 screen_size = window::getWindowSize();
-    renderer::GLRenderer::initialize(screen_size.x, screen_size.y);
-    ResourceManager::initialize(asset_path);
+    renderer::Renderer::initialize<GLRenderer>(screen_size.x, screen_size.y);
+    ResourceManager::initialize<ResourceManager>(asset_path);
     renderer::GLRenderer::get_singleton().init();
-    Physics::initialize();
+    Physics::initialize<Physics>();
 
     EV_INFO("Initialized");
 }
@@ -87,7 +87,7 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
 void EV2_shutdown() {
     Physics::shutdown();
     ResourceManager::shutdown();
-    renderer::GLRenderer::shutdown();
+    renderer::Renderer::shutdown();
 
     EV_INFO("Shutdown");
 }

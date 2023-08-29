@@ -5,7 +5,7 @@
 #include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/camera.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 #include "resource.hpp"
 
 #define CBT_IMPLEMENTATION

@@ -28,9 +28,9 @@ protected:
     ~Singleton() = default;
 
 public:
-    template<typename... _Args>
+    template<typename Derived, typename... _Args>
     static void initialize(_Args&&... __args) {
-        m_singleton = std::unique_ptr<T>(new T(std::forward<_Args>(__args)...));
+        m_singleton = std::unique_ptr<T>(new Derived(std::forward<_Args>(__args)...));
     }
 
     static void shutdown() {

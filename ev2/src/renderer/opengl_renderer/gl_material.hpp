@@ -10,6 +10,7 @@
 #include "core/assert.hpp"
 
 #include "renderer/material.hpp"
+#include "gl_texture.hpp"
 
 namespace ev2::renderer {
 
@@ -39,14 +40,46 @@ struct GLMaterial : public Material {
     void set_sheen(float s) override;
     void set_sheenTint(float st) override;
 
-    void set_ambient_tex(std::shared_ptr<Texture> tex) override { ambient_tex = tex; }
-    void set_diffuse_tex(std::shared_ptr<Texture> tex) override { diffuse_tex = tex; }
-    void set_specular_tex(std::shared_ptr<Texture> tex) override { specular_tex = tex; }
-    void set_specular_highlight_tex(std::shared_ptr<Texture> tex) override { specular_highlight_tex = tex; }
-    void set_bump_tex(std::shared_ptr<Texture> tex) override { bump_tex = tex; }
-    void set_displacement_tex(std::shared_ptr<Texture> tex) override { displacement_tex = tex; }
-    void set_alpha_tex(std::shared_ptr<Texture> tex) override { alpha_tex = tex; }
-    void set_reflection_tex(std::shared_ptr<Texture> tex) override { reflection_tex = tex; }
+    void set_ambient_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        ambient_tex = gl_tex;
+    }
+
+    void set_diffuse_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        diffuse_tex = gl_tex;
+    }
+
+    void set_specular_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        specular_tex = gl_tex;
+    }
+
+    void set_specular_highlight_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        specular_highlight_tex = gl_tex;
+    }
+
+    void set_bump_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        bump_tex = gl_tex;
+    }
+
+    void set_displacement_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        displacement_tex = gl_tex;
+    }
+
+    void set_alpha_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        alpha_tex = gl_tex;
+    }
+
+    void set_reflection_tex(std::shared_ptr<Texture> tex) override {
+        auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
+        reflection_tex = gl_tex;
+    }
+
 
 
     int32_t get_material_id() const noexcept { return material_id; }
@@ -54,14 +87,14 @@ struct GLMaterial : public Material {
     bool is_registered() noexcept { return material_id != -1 && material_slot != -1; }
 
 public:
-    std::shared_ptr<Texture> ambient_tex;             // map_Ka
-    std::shared_ptr<Texture> diffuse_tex;             // map_Kd
-    std::shared_ptr<Texture> specular_tex;            // map_Ks
-    std::shared_ptr<Texture> specular_highlight_tex;  // map_Ns
-    std::shared_ptr<Texture> bump_tex;                // map_bump, map_Bump, bump
-    std::shared_ptr<Texture> displacement_tex;        // disp
-    std::shared_ptr<Texture> alpha_tex;               // map_d
-    std::shared_ptr<Texture> reflection_tex;          // refl
+    std::shared_ptr<GLTexture> ambient_tex;             // map_Ka
+    std::shared_ptr<GLTexture> diffuse_tex;             // map_Kd
+    std::shared_ptr<GLTexture> specular_tex;            // map_Ks
+    std::shared_ptr<GLTexture> specular_highlight_tex;  // map_Ns
+    std::shared_ptr<GLTexture> bump_tex;                // map_bump, map_Bump, bump
+    std::shared_ptr<GLTexture> displacement_tex;        // disp
+    std::shared_ptr<GLTexture> alpha_tex;               // map_d
+    std::shared_ptr<GLTexture> reflection_tex;          // refl
 
 private:
     friend class GLRenderer;

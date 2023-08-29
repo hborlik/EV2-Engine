@@ -1,5 +1,7 @@
 #include "filesystem.hpp"
 
+#include "core/engine.hpp"
+
 namespace ev2 {
 
 auto read_file(const std::filesystem::path& path) -> std::string {
@@ -22,7 +24,7 @@ auto read_file(const std::filesystem::path& path) -> std::string {
 }
 
 std::string Filesystem::get_shader_content(const std::filesystem::path& path) {
-    return read_file(asset_path / path);
+    return read_file(Engine::get_singleton().asset_path / path);
 }
 
 }

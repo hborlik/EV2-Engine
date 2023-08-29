@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-struct Foo : public ev2::ReferenceCounted<Foo> {
+struct Foo : public ev2::ReferenceCountInherit<Foo> {
 
 };
 

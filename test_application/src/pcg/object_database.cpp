@@ -10,7 +10,7 @@
 
 #include "io/serializers.hpp"
 #include "pcg/wfc.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 
 namespace ev2::pcg {
 

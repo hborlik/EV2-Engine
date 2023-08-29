@@ -34,7 +34,7 @@ public:
 };
 
 template<typename T>
-class ReferenceCounted;
+class ReferenceCountInherit;
 
 template<typename T>
 struct Ref {
@@ -47,7 +47,7 @@ struct Ref {
 
     Ref(std::nullptr_t) noexcept : Ref() {}
 
-    explicit Ref(ReferenceCounted<T>* obj) : _ref{dynamic_cast<T*>(obj)} {
+    explicit Ref(ReferenceCountInherit<T>* obj) : _ref{dynamic_cast<T*>(obj)} {
         if (_ref)
             _ref->increment();
     }
@@ -182,13 +182,15 @@ Ref<T> make_referenced(Args&&... args) {
     return Ref<T>{obj};
 }
 
+// TODO: look at https://www.fluentcpp.com/2017/09/12/how-to-return-a-smart-pointer-and-use-covariance/
+// to modify base class to support covariant Ref<T> returns
 template<typename T>
-class ReferenceCounted : public ReferenceCountedBase {
+class ReferenceCountInherit : public ReferenceCountedBase {
 public:
     using RefType = Ref<T>;
 
-    ReferenceCounted() = default;
-    virtual ~ReferenceCounted() = default;
+    ReferenceCountInherit() = default;
+    virtual ~ReferenceCountInherit() = default;
 
     Ref<T> get_ref() noexcept {return Ref<T>{this};}
 

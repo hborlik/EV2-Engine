@@ -10,7 +10,6 @@
 #include <memory>
 #include "evpch.hpp"
 
-#include "core/singleton.hpp"
 #include "renderer/shader_builder.hpp"
 #include "renderer/camera.hpp"
 #include "renderer/renderer.hpp"
@@ -32,14 +31,16 @@ using mat_slot_t = uint8_t;
  * @brief light id
  * 
  */
-struct GLLight : public Light {
-    enum LightType {
-        Point,
-        Directional
-    } _type;
-    int32_t _v = -1;
+class GLPointLight : public PointLight {
+public:
+    void set_color(const glm::vec3& color) override;
+    void set_position(const glm::vec3& position) override;
+    void set_k(const glm::vec3& k) override;
+    bool is_valid() const noexcept {return light_id != -1;}
 
-    bool is_valid() const noexcept {return _v != -1;}
+
+    int32_t light_id = -1;
+    class GLRenderer* m_owner = nullptr;
 };
 
 struct LightData {
@@ -48,7 +49,7 @@ struct LightData {
     glm::vec3 k{0.0, 0.0, 2.5}; // k_c, k_l, k_q
 };
 
-struct DirectionalLight {
+struct DirectionalLightData {
     glm::vec3 color     = {1, 1, 1};
     glm::vec3 ambient   = {0.05, 0.05, 0.05};
     glm::vec3 position = {0, -1, 0};
@@ -103,7 +104,8 @@ inline uint32_t unpack_uvec3_to_id(const glm::uvec3& vec) noexcept {
     return id;
 }
 
-struct GLDrawable : public Drawable {
+class GLDrawable : public Drawable {
+public:
     ~GLDrawable() {
         if (gl_vao != 0)
             glDeleteVertexArrays(1, &gl_vao);
@@ -111,9 +113,8 @@ struct GLDrawable : public Drawable {
 
     void set_mesh(std::shared_ptr<Mesh> mesh) override;
     void set_material(std::shared_ptr<Material> material) override;
-    void set_transform() override;
+    void set_transform(const glm::mat4& transform) override;
 
-    void set_material_override(std::shared_ptr<Material> material);
     void set_picking_id(std::size_t picking_id);
 
 private:
@@ -131,19 +132,21 @@ public:
 private:
     friend class GLRenderer;
 
-    GLDrawable() = default;
+    GLDrawable(class GLRenderer* owner) : m_owner{owner} {}
 
+    class GLRenderer* m_owner = nullptr;
     std::shared_ptr<GLMaterial>               material_override{};
 
     int32_t                     id = -1;
-    std::shared_ptr<Mesh>       m_mesh = nullptr;
+    std::shared_ptr<GLMesh>     m_mesh = nullptr;
     GLuint                      gl_vao = 0;
 
     glm::uvec3 id_color{};
     std::size_t m_picking_id{};
 };
 
-struct GLInstancedDrawable : public InstancedDrawable {
+class GLInstancedDrawable : public InstancedDrawable {
+public:
     GLInstancedDrawable(GLInstancedDrawable &&o) = default;
 
     GLInstancedDrawable& operator=(GLInstancedDrawable &&o) = default;
@@ -153,7 +156,7 @@ struct GLInstancedDrawable : public InstancedDrawable {
             glDeleteVertexArrays(1, &gl_vao);
     }
 
-    void set_mesh(std::shared_ptr<Mesh> drawable) override;
+    void set_mesh(std::shared_ptr<Mesh> mesh) override;
     void set_material(std::shared_ptr<Material> material) override;
     void set_transform() override;
 
@@ -168,12 +171,12 @@ private:
     GLInstancedDrawable() = default;
 
     int32_t                     id = -1;
-    std::shared_ptr<Mesh>       m_mesh = nullptr;
+    std::shared_ptr<GLMesh>     m_mesh = nullptr;
     GLuint                      gl_vao = 0;
 };
 
 using ModelInstancePtr = std::shared_ptr<GLDrawable>;
-using InstancedDrawablePtr = std::shared_ptr<InstancedDrawable>;
+using InstancedDrawablePtr = std::shared_ptr<GLInstancedDrawable>;
 
 class RenderPass {
 public:
@@ -183,7 +186,7 @@ public:
     virtual void render(const RenderState& state) = 0;
 };
 
-class GLRenderer : public Singleton<GLRenderer>, public Renderer {
+class GLRenderer : public Renderer {
 public:
 
     struct ProgramData {
@@ -210,27 +213,22 @@ public:
 
     void init();
 
-    std::shared_ptr<Mesh> make_mesh() override;
+    std::shared_ptr<Mesh> make_mesh(const Model* model) override;
     std::shared_ptr<Material> make_material() override;
-    std::shared_ptr<Light> make_light() override;
+    std::shared_ptr<PointLight> make_point_light() override;
+    std::shared_ptr<DirectionalLight> make_directional_light() override;
     std::shared_ptr<Texture> make_texture() override;
     std::shared_ptr<Drawable> make_drawable() override;
     std::shared_ptr<InstancedDrawable> make_instanced_drawable() override;
 
-    LID create_point_light();
-    LID create_directional_light();
-    void set_light_position(LID lid, const glm::vec3& position);
-    void set_light_color(LID lid, const glm::vec3& color);
-    void set_light_ambient(LID lid, const glm::vec3& color);
-    void destroy_light(LID lid);
+    void set_resolution(uint32_t width, uint32_t height) override;
 
-    void render(const Camera &camera);
+    void render(const Camera &camera) override;
 
     void set_wireframe(bool enable);
     void set_debug_draw(bool enable);
     std::size_t read_obj_fb(const glm::uvec2& screen_point);
 
-    void set_resolution(uint32_t width, uint32_t height);
     float get_aspect_ratio() const noexcept {return width / (float)height;}
 
     void draw_screen_space_triangle();
@@ -270,8 +268,9 @@ public:
 private:
     friend GLMaterial;
     friend GLDrawable;
+    friend GLPointLight;
 
-    void draw(Mesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
+    void draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
     void update_material(mat_slot_t material_slot, const MaterialData& material);
 
@@ -288,9 +287,11 @@ private:
 
     void destroy_model_instance(GLDrawable* model);
 
+    void destroy_light(GLPointLight* light);
+
     void update_picking_id_model_instance(GLDrawable* drawable);
 
-    void destroy_instanced_drawable(InstancedDrawable* drawable);
+    void destroy_instanced_drawable(GLInstancedDrawable* drawable);
 
 public:
     float exposure      = .8f;
@@ -336,7 +337,7 @@ private:
     uint32_t next_model_instance_id = 100;
 
     // instances of a drawable with instanced draw calls
-    std::unordered_map<int32_t, InstancedDrawable*> instanced_drawables;
+    std::unordered_map<int32_t, GLInstancedDrawable*> instanced_drawables;
     uint32_t next_instanced_drawable_id = 100;
 
     // picking id map small hash to original id
@@ -350,8 +351,8 @@ private:
 
     // lights
     std::unordered_map<uint32_t, LightData> point_lights;
-    std::unique_ptr<Buffer> point_light_data_buffer;
-    std::unordered_map<uint32_t, DirectionalLight> directional_lights;
+    std::unique_ptr<GLBuffer> point_light_data_buffer;
+    std::unordered_map<uint32_t, DirectionalLightData> directional_lights;
     int32_t next_light_id = 1000;
     int32_t shadow_directional_light_id = -1;
 
@@ -420,7 +421,7 @@ private:
     // texture in the 0 index is used for the bloom combined output
     std::array<std::shared_ptr<GLTexture>, 2> bloom_blur_swap_tex;
 
-    Buffer shader_globals;
+    GLBuffer shader_globals;
     ProgramUniformBlockDescription globals_desc;
     struct GlobalsOffsets {
         int P_ind;
@@ -432,10 +433,10 @@ private:
         int CameraDir_ind;
     } goffsets;
 
-    Buffer lighting_materials;
+    GLBuffer lighting_materials;
     ProgramUniformBlockDescription lighting_materials_desc;
 
-    Buffer ssao_kernel_buffer;
+    GLBuffer ssao_kernel_buffer;
     ProgramUniformBlockDescription ssao_kernel_desc;
 
     uint32_t width, height;

@@ -104,7 +104,7 @@ public:
     void set_color(const glm::vec3& color);
 
 private:
-    std::shared_ptr<renderer::Light> lid{};
+    std::shared_ptr<renderer::PointLight> lid{};
 };
 
 class DirectionalLightNode : public Node {
@@ -122,7 +122,7 @@ public:
     void set_ambient(const glm::vec3& color);
 
 private:
-    std::shared_ptr<renderer::Light> lid{};
+    std::shared_ptr<renderer::PointLight> lid{};
 };
 
 }

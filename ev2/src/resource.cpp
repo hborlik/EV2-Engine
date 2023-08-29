@@ -4,7 +4,7 @@
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/renderer.hpp"
 #include "io/serializers.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 
 #include <glm/glm.hpp>
 

@@ -18,7 +18,7 @@
 
 namespace ev2 {
 
-class Object : public ReferenceCounted<Object> {
+class Object : public ReferenceCountInherit<Object> {
 protected:
     Object();
 public:

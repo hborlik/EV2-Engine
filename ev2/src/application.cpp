@@ -12,7 +12,7 @@
 namespace ev2 {
 
 Application::Application() : m_terrain_renderer(std::make_unique<renderer::TerrainRenderer>()){
-    renderer::GLRenderer::get_singleton().add_pass(m_terrain_renderer.get());
+    // renderer::Renderer::get_singleton().add_pass(m_terrain_renderer.get());
 }
 
 void Application::process(float dt) {
@@ -49,7 +49,7 @@ int Application::run() {
 
         auto camera_node = get_current_camera();
 
-        renderer::GLRenderer::get_singleton().render(camera_node->get_camera()); // render scene
+        renderer::Renderer::get_singleton().render(camera_node->get_camera()); // render scene
 
         imgui();
         dt = float(window::getFrameTime());
@@ -89,8 +89,8 @@ void Application::on_mouse_button(int32_t mouse_x, int32_t mouse_y, int32_t scro
 }
 
 void Application::on_window_size_change(int32_t width, int32_t height) {
-    if (ev2::renderer::GLRenderer::is_initialized())
-        ev2::renderer::GLRenderer::get_singleton().set_resolution(width, height);
+    if (ev2::renderer::Renderer::is_initialized())
+        ev2::renderer::Renderer::get_singleton().set_resolution(width, height);
     window_width = width;
     window_height = height;
 }

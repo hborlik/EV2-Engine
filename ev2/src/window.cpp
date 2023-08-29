@@ -10,7 +10,7 @@
 #include "core/ev.hpp"
 #include "input.hpp"
 #include "application.hpp"
-#include "engine.hpp"
+#include "core/engine.hpp"
 
 #define EV_GL_MIN_SEVERITY GL_DEBUG_SEVERITY_LOW
 #define EV_GL_ALLOW_NOTIFICATIONS false
