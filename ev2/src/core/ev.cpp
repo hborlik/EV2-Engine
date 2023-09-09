@@ -17,6 +17,8 @@
 #include "physics.hpp"
 #include "core/engine.hpp"
 
+#include "renderer/opengl_renderer/gl_renderer.hpp"
+
 #include "ui/imgui.hpp"
 #include "ui/imgui_impl_glfw.hpp"
 #include "ui/imgui_impl_opengl3.hpp"
@@ -76,9 +78,9 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
     ImGui_ImplOpenGL3_Init(glsl_version);
     
     glm::ivec2 screen_size = window::getWindowSize();
-    renderer::Renderer::initialize<GLRenderer>(screen_size.x, screen_size.y);
+    renderer::Renderer::initialize<renderer::GLRenderer>(screen_size.x, screen_size.y);
     ResourceManager::initialize<ResourceManager>(asset_path);
-    renderer::GLRenderer::get_singleton().init();
+    renderer::Renderer::get_singleton().init();
     Physics::initialize<Physics>();
 
     EV_INFO("Initialized");

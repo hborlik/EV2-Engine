@@ -10,10 +10,12 @@
 #include "evpch.hpp"
 
 #include "renderer/renderer.hpp"
-#include "renderer/opengl_renderer/render_state.hpp"
-#include "renderer/opengl_renderer/gl_shader.hpp"
 #include "renderer/material.hpp"
 #include "io/image.hpp"
+
+#include "renderer/opengl_renderer/gl_renderer.hpp"
+#include "renderer/opengl_renderer/render_state.hpp"
+#include "renderer/opengl_renderer/gl_shader.hpp"
 
 namespace ev2::renderer {
 

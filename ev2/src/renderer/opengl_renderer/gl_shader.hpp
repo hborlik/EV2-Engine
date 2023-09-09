@@ -39,13 +39,13 @@ constexpr gl::DataType  BiTangentAttributeType  = gl::DataType::VEC3F;
 const std::string       TangentAttributeName    = "Tangent";
 constexpr gl::DataType  TangentAttributeType    = gl::DataType::VEC3F;
 
-constexpr uint32_t VERTEX_BINDING_LOCATION      = 0;
-constexpr uint32_t NORMAL_BINDING_LOCATION      = 1;
-constexpr uint32_t COLOR_BINDING_LOCATION       = 2;
-constexpr uint32_t TEXCOORD_BINDING_LOCATION    = 3;
-constexpr uint32_t TANGENT_BINDING_LOCATION     = 5;
-constexpr uint32_t BITANGENT_BINDING_LOCATION   = 6;
-constexpr uint32_t INSTANCE_BINDING_LOCATION    = 7;
+constexpr int32_t VERTEX_BINDING_LOCATION      = 0;
+constexpr int32_t NORMAL_BINDING_LOCATION      = 1;
+constexpr int32_t COLOR_BINDING_LOCATION       = 2;
+constexpr int32_t TEXCOORD_BINDING_LOCATION    = 3;
+constexpr int32_t TANGENT_BINDING_LOCATION     = 5;
+constexpr int32_t BITANGENT_BINDING_LOCATION   = 6;
+constexpr int32_t INSTANCE_BINDING_LOCATION    = 7;
 
 const std::unordered_map<std::string, uint32_t> AttributeBindings {
     std::make_pair("POSITION",  VERTEX_BINDING_LOCATION),
@@ -58,7 +58,7 @@ const std::unordered_map<std::string, uint32_t> AttributeBindings {
 
 inline uint32_t glBindingLocation(const std::string& attribute_name) {return AttributeBindings.at(attribute_name);}
 
-const std::unordered_map<AttributeLabel, uint32_t> DefaultBindings {
+const std::unordered_map<AttributeLabel, int32_t> DefaultBindings {
     std::make_pair(AttributeLabel::Vertex,    VERTEX_BINDING_LOCATION),
     std::make_pair(AttributeLabel::Normal,    NORMAL_BINDING_LOCATION),
     std::make_pair(AttributeLabel::Color,     COLOR_BINDING_LOCATION),

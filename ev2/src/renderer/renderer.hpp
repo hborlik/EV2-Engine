@@ -36,7 +36,7 @@ public:
 
     virtual void set_color(const glm::vec3& color) = 0;
     virtual void set_position(const glm::vec3& position) = 0;
-    virtual void set_ambient(const glm::vec3& k) = 0;
+    virtual void set_ambient(const glm::vec3& ambient) = 0;
 };
 
 class Drawable {
@@ -59,6 +59,8 @@ public:
 
 class Renderer : public Singleton<Renderer> {
 public:
+    virtual void init() = 0;
+
     virtual std::shared_ptr<Mesh> make_mesh(const Model* model = nullptr) = 0;
     virtual std::shared_ptr<Material> make_material() = 0;
     virtual std::shared_ptr<PointLight> make_point_light() = 0;

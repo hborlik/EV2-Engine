@@ -10,16 +10,17 @@
 #include "evpch.hpp"
 
 #include "renderer/buffer.hpp"
+#include "renderer/vertex_buffer_layout.hpp"
 
 namespace ev2::renderer {
 
 struct VertexBufferAccessor {
-    int         buffer_id   = -1;     // buffer in VertexBuffer
-    size_t      byte_offset = 0;
+    int         buffer_id   = -1;       // buffer in VertexBuffer::buffers
+    size_t      byte_offset = 0;        // from beginning of buffer
     bool        normalized  = false;
     ShaderDataType type     = ShaderDataType::Float;
-    size_t      count       = 0;       // required
-    size_t      stride      = 0;
+    size_t      count       = 0;        // number of elements
+    size_t      stride      = 0;        // bytes between consecutive elements
 };
 
 class VertexBuffer {
@@ -34,7 +35,11 @@ public:
         return buffers.at(buffer_id);
     }
 
-    inline void add_accessor(AttributeLabel accessor, uint32_t buffer_id,
+    const std::shared_ptr<Buffer> get_buffer(uint32_t buffer_id) const {
+        return buffers.at(buffer_id);
+    }
+
+    void add_accessor(AttributeLabel accessor, uint32_t buffer_id,
                              size_t byte_offset, bool normalized,
                              ShaderDataType type, size_t count, size_t stride) {
         accessors.insert_or_assign(
@@ -42,7 +47,7 @@ public:
                                            normalized, type, count, stride});
     }
 
-    inline VertexBufferAccessor& get_accessor(AttributeLabel accessor) {
+    VertexBufferAccessor& get_accessor(AttributeLabel accessor) {
         return accessors.at(accessor);
     }
 
@@ -54,7 +59,16 @@ public:
      */
     void add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout);
 
-    static VertexBuffer vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors);
+
+    /**
+     * @brief vertex buffer for three separate attribute buffers
+     * 
+     * @param vertices 
+     * @param normals 
+     * @param vertex_colors 
+     * @return std::unique_ptr<VertexBuffer> 
+     */
+    static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors);
     
     /**
      * @brief buffer format pos(3float), normal(3float), color(3float), texcoord(2float)

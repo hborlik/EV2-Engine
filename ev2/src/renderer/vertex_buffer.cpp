@@ -17,8 +17,8 @@ void VertexBuffer::add_accessors_from_layout(int buffer_id, const VertexBufferLa
     }
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors) {
-    VertexBuffer vb;
+std::unique_ptr<VertexBuffer> VertexBuffer::vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors) {
+    std::unique_ptr<VertexBuffer> vb = std::make_unique<VertexBuffer>();
 
     GLuint gl_vao;
     glGenVertexArrays(1, &gl_vao);
@@ -52,10 +52,10 @@ VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffe
 
     constexpr std::size_t vec3Size = sizeof(glm::vec3);
 
-    vb.add_accessor(AttributeLabel::Vertex,   0, 0         , false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Normal,   0, vec3Size*1, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Color,    0, vec3Size*2, false, gl::DataType::FLOAT, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Texcoord, 0, vec3Size*3, false, gl::DataType::FLOAT, 2, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Vertex,   0, 0         , false, ShaderDataType::Float, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Normal,   0, vec3Size*1, false, ShaderDataType::Float, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Color,    0, vec3Size*2, false, ShaderDataType::Float, 3, sizeof(float) * 11);
+    vb.add_accessor(AttributeLabel::Texcoord, 0, vec3Size*3, false, ShaderDataType::Float, 2, sizeof(float) * 11);
 
     vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
     return vb;
@@ -150,65 +150,6 @@ std::pair<VertexBuffer, int32_t> VertexBuffer::vbInitDefault() {
     GLuint gl_vao;
     glGenVertexArrays(1, &gl_vao);
     return std::make_pair(std::move(vb), gl_vao);
-}
-
-GLuint VertexBuffer::gen_vao_for_attributes(const std::unordered_map<AttributeLabel, uint32_t>& attributes, const Buffer* instance_buffer) {
-    GLuint vao_id;
-    glGenVertexArrays(1, &vao_id);
-    glBindVertexArray(vao_id);
-
-    for (const auto& l : attributes) {
-        const int binding = l.second;
-        const AttributeLabel accessor_id = l.first;
-
-        auto accessor_itr = accessors.find(accessor_id);
-        if(accessor_itr != accessors.end()) {
-            VertexBufferAccessor& vba = accessor_itr->second;
-        
-            auto buffer_itr= buffers.find(vba.buffer_id);
-            assert(buffer_itr != buffers.end());
-
-            buffer_itr->second->bind();
-            glEnableVertexAttribArray(binding);
-            glVertexAttribPointer(binding, vba.count, (GLenum)vba.type, vba.normalized ? GL_TRUE : GL_FALSE, vba.stride, (void*)vba.byte_offset);
-            buffer_itr->second->unbind();
-        }
-            // std::cout << "could not find accessor for " << (int)accessor_id << std::endl;
-    }
-
-    if (indexed != -1) {
-        buffers.at(indexed)->bind();
-    }
-
-    if (instance_buffer != nullptr) {
-        // bind instance buffer
-        instance_buffer->bind();
-
-        // mat4 instance info, note: max size for a vertex attribute is a vec4
-        constexpr std::size_t vec4Size = sizeof(glm::vec4);
-        const int binding = mat_spec::INSTANCE_BINDING_LOCATION;
-        glEnableVertexAttribArray(binding);
-        glVertexAttribPointer(binding, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)0);
-
-        glEnableVertexAttribArray(binding + 1);
-        glVertexAttribPointer(binding + 1, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size));
-
-        glEnableVertexAttribArray(binding + 2);
-        glVertexAttribPointer(binding + 2, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 2));
-
-        glEnableVertexAttribArray(binding + 3);
-        glVertexAttribPointer(binding + 3, 4, GL_FLOAT, GL_FALSE, 4 * vec4Size, (void*)(vec4Size * 3));
-
-        glVertexAttribDivisor(binding,  1);
-        glVertexAttribDivisor(binding+1, 1);
-        glVertexAttribDivisor(binding+2, 1);
-        glVertexAttribDivisor(binding+3, 1);
-
-        instance_buffer->unbind();
-    }
-
-    glBindVertexArray(0);
-    return vao_id;
 }
 
 }

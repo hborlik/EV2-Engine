@@ -46,6 +46,34 @@ void GLPointLight::set_k(const glm::vec3& k) {
     }
 }
 
+void GLDirectionalLight::set_color(const glm::vec3& color) {
+    auto& directional_lights = m_owner->directional_lights;
+    auto mi = directional_lights.find(light_id);
+    EV_CORE_ASSERT(mi != directional_lights.end(), "GLDirectionalLight invalid light_id!");
+    if (mi != directional_lights.end()) {
+        mi->second.color = color;
+    }
+}
+
+void GLDirectionalLight::set_position(const glm::vec3& position) {
+    auto& directional_lights = m_owner->directional_lights;
+    auto mi = directional_lights.find(light_id);
+    EV_CORE_ASSERT(mi != directional_lights.end(), "GLDirectionalLight invalid light_id!");
+    if (mi != directional_lights.end()) {
+        mi->second.position = position;
+    }
+}
+
+void GLDirectionalLight::set_ambient(const glm::vec3& ambient) {
+    auto& directional_lights = m_owner->directional_lights;
+    auto mi = directional_lights.find(light_id);
+    EV_CORE_ASSERT(mi != directional_lights.end(), "GLDirectionalLight invalid light_id!");
+    if (mi != directional_lights.end()) {
+        mi->second.ambient = ambient;
+    }
+}
+
+
 void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
     auto gl_mesh = std::dynamic_pointer_cast<GLMesh>(mesh);
     EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
@@ -82,10 +110,7 @@ void GLInstancedDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
     EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
     this->m_mesh = gl_mesh;
 
-    if (gl_vao != 0)
-        glDeleteVertexArrays(1, &gl_vao);
-
-    gl_vao = m_mesh->get_vertex_buffer().gen_vao_for_attributes(mat_spec::DefaultBindings, instance_transform_buffer.get());
+    gl_vao = VAOFactory::gen_vao_for_attributes(m_mesh->get_vertex_buffer().get(), m_mesh->get_index_buffer().get(), mat_spec::DefaultBindings, instance_transform_buffer.get());
 }
 
 void GLRenderer::draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {

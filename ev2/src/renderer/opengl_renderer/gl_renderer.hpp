@@ -18,6 +18,7 @@
 #include "render_state.hpp"
 #include "gl_material.hpp"
 #include "gl_mesh.hpp"
+#include "vao.hpp"
 
 #include "geometry.hpp"
 
@@ -28,7 +29,7 @@ constexpr uint16_t MAX_N_MATERIALS = 255;
 using mat_slot_t = uint8_t;
 
 /**
- * @brief light id
+ * @brief Point light interface class
  * 
  */
 class GLPointLight : public PointLight {
@@ -36,8 +37,20 @@ public:
     void set_color(const glm::vec3& color) override;
     void set_position(const glm::vec3& position) override;
     void set_k(const glm::vec3& k) override;
+
     bool is_valid() const noexcept {return light_id != -1;}
 
+    int32_t light_id = -1;
+    class GLRenderer* m_owner = nullptr;
+};
+
+class GLDirectionalLight : public DirectionalLight {
+public:
+    void set_color(const glm::vec3& color) override;
+    void set_position(const glm::vec3& position) override;
+    void set_ambient(const glm::vec3& ambient) override;
+
+    bool is_valid() const noexcept {return light_id != -1;}
 
     int32_t light_id = -1;
     class GLRenderer* m_owner = nullptr;
@@ -106,10 +119,6 @@ inline uint32_t unpack_uvec3_to_id(const glm::uvec3& vec) noexcept {
 
 class GLDrawable : public Drawable {
 public:
-    ~GLDrawable() {
-        if (gl_vao != 0)
-            glDeleteVertexArrays(1, &gl_vao);
-    }
 
     void set_mesh(std::shared_ptr<Mesh> mesh) override;
     void set_material(std::shared_ptr<Material> material) override;
@@ -139,7 +148,7 @@ private:
 
     int32_t                     id = -1;
     std::shared_ptr<GLMesh>     m_mesh = nullptr;
-    GLuint                      gl_vao = 0;
+    VAO                         gl_vao{};
 
     glm::uvec3 id_color{};
     std::size_t m_picking_id{};
@@ -150,11 +159,6 @@ public:
     GLInstancedDrawable(GLInstancedDrawable &&o) = default;
 
     GLInstancedDrawable& operator=(GLInstancedDrawable &&o) = default;
-
-    ~GLInstancedDrawable() {
-        if (gl_vao != 0)
-            glDeleteVertexArrays(1, &gl_vao);
-    }
 
     void set_mesh(std::shared_ptr<Mesh> mesh) override;
     void set_material(std::shared_ptr<Material> material) override;
@@ -172,7 +176,7 @@ private:
 
     int32_t                     id = -1;
     std::shared_ptr<GLMesh>     m_mesh = nullptr;
-    GLuint                      gl_vao = 0;
+    VAO                         gl_vao{};
 };
 
 using ModelInstancePtr = std::shared_ptr<GLDrawable>;
@@ -211,7 +215,7 @@ public:
     GLRenderer(uint32_t width, uint32_t height);
     ~GLRenderer();
 
-    void init();
+    void init() override;
 
     std::shared_ptr<Mesh> make_mesh(const Model* model) override;
     std::shared_ptr<Material> make_material() override;
@@ -269,6 +273,7 @@ private:
     friend GLMaterial;
     friend GLDrawable;
     friend GLPointLight;
+    friend GLDirectionalLight;
 
     void draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
@@ -287,7 +292,9 @@ private:
 
     void destroy_model_instance(GLDrawable* model);
 
-    void destroy_light(GLPointLight* light);
+    void destroy_point_light(GLPointLight* light);
+
+    void destroy_directional_light(GLDirectionalLight* light);
 
     void update_picking_id_model_instance(GLDrawable* drawable);
 
