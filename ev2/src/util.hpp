@@ -93,16 +93,15 @@ template<typename T>
 class non_copyable {
 public:
     non_copyable() = default;
-    non_copyable(T v) : v{std::move(v)} {}
+    explicit non_copyable(T v) : v{std::move(v)} {}
 
     non_copyable(const non_copyable&) = delete; // non construction copyable
     non_copyable& operator=(const non_copyable&) = delete; // non copyable
 
-    non_copyable(non_copyable&& o) : non_copyable() { swap(*this, o); }
-    non_copyable& operator=(non_copyable&& o) { swap(*this, o); return *this; }
+    non_copyable(non_copyable&& o) : non_copyable() { swap(*this, o); } // move construction
+    non_copyable& operator=(non_copyable&& o) { swap(*this, o); return *this; } // move assignment
 
     non_copyable& operator=(const T& o) noexcept {v = o;} // assignment from underlying type
-
     explicit operator T() const noexcept {return v;} // explicit conversion to underlying type
 
 private:
