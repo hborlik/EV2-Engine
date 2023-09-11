@@ -34,7 +34,7 @@ public:
             glDeleteVertexArrays(1, &m_handle.v);
     }
 
-    void bind() const { glBindVertexArray(m_handle); }
+    void bind() const { glBindVertexArray(m_handle.v); }
     void unbind() const { glBindVertexArray(0); }
     GLuint get_handle() const noexcept {return m_handle.v;}
 

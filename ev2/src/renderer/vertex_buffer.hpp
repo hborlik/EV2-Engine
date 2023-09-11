@@ -16,39 +16,51 @@ namespace ev2::renderer {
 
 struct VertexBufferAccessor {
     int         buffer_id   = -1;       // buffer in VertexBuffer::buffers
-    size_t      byte_offset = 0;        // from beginning of buffer
-    bool        normalized  = false;
-    ShaderDataType type     = ShaderDataType::Float;
-    size_t      count       = 0;        // number of elements
-    size_t      stride      = 0;        // bytes between consecutive elements
+    Attribute   attribute{};
 };
 
 class VertexBuffer {
 public:
     VertexBuffer() = default;
 
-    void add_buffer(uint32_t buffer_id, std::shared_ptr<Buffer> buffer) {
+    void add_buffer(int buffer_id, std::shared_ptr<Buffer> buffer) {
         buffers.emplace(buffer_id, std::move(buffer));
     }
 
-    std::shared_ptr<Buffer> get_buffer(uint32_t buffer_id) {
+    std::shared_ptr<Buffer> get_buffer(int buffer_id) {
         return buffers.at(buffer_id);
     }
 
-    const std::shared_ptr<Buffer> get_buffer(uint32_t buffer_id) const {
+    const std::shared_ptr<Buffer> get_buffer(int buffer_id) const {
         return buffers.at(buffer_id);
     }
 
-    void add_accessor(AttributeLabel accessor, uint32_t buffer_id,
-                             size_t byte_offset, bool normalized,
-                             ShaderDataType type, size_t count, size_t stride) {
-        accessors.insert_or_assign(
-            accessor, VertexBufferAccessor{(int)buffer_id, byte_offset,
-                                           normalized, type, count, stride});
+    void add_accessor(int buffer_id, const Attribute& attr) {
+        accessors.insert_or_assign(attr.label, VertexBufferAccessor{buffer_id,  attr});
     }
 
-    VertexBufferAccessor& get_accessor(AttributeLabel accessor) {
-        return accessors.at(accessor);
+    void add_accessor(int buffer_id,
+        AttributeLabel label,
+        ShaderDataType type,
+        size_t count,
+        bool normalized,
+        size_t stride,
+        size_t byte_offset) {
+
+        const Attribute attr { 
+            .label=label, 
+            .type=type,
+            .element_size=ShaderDataTypeSize(type),
+            .count=count,
+            .normalized=normalized,
+            .stride=stride,
+            .byte_offset=byte_offset};
+        
+        add_accessor(buffer_id, attr);
+    }
+
+    VertexBufferAccessor& get_accessor(AttributeLabel label) {
+        return accessors.at(label);
     }
 
     /**
@@ -57,26 +69,29 @@ public:
      * @param buffer_id buffer that is the target of the layout. Buffer should be in buffers map
      * @param layout vertex buffer layout
      */
-    void add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout);
+    void add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout) {
+        // map the elements defined in the layout
+        for (auto& attr : layout.elements) {
+            add_accessor(buffer_id, attr);
+        }
+    }
 
 
     /**
-     * @brief vertex buffer for three separate attribute buffers
+     * @brief vertex buffer format pos(3float), normal(3float), color(3float)
      * 
-     * @param vertices 
-     * @param normals 
-     * @param vertex_colors 
+     * @param buffer
      * @return std::unique_ptr<VertexBuffer> 
      */
-    static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors);
+    static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(std::shared_ptr<Buffer> buffer);
     
     /**
      * @brief buffer format pos(3float), normal(3float), color(3float), texcoord(2float)
      * 
      * @param buffer 
-     * @return VertexBuffer 
+     * @return std::unique_ptr<VertexBuffer> 
      */
-    static VertexBuffer vbInitArrayVertexData(const std::vector<float>& buffer);
+    static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(const std::vector<float>& buffer);
     static VertexBuffer vbInitSphereArrayVertexData(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer);
 
     /**

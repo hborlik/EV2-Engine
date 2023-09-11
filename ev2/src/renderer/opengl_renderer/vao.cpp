@@ -28,12 +28,13 @@ VAO VAOFactory::gen_vao_for_attributes(const VertexBuffer* vb, const Buffer* ind
         auto accessor_itr = vb->accessors.find(accessor_id);
         if(accessor_itr != vb->accessors.end()) {
             const VertexBufferAccessor& vba = accessor_itr->second;
+            const Attribute& attr = vba.attribute;
         
             auto buffer = std::dynamic_pointer_cast<GLBuffer>(vb->get_buffer(vba.buffer_id));
 
             buffer->bind();
             glEnableVertexAttribArray(binding);
-            glVertexAttribPointer(binding, vba.count, (GLenum)vba.type, vba.normalized ? GL_TRUE : GL_FALSE, vba.stride, (void*)vba.byte_offset);
+            glVertexAttribPointer(binding, attr.count, (GLenum)gl::getGLDataType(attr.type), attr.normalized ? GL_TRUE : GL_FALSE, attr.stride, (void*)attr.byte_offset);
             buffer->unbind();
         }
             // std::cout << "could not find accessor for " << (int)accessor_id << std::endl;

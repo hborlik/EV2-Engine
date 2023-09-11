@@ -78,11 +78,8 @@ void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
     auto gl_mesh = std::dynamic_pointer_cast<GLMesh>(mesh);
     EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
     m_mesh = gl_mesh;
-
-    if (gl_vao != 0)
-        glDeleteVertexArrays(1, &gl_vao);
     
-    gl_vao = m_mesh->get_vertex_buffer().gen_vao_for_attributes(mat_spec::DefaultBindings);
+    gl_vao = VAOFactory::gen_vao_for_attributes(m_mesh->get_vertex_buffer().get(), m_mesh->get_index_buffer().get(), mat_spec::DefaultBindings);
 }
 
 void GLDrawable::set_material(std::shared_ptr<Material> material) {
@@ -560,7 +557,7 @@ std::shared_ptr<Material> GLRenderer::make_material() {
 
 std::shared_ptr<PointLight> GLRenderer::make_point_light() {
     const auto light_deleter = [this](GLPointLight* light) {
-        this->destroy_light(light);
+        this->destroy_point_light(light);
     };
     int32_t nlid = next_light_id++;
     std::shared_ptr<GLPointLight> light(new GLPointLight{}, light_deleter);
@@ -570,8 +567,8 @@ std::shared_ptr<PointLight> GLRenderer::make_point_light() {
 }
 
 std::shared_ptr<DirectionalLight> GLRenderer::make_directional_light() {
-    const auto light_deleter = [this](DirectionalLight* light) {
-        this->destroy_light(light);
+    const auto light_deleter = [this](GLDirectionalLight* light) {
+        this->destroy_directional_light(light);
     };
     int32_t nlid = next_light_id++;
     if (shadow_directional_light_id < 0)
@@ -601,7 +598,7 @@ std::shared_ptr<Drawable> GLRenderer::make_drawable() {
 }
 
 std::shared_ptr<InstancedDrawable> GLRenderer::make_instanced_drawable() {
-    const auto instanced_drawable_deleter = [this](InstancedDrawable* id) {
+    const auto instanced_drawable_deleter = [this](GLInstancedDrawable* id) {
         this->destroy_instanced_drawable(id);
     };
 
@@ -690,11 +687,16 @@ void GLRenderer::destroy_material(GLMaterial* material) {
     material->m_owner = nullptr;
 }
 
-void GLRenderer::destroy_light(GLPointLight* light) {
+void GLRenderer::destroy_point_light(GLPointLight* light) {
+    EV_CORE_ASSERT(light && light->is_valid());
+
+    point_lights.erase(light->light_id);
+}
+
+void GLRenderer::destroy_directional_light(GLDirectionalLight* light) {
     EV_CORE_ASSERT(light && light->is_valid());
 
     directional_lights.erase(light->light_id);
-    point_lights.erase(light->light_id);
 }
 
 void GLRenderer::update_picking_id_model_instance(GLDrawable* drawable) {
@@ -719,7 +721,7 @@ void GLRenderer::render(const Camera &camera) {
 
     // pre render data updates
     for (auto& m : materials) {
-        Material* material = m.second;
+        GLMaterial* material = m.second;
         material_data_buffer.at(material->material_slot).update_from(material);
     }
 
@@ -804,7 +806,7 @@ void GLRenderer::render(const Camera &camera) {
             if (m->m_mesh) {
                 ev2::gl::glUniform(m->transform, sdp_m_location);
 
-                draw(m->m_mesh.get(), depth_program, false, m->gl_vao);
+                draw(m->m_mesh.get(), depth_program, false, m->gl_vao.get_handle());
             }
         }
         depth_program.program->unbind();
@@ -865,7 +867,7 @@ void GLRenderer::render(const Camera &camera) {
 
             int32_t mat_id_override = m->material_override ? m->material_override->get_material_id() : -1;
 
-            draw(m->m_mesh.get(), geometry_program, true, m->gl_vao, mat_id_override);
+            draw(m->m_mesh.get(), geometry_program, true, m->gl_vao.get_handle(), mat_id_override);
         }
     }
     geometry_program.program->unbind();
@@ -880,7 +882,7 @@ void GLRenderer::render(const Camera &camera) {
         if (m->m_mesh) {
             ev2::gl::glUniform(m->instance_world_transform, gpi_m_location);
 
-            draw(m->m_mesh.get(), geometry_program_instanced, true, m->gl_vao, -1, m->n_instances);
+            draw(m->m_mesh.get(), geometry_program_instanced, true, m->gl_vao.get_handle(), -1, m->n_instances);
         }
     }
     geometry_program_instanced.program->unbind();

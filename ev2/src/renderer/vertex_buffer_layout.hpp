@@ -11,13 +11,25 @@
 
 namespace ev2::renderer {
 
-struct Attribute {
-    AttributeLabel      label           = AttributeLabel::Vertex;
-    ShaderDataType      type            = ShaderDataType::Float;
-    uint32_t            count           = 0;
-    uint32_t            element_size    = 0;
-    uint32_t            offset          = 0;    // calculated offset.
+enum class AttributeLabel : int {
+    Vertex = 0,
+    Normal,
+    Color,
+    Texcoord,
+    Tangent,
+    Bitangent
 };
+
+struct Attribute {
+    AttributeLabel  label       = AttributeLabel::Vertex;
+    ShaderDataType  type        = ShaderDataType::Float;
+    size_t          element_size= 0;    // size in bytes of a single element. eg 4 for Float
+    size_t          count       = 0;    // number of elements (not size of array). eg 3 for vec3
+    bool            normalized  = false;
+    size_t          stride      = 0;    // bytes between consecutive elements
+    size_t          byte_offset = 0;    // offset from beginning of buffer
+};
+
 
 struct VertexBufferLayout {
 
@@ -48,7 +60,7 @@ struct VertexBufferLayout {
         EV_CORE_ASSERT(!finalized(), "Layout should not be finalized!");
         uint32_t total_size = 0;
         for (auto& l : elements) {
-            l.offset = total_size;
+            l.byte_offset = total_size;
             total_size += l.element_size * l.count;
         }
         stride = total_size;

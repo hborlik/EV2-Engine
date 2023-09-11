@@ -78,13 +78,23 @@ static uint32_t ShaderDataTypeSize(ShaderDataType type) {
     return 0;
 }
 
-enum class AttributeLabel : int {
-    Vertex = 0,
-    Normal,
-    Color,
-    Texcoord,
-    Tangent,
-    Bitangent
+
+/**
+ * @brief frequency of access (modification and usage)
+ * 
+ */
+enum class BufferAccess {
+    Static,     // The data store contents will be modified once and used many times.
+    Dynamic     // The data store contents will be modified repeatedly and used many times.
+};
+
+/**
+ * @brief the nature of that memory access
+ * 
+ */
+enum class BufferUsage {
+    Vertex,     // contains vertex data
+    Index,      // contains index data
 };
 
 class Buffer {
@@ -103,9 +113,11 @@ public:
     virtual void sub_bytes(const void* data, std::size_t size, std::size_t offset) = 0;
 
     template<typename T>
-    void sub_data(const T& source, uint32_t offset) {
+    void sub_data(const T& source, std::size_t offset) {
         sub_bytes(&source, sizeof(T), offset);
     }
+
+    static std::unique_ptr<Buffer> make_buffer(BufferUsage usage, BufferAccess access);
 };
 
 } // namespace ev2::renderer

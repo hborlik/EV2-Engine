@@ -11,6 +11,8 @@
 
 #include "evpch.hpp"
 
+#include "renderer/buffer.hpp"
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -67,7 +69,13 @@ namespace ev2 {
         SHORT               = GL_SHORT,
         UNSIGNED_SHORT      = GL_UNSIGNED_SHORT,
         INT                 = GL_INT,
+        INT2                = GL_INT_VEC2,
+        INT3                = GL_INT_VEC3,
+        INT4                = GL_INT_VEC4,
         UNSIGNED_INT        = GL_UNSIGNED_INT,
+        UNSIGNED_INT2       = GL_UNSIGNED_INT_VEC2,
+        UNSIGNED_INT3       = GL_UNSIGNED_INT_VEC3,
+        UNSIGNED_INT4       = GL_UNSIGNED_INT_VEC4,
         FIXED               = GL_FIXED,
         HALF_FLOAT          = GL_HALF_FLOAT,
         FLOAT               = GL_FLOAT,
@@ -421,7 +429,65 @@ namespace ev2 {
     inline constexpr DataType getGlEnumForType<float>() {return DataType::FLOAT;}
     template<>
     inline constexpr DataType getGlEnumForType<double>() {return DataType::DOUBLE;}
-    
+
+    inline DataType getGLDataType(renderer::ShaderDataType type) {
+        switch(type) {
+            case renderer::ShaderDataType::Short:
+                return DataType::SHORT;
+            case renderer::ShaderDataType::UnsignedShort:
+                return DataType::UNSIGNED_SHORT;
+            case renderer::ShaderDataType::Int:
+                return DataType::INT;
+            case renderer::ShaderDataType::Int2:
+                return DataType::INT2;
+            case renderer::ShaderDataType::Int3:
+                return DataType::INT3;
+            case renderer::ShaderDataType::Int4:
+                return DataType::INT4;
+            case renderer::ShaderDataType::Uint:
+                return DataType::UNSIGNED_INT;
+            case renderer::ShaderDataType::Uint2:
+                return DataType::UNSIGNED_INT2;
+            case renderer::ShaderDataType::Uint3:
+                return DataType::UNSIGNED_INT3;
+            case renderer::ShaderDataType::Uint4:
+                return DataType::UNSIGNED_INT4;
+            case renderer::ShaderDataType::HalfFloat:
+                return DataType::HALF_FLOAT;
+            case renderer::ShaderDataType::Float:
+                return DataType::FLOAT;
+            case renderer::ShaderDataType::Vec2f:
+                return DataType::VEC2F;
+            case renderer::ShaderDataType::Vec3f:
+                return DataType::VEC3F;
+            case renderer::ShaderDataType::Vec4f:
+                return DataType::VEC4F;
+            case renderer::ShaderDataType::Mat2f:
+                return DataType::MAT2F;
+            case renderer::ShaderDataType::Mat3f:
+                return DataType::MAT3F;
+            case renderer::ShaderDataType::Mat4f:
+                return DataType::MAT4F;
+            case renderer::ShaderDataType::Double:
+                return DataType::DOUBLE;
+            case renderer::ShaderDataType::Vec2d:
+                return DataType::VEC2D;
+            case renderer::ShaderDataType::Vec3d:
+                return DataType::VEC3D;
+            case renderer::ShaderDataType::Vec4d:
+                return DataType::VEC4D;
+            case renderer::ShaderDataType::Mat2d:
+                return DataType::MAT2D;
+            case renderer::ShaderDataType::Mat3d:
+                return DataType::MAT3D;
+            case renderer::ShaderDataType::Mat4d:
+                return DataType::MAT4D;
+            default:
+                EV_CORE_CRITICAL("getGLDataType unsupported type!");
+                return DataType::UNKNOWN;
+        };
+    }
+
     }
 }
 

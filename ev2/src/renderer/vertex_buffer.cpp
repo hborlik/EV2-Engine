@@ -2,62 +2,81 @@
 
 namespace ev2::renderer {
 
-void VertexBuffer::add_accessors_from_layout(int buffer_id, const VertexBufferLayout& layout) {
-    assert(buffers.find(buffer_id) != buffers.end());
-    // map the elements defined in the layout
-    for (auto& attr : layout.elements) {
-        accessors.emplace(std::make_pair(attr.label, VertexBufferAccessor{
-            buffer_id, // id of the target buffer
-            attr.offset, // offset in the target buffer
-            false,
-            attr.type,
-            attr.count,
-            layout.stride})
-        );
-    }
-}
-
-std::unique_ptr<VertexBuffer> VertexBuffer::vbInitArrayVertexData(const std::vector<float>& vertices, const std::vector<float>& normals, const std::vector<float>& vertex_colors) {
+std::unique_ptr<VertexBuffer> VertexBuffer::vbInitArrayVertexData(std::shared_ptr<Buffer> buffer) {
     std::unique_ptr<VertexBuffer> vb = std::make_unique<VertexBuffer>();
 
-    GLuint gl_vao;
-    glGenVertexArrays(1, &gl_vao);
-    glBindVertexArray(gl_vao);
+    const uint32_t FloatSize = ShaderDataTypeSize(ShaderDataType::Float);
 
-    vb.buffers.emplace(mat_spec::VERTEX_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertices));
-    vb.buffers.at(mat_spec::VERTEX_BINDING_LOCATION)->bind();
-    glEnableVertexAttribArray(mat_spec::VERTEX_BINDING_LOCATION);
-    glVertexAttribPointer(mat_spec::VERTEX_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    vb->add_buffer(0, buffer);
 
-    vb.buffers.emplace(mat_spec::NORMAL_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, normals));
-    vb.buffers.at(mat_spec::NORMAL_BINDING_LOCATION)->bind();
-    glEnableVertexAttribArray(mat_spec::NORMAL_BINDING_LOCATION);
-    glVertexAttribPointer(mat_spec::NORMAL_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 3));
+    vb->add_accessor(0, Attribute{
+        .type=ShaderDataType::Float,
+        .count=3,
+        .element_size=FloatSize * 3,
+        .label=AttributeLabel::Vertex,
+        .normalized=false,
+        .stride=FloatSize * 9,
+        .byte_offset=0
+    });
 
-    vb.buffers.emplace(mat_spec::COLOR_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertex_colors));
-    vb.buffers.at(mat_spec::COLOR_BINDING_LOCATION)->bind();
-    glEnableVertexAttribArray(mat_spec::COLOR_BINDING_LOCATION);
-    glVertexAttribPointer(mat_spec::COLOR_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 6));
+    vb->add_accessor(0, Attribute{
+        .type=ShaderDataType::Float,
+        .count=3,
+        .element_size=FloatSize * 3,
+        .label=AttributeLabel::Normal,
+        .normalized=false,
+        .stride=FloatSize * 9,
+        .byte_offset=FloatSize * 3
+    });
 
-    vb.buffers.at(mat_spec::COLOR_BINDING_LOCATION)->unbind();
+    vb->add_accessor(0, Attribute{
+        .type=ShaderDataType::Float,
+        .count=3,
+        .element_size=FloatSize * 3,
+        .label=AttributeLabel::Color,
+        .normalized=false,
+        .stride=FloatSize * 9,
+        .byte_offset=FloatSize * 6
+    });
 
-    glBindVertexArray(0);
+    // vb->buffers.emplace(mat_spec::VERTEX_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertices));
+    // vb.buffers.at(mat_spec::VERTEX_BINDING_LOCATION)->bind();
+    // glEnableVertexAttribArray(mat_spec::VERTEX_BINDING_LOCATION);
+    // glVertexAttribPointer(mat_spec::VERTEX_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    
+
+    // vb.buffers.emplace(mat_spec::NORMAL_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, normals));
+    // vb.buffers.at(mat_spec::NORMAL_BINDING_LOCATION)->bind();
+    // glEnableVertexAttribArray(mat_spec::NORMAL_BINDING_LOCATION);
+    // glVertexAttribPointer(mat_spec::NORMAL_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 3));
+
+    // vb.buffers.emplace(mat_spec::COLOR_BINDING_LOCATION, std::make_shared<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, vertex_colors));
+    // vb.buffers.at(mat_spec::COLOR_BINDING_LOCATION)->bind();
+    // glEnableVertexAttribArray(mat_spec::COLOR_BINDING_LOCATION);
+    // glVertexAttribPointer(mat_spec::COLOR_BINDING_LOCATION, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 6));
+
+    // vb.buffers.at(mat_spec::COLOR_BINDING_LOCATION)->unbind();
+
+    // glBindVertexArray(0);
 
     return vb;
 }
 
-VertexBuffer VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffer) {
-    VertexBuffer vb;
+std::unique_ptr<VertexBuffer> VertexBuffer::vbInitArrayVertexData(const std::vector<float>& buffer) {
+    std::unique_ptr<VertexBuffer> vb = std::make_unique<VertexBuffer>();
     // pos(3float), normal(3float), color(3float), texcoord(2float)
 
     constexpr std::size_t vec3Size = sizeof(glm::vec3);
 
-    vb.add_accessor(AttributeLabel::Vertex,   0, 0         , false, ShaderDataType::Float, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Normal,   0, vec3Size*1, false, ShaderDataType::Float, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Color,    0, vec3Size*2, false, ShaderDataType::Float, 3, sizeof(float) * 11);
-    vb.add_accessor(AttributeLabel::Texcoord, 0, vec3Size*3, false, ShaderDataType::Float, 2, sizeof(float) * 11);
+    vb->add_accessor(0, AttributeLabel::Vertex,   ShaderDataType::Float, 3, false, sizeof(float) * 11, 0         );
+    vb->add_accessor(0, AttributeLabel::Normal,   ShaderDataType::Float, 3, false, sizeof(float) * 11, vec3Size*1);
+    vb->add_accessor(0, AttributeLabel::Color,    ShaderDataType::Float, 3, false, sizeof(float) * 11, vec3Size*2);
+    vb->add_accessor(0, AttributeLabel::Texcoord, ShaderDataType::Float, 2, false, sizeof(float) * 11, vec3Size*3);
 
-    vb.buffers.emplace(0, std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer));
+    // std::make_shared<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::STATIC_DRAW, buffer)
+
+    auto buffer = Buffer::make_buffer(BufferUsage::Vertex, BufferAccess::Static);
+    vb->buffers.emplace(0, buffer);
     return vb;
 }
 
