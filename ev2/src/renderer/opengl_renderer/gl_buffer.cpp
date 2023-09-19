@@ -15,18 +15,26 @@ namespace ev2::renderer {
 using namespace ev2;
 using namespace ev2::gl;
 
-void GLBuffer::allocate(std::size_t bytes) {
-    glBindBuffer((GLenum)target, (GLuint)gl_reference);
-    GL_CHECKED_CALL(glBufferData((GLenum)target, bytes, NULL, (GLenum)usage));
-    glBindBuffer((GLenum)target, 0);
-    capacity = bytes;
+void GLBuffer::allocate_impl(std::size_t size) {
+    if(size > 0) {
+        bool error = false;
+        GL_ERROR_CHECK(glNamedBufferData((GLuint)gl_reference, size, NULL, (GLenum)usage), error);
+        if (!error) capacity = size;
+    }
 }
 
-void GLBuffer::copy_data(std::size_t size, const void* data) {
-    glBindBuffer((GLenum)target, (GLuint)gl_reference);
-    glBufferData((GLenum)target, size, data, (GLenum)usage);
-    glBindBuffer((GLenum)target, 0);
-    capacity = size;
+void GLBuffer::allocate_impl(const void* data, std::size_t size) {
+    if(size > 0) {
+        bool error = false;
+        GL_ERROR_CHECK(glNamedBufferData((GLuint)gl_reference, size, data, (GLenum)usage), error);
+        if (!error) capacity = size;
+    }
+}
+
+void GLBuffer::sub_bytes_impl(const void* data, std::size_t size, std::size_t offset) {
+    if(data && size > 0) {
+        GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, size, data));
+    }
 }
 
 } // namespace ev2::renderer

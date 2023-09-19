@@ -670,12 +670,21 @@ std::unique_ptr<Model> load_model(const std::filesystem::path& filename, const s
             ev_mat[i++] = mat;
         }
 
+         // pos(3float), normal(3float), color(3float), texcoord(2float)
+        renderer::VertexBufferLayout buffer_layout{};
+        buffer_layout.add_attribute(renderer::AttributeLabel::Vertex)
+            .add_attribute(renderer::AttributeLabel::Normal)
+            .add_attribute(renderer::AttributeLabel::Color)
+            .add_attribute(renderer::AttributeLabel::Texcoord)
+            .finalize();
+
         return std::make_unique<Model>(
             (base_dir / filename).generic_string(),
             std::move(drawObjects),
             std::move(ev_mat),
             bmin,
             bmax,
+            buffer_layout,
             std::move(buffer)
         );
 

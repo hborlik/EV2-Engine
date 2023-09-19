@@ -72,7 +72,7 @@ struct DirectionalLightData {
  * @brief material data internal
  * 
  */
-struct MaterialData {
+struct GLMaterialData {
     glm::vec3 diffuse       = {0.5, 0.4, 0.0};
     glm::vec3 emissive      = {};
     float metallic          = 0;
@@ -166,7 +166,7 @@ public:
 
 public:
     glm::mat4               instance_world_transform = glm::identity<glm::mat4>();
-    std::unique_ptr<Buffer> instance_transform_buffer{};
+    std::shared_ptr<Buffer> instance_transform_buffer{};
     uint32_t                n_instances;
 
 private:
@@ -218,10 +218,10 @@ public:
     void init() override;
 
     std::shared_ptr<Mesh> make_mesh(const Model* model) override;
-    std::shared_ptr<Material> make_material() override;
+    std::shared_ptr<Material> make_material(const MaterialData* material) override;
     std::shared_ptr<PointLight> make_point_light() override;
     std::shared_ptr<DirectionalLight> make_directional_light() override;
-    std::shared_ptr<Texture> make_texture() override;
+    std::shared_ptr<Texture> make_texture(TextureType type, const Image* image) override;
     std::shared_ptr<Drawable> make_drawable() override;
     std::shared_ptr<InstancedDrawable> make_instanced_drawable() override;
 
@@ -277,7 +277,7 @@ private:
 
     void draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override = -1, int32_t n_instances = -1);
 
-    void update_material(mat_slot_t material_slot, const MaterialData& material);
+    void update_material(mat_slot_t material_slot, const GLMaterialData& material);
 
     void load_ssao_uniforms();
 
@@ -336,7 +336,7 @@ private:
     std::unordered_map<int32_t, GLMaterial*> materials;
     int32_t next_material_id = 1234;
 
-    std::array<MaterialData, MAX_N_MATERIALS> material_data_buffer; // cpu side material data array
+    std::array<GLMaterialData, MAX_N_MATERIALS> material_data_buffer; // cpu side material data array
     std::queue<mat_slot_t> free_material_slots; // queue of free slots in material_data_buffer
 
     // single instance of a drawable
@@ -405,7 +405,8 @@ private:
     FBO bloom_thresh_combine;
     std::array<FBO, 2> bloom_blur_swap_fbo;
     
-    std::pair<VertexBuffer, GLuint> sst_vb;
+    std::shared_ptr<VertexBuffer> sst_vb;
+    VAO sst_vao;
 
     std::shared_ptr<GLTexture> shadow_depth_tex;
 
@@ -429,7 +430,7 @@ private:
     std::array<std::shared_ptr<GLTexture>, 2> bloom_blur_swap_tex;
 
     GLBuffer shader_globals;
-    ProgramUniformBlockDescription globals_desc;
+    ProgramBlockLayout globals_desc;
     struct GlobalsOffsets {
         int P_ind;
         int PInv_ind;
@@ -441,10 +442,10 @@ private:
     } goffsets;
 
     GLBuffer lighting_materials;
-    ProgramUniformBlockDescription lighting_materials_desc;
+    ProgramBlockLayout lighting_materials_desc;
 
     GLBuffer ssao_kernel_buffer;
-    ProgramUniformBlockDescription ssao_kernel_desc;
+    ProgramBlockLayout ssao_kernel_desc;
 
     uint32_t width, height;
     bool wireframe = false;
@@ -452,7 +453,7 @@ private:
 
     float point_light_geom_base_scale;
     std::shared_ptr<GLMesh> point_light_mesh;
-    GLuint point_light_gl_vao = 0;
+    VAO point_light_gl_vao{};
 
     int32_t default_material_slot = 0;
 

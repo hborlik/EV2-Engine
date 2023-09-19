@@ -10,41 +10,6 @@
 
 namespace ev2 {
 
-std::unique_ptr<renderer::Mesh> Model::create_renderer_drawable(bool load_materials) {
-    std::vector<renderer::Primitive> ev_prim(draw_objects.size());
-    size_t i = 0;
-    // convert the loaded object to the model format
-    for (auto& dObj : draw_objects) {
-        int mat_id = dObj.material_id;
-        if (mat_id == -1)
-            mat_id = 0;
-        // auto& m = loaded_model->materials[mat_id];
-
-        ev_prim[i++] = renderer::Primitive {
-            dObj.start * 3,
-            dObj.numTriangles * 3,
-            mat_id
-        };
-    }
-    // get materials information
-    std::vector<std::shared_ptr<renderer::Material>> ev_mat;
-    if (load_materials)
-        for (auto& mat : materials) {
-            ev_mat.push_back(mat.create_renderer_material());
-        }
-
-    return std::make_unique<renderer::Mesh>(
-        renderer::VertexBuffer::vbInitArrayVertexData(buffer),
-        std::move(ev_prim),
-        std::move(ev_mat),
-        AABB{bmin, bmax},
-        Sphere{},
-        renderer::FrustumCull::AABB,
-        gl::CullMode::BACK,
-        gl::FrontFacing::CCW
-    );
-}
-
 std::shared_ptr<renderer::Material> MaterialData::create_renderer_material() const {
     auto mat = renderer::GLRenderer::get_singleton().create_material();
     mat->name           = name;

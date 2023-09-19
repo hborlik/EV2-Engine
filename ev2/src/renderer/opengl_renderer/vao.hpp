@@ -24,6 +24,11 @@ public:
         glGenVertexArrays(1, &m_handle.v);
     }
 
+    VAO(std::shared_ptr<VertexBuffer> vertex_buffer,
+        std::shared_ptr<Buffer> index_buffer) : vertex_buffer{vertex_buffer}, index_buffer{index_buffer} {
+        glGenVertexArrays(1, &m_handle.v);
+    }
+
     explicit VAO(GLuint handle) : m_handle{handle} {}
 
     VAO(VAO&&) = default;
@@ -40,13 +45,17 @@ public:
 
 private:
     util::non_copyable<GLuint> m_handle;
+
+    std::shared_ptr<VertexBuffer> vertex_buffer{};
+    std::shared_ptr<Buffer> index_buffer{};
+
 };
 
 class VAOFactory {
 public:
     VAOFactory() = delete;
 
-    static VAO make_vao(const std::map<AttributeLabel, int>& binding_map, const VertexBuffer& vb);
+    static VAO make_vao(std::shared_ptr<VertexBuffer> vb, const std::unordered_map<AttributeLabel, int>& binding_map, std::shared_ptr<Buffer> instance_buffer = nullptr);
 
     /**
      * @brief Create a vertex array object using stored accessors and binding locations specified in attributes. This
@@ -59,7 +68,7 @@ public:
      * @param instance_buffer optional instance buffer for use in instanced rendering
      * @return VAO 
      */
-    static VAO gen_vao_for_attributes(const VertexBuffer* vb, const Buffer* index_buffer, const std::unordered_map<AttributeLabel, int>& attributes, const Buffer* instance_buffer = nullptr);
+    static VAO make_vao(std::shared_ptr<VertexBuffer> vb, std::shared_ptr<Buffer> index_buffer, const std::unordered_map<AttributeLabel, int>& attributes, std::shared_ptr<Buffer> instance_buffer = nullptr);
 };
 
 }

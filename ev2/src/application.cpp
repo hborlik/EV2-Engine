@@ -11,8 +11,11 @@
 
 namespace ev2 {
 
-Application::Application() : m_terrain_renderer(std::make_unique<renderer::TerrainRenderer>()){
-    // renderer::Renderer::get_singleton().add_pass(m_terrain_renderer.get());
+Application::Application() {
+#ifdef ENABLE_TERRAIN
+    m_terrain_renderer = std::make_unique<renderer::TerrainRenderer>();
+    renderer::Renderer::get_singleton().add_pass(m_terrain_renderer.get());
+#endif // ENABLE_TERRAIN
 }
 
 void Application::process(float dt) {

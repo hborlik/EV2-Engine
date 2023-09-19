@@ -10,14 +10,6 @@ void GLMesh::set_index_buffer(std::shared_ptr<Buffer> buffer) {
     m_index_buffer = std::dynamic_pointer_cast<GLBuffer>(buffer);
 }
 
-std::shared_ptr<VertexBuffer> GLMesh::get_vertex_buffer() const {
-    return m_vertex_buffer;
-}
-
-std::shared_ptr<Buffer> GLMesh::get_index_buffer() const {
-    return m_index_buffer;
-}
-
 void GLMesh::set_primitives(const std::vector<Primitive>& primitives) {
     m_primitives = primitives;
 }
@@ -31,6 +23,18 @@ void GLMesh::set_materials(const std::vector<std::shared_ptr<Material>>& materia
         if (mat)
             m_materials.push_back(mat);
     }
+}
+
+std::shared_ptr<VertexBuffer> GLMesh::get_vertex_buffer() const {
+    return m_vertex_buffer;
+}
+
+std::shared_ptr<Buffer> GLMesh::get_index_buffer() const {
+    return m_index_buffer;
+}
+
+std::vector<Primitive> GLMesh::get_primitives() const {
+    return m_primitives;
 }
 
 } // namespace ev2::renderer

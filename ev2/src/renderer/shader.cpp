@@ -11,7 +11,7 @@ std::unique_ptr<Shader> make_shader(const ShaderSource& source) {
 
     switch(RenderAPI::get_api()) {
         case RenderAPI::API::OpenGL: {
-            auto shader = std::make_unique<GLShader>(source.type);
+            auto shader = std::make_unique<GLShader>(glShaderType(source.type));
             shader->compile(source);
             return shader;
         }

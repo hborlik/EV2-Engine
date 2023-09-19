@@ -16,6 +16,7 @@
 #include "renderer/opengl_renderer/gl_buffer.hpp"
 #include "renderer/shader.hpp"
 #include "renderer/shader_builder.hpp"
+#include "renderer/vertex_buffer_layout.hpp"
 
 namespace ev2::renderer
 {
@@ -110,7 +111,7 @@ inline gl::GLSLShaderType glShaderType(ShaderType type) {
 class GLShader : public Shader
 {
 public:
-    explicit GLShader(ShaderType type);
+    explicit GLShader(gl::GLSLShaderType type);
     virtual ~GLShader();
 
     GLShader(const GLShader &) = delete;
@@ -178,136 +179,17 @@ struct ProgramInputDescription
     GLenum Type = 0;
 };
 
-struct ProgramUniformBlockDescription
+struct BlockLayoutUtil
 {
-    GLint location_index = -1;  // Index in Program interface
-    GLint block_size = -1; // total size in bytes of buffer
-
-    struct Layout
-    {
-        GLint Offset = 0;      // offset in bytes from beginning of buffer
-        GLint ArraySize = 0;   // number of array elements
-        GLint ArrayStride = 0; // stride in bytes between array elements
-    };
-    std::unordered_map<std::string, int> layout_map;
-    std::vector<Layout> layouts;
-
-    Layout get_layout(const std::string &name)
-    {
-        auto itr = layout_map.find(name);
-        if (itr != layout_map.end())
-            return layouts[itr->second];
-        return {-1, -1, -1};
-    }
-
-    Layout get_layout(int ind) {
-        return layouts.at(ind);
-    }
-
-    GLint get_offset(const std::string &name)
-    {
-        auto itr = layout_map.find(name);
-        if (itr != layout_map.end())
-            return layouts[itr->second].Offset;
-        throw std::out_of_range{name};
-    }
-
-    int get_index(const std::string &name) {
-        auto itr = layout_map.find(name);
-        if (itr != layout_map.end()) {
-            return itr->second;
-        }
-        throw std::out_of_range{name};
-    }
-
-    GLint get_offset(int ind) {
-        return layouts.at(ind).Offset;
-    }
-
-    bool is_valid() const noexcept {return location_index != -1;}
-
-    /**
-     * @brief Set a Shader parameter in the target uniform block buffer.
-     * 
-     * @tparam T 
-     * @param paramName 
-     * @param data 
-     * @param shaderBuffer 
-     * @return true 
-     * @return false 
-     */
-    template <typename T>
-    bool set_parameter(const std::string &paramName, const T &data, GLBuffer &shaderBuffer)
-    {
-        if (is_valid()) {
-            GLint uoff = get_offset(paramName);
-            shaderBuffer.sub_data(data, (uint32_t)uoff);
-            return true;
-        }
-        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramName);
-        return false;
-    }
-
-    /**
-     * @brief Set a Shader parameter in the target uniform block buffer.
-     * 
-     * @tparam T 
-     * @param paramName 
-     * @param data 
-     * @param shaderBuffer 
-     * @return true 
-     * @return false 
-     */
-    template <typename T>
-    bool set_parameter(int paramIndex, const T &data, GLBuffer &shaderBuffer)
-    {
-        if (is_valid())
-        {
-            GLint uoff = get_offset(paramIndex);
-            shaderBuffer.sub_data(data, (uint32_t)uoff);
-            return true;
-        }
-        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramIndex);
-        return false;
-    }
-
-    /**
-     * @brief Set the Shader Parameter in a buffer using this ProgramUniformBlockDescription
-     * 
-     * @tparam T 
-     * @param paramName 
-     * @param data 
-     * @param shaderBuffer 
-     * @return true 
-     * @return false 
-     */
-    template <typename T>
-    bool set_parameter(const std::string &paramName, const std::vector<T> &data, GLBuffer &shaderBuffer)
-    {
-        if (is_valid())
-        {
-            ProgramUniformBlockDescription::Layout layout = get_layout(paramName);
-            GLint uoff = layout.Offset;
-            GLint stride = layout.ArrayStride;
-            if (uoff != -1 && layout.ArraySize >= data.size())
-            {
-                shaderBuffer.sub_data(data, uoff, stride);
-                return true;
-            }
-        }
-        Log::warn_core<GLShader>("Failed to set shader parameter {}", paramName);
-        return false;
-    }
-
     /**
      * @brief bind a given buffer as a uniform buffer
      * @deprecated use buffer.bind_range
      * 
      * @param buffer 
      */
-    void bind_buffer(const GLBuffer &buffer) {
+    static void bind_buffer(const ProgramBlockLayout& layout, const GLBuffer &buffer) {
         GL_CHECKED_CALL(
-            glBindBufferRange(GL_UNIFORM_BUFFER, location_index, buffer.handle(), 0, buffer.get_capacity())
+            glBindBufferRange(GL_UNIFORM_BUFFER, layout.location_index, buffer.handle(), 0, buffer.get_capacity())
         );
     }
 };
@@ -331,7 +213,7 @@ public:
      * @param 
      * @param shader 
      */
-    void attachShader(const GLShader* shader);
+    void attach_shader(std::shared_ptr<Shader> shader) override;
 
     /**
      * @brief  Set path for shader stage in this program
@@ -346,7 +228,7 @@ public:
     /**
      * @brief Link shader programs
      */
-    void link();
+    void link() override;
 
     /**
      * @brief Set this program to active
@@ -364,7 +246,7 @@ public:
      * @return true
      * @return false
      */
-    bool isLinked() const;
+    bool is_linked() const override;
 
     /**
      * @brief Get the Modified Count
@@ -400,13 +282,15 @@ public:
     }
 
     /**
-     * @brief Get the Attribute Map. Mapping attribute index to binding location in the shader.
+     * @brief Get the Attribute Map. Mapping AttributeLabel to binding location in the shader.
      * 
-     * @return std::unordered_map<VertexAttributeType, int> mapping attribute identifier to binding location.
+     * @return std::unordered_map<AttributeLabel, int> mapping attribute identifier to binding location.
      */
-    std::unordered_map<AttributeLabel, uint32_t> getAttributeMap() const {
-        std::unordered_map<AttributeLabel, uint32_t> map;
+    std::unordered_map<AttributeLabel, int> getAttributeMap() const {
+        std::unordered_map<AttributeLabel, int> map;
+        // convert map of name->ProgramInputDescription to AttributeLabel->binding location map
         for (auto& mapping : inputs) {
+            // if the input has a name in ShaderVertexAttributes
             auto default_binding = mat_spec::ShaderVertexAttributes.find(mapping.first);
             if (default_binding != mat_spec::ShaderVertexAttributes.end()) {
                 auto label = std::get<2>(default_binding->second);
@@ -422,7 +306,7 @@ public:
      * @param uboName
      * @return ProgramUniformBlockDescription zero initialized if it does not exist
      */
-    ProgramUniformBlockDescription getUniformBlockInfo(const std::string& uboName) const {
+    ProgramBlockLayout get_uniform_block_layout(const std::string& uboName) const override {
         auto itr = uniformBlocks.find(uboName);
         if (itr != uniformBlocks.end())
             return itr->second;
@@ -466,7 +350,7 @@ protected:
     virtual void onBuilt(){};
 
 private:
-    bool attach_shader(GLuint shader_name);
+    bool gl_attach_shader(GLuint shader_name);
 
 public:
     /**
@@ -477,7 +361,7 @@ public:
 protected:
     std::unordered_map<std::string, ProgramUniformDescription> uniforms;
     std::unordered_map<std::string, ProgramInputDescription> inputs;
-    std::unordered_map<std::string, ProgramUniformBlockDescription> uniformBlocks;
+    std::unordered_map<std::string, ProgramBlockLayout> uniformBlocks;
 
     // counter for dependent objects. incremented when shader has been reloaded.
     uint32_t modifiedCount = 0;

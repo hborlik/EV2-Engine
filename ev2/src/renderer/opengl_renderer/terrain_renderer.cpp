@@ -1,5 +1,7 @@
 #include "renderer/opengl_renderer/terrain_renderer.hpp"
 
+#ifdef ENABLE_TERRAIN
+
 #include "glm/geometric.hpp"
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/opengl_renderer/gl_buffer.hpp"
@@ -18,9 +20,6 @@
 
 template<typename T>
 constexpr auto sqr(T a) noexcept {return a * a;}
-
-#define TERRAIN
-#ifdef TERRAIN
 
 namespace ev2::renderer {
 
@@ -1713,4 +1712,4 @@ void TerrainRenderer::render(const RenderState& state)
 
 }
 
-#endif
+#endif // ENABLE_TERRAIN

@@ -42,17 +42,12 @@ public:
     void add_accessor(int buffer_id,
         AttributeLabel label,
         ShaderDataType type,
-        size_t count,
-        bool normalized,
         size_t stride,
         size_t byte_offset) {
 
         const Attribute attr { 
             .label=label, 
             .type=type,
-            .element_size=ShaderDataTypeSize(type),
-            .count=count,
-            .normalized=normalized,
             .stride=stride,
             .byte_offset=byte_offset};
         
@@ -76,6 +71,7 @@ public:
         }
     }
 
+    static std::unique_ptr<VertexBuffer> vbInitDefault();
 
     /**
      * @brief vertex buffer format pos(3float), normal(3float), color(3float)
@@ -85,6 +81,8 @@ public:
      */
     static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(std::shared_ptr<Buffer> buffer);
     
+    static std::unique_ptr<VertexBuffer> vbInitArrayVertexSpec(std::shared_ptr<Buffer> buffer, const VertexBufferLayout& layout);
+    
     /**
      * @brief buffer format pos(3float), normal(3float), color(3float), texcoord(2float)
      * 
@@ -92,14 +90,14 @@ public:
      * @return std::unique_ptr<VertexBuffer> 
      */
     static std::unique_ptr<VertexBuffer> vbInitArrayVertexData(const std::vector<float>& buffer);
-    static VertexBuffer vbInitSphereArrayVertexData(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer);
 
+    
     /**
      * @brief init vertex buffer for a screen space triangle (vertices only)
      * 
      * @return VertexBuffer 
      */
-    static VertexBuffer vbInitSST();
+    static std::unique_ptr<VertexBuffer> vbInitSST();
 
     /**
      * @brief buffer format pos(3float), normal(3float), color(3float), texcoord(2float). 
@@ -107,14 +105,9 @@ public:
      * 
      * @param buffer 
      * @param instance_buffer instance buffer to be used with the returned VAO
-     * @return VertexBuffer 
+     * @return std::unique_ptr<VertexBuffer> 
      */
-    static VertexBuffer vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const VertexBufferLayout& layout);
-
-    static VertexBuffer vbInitArrayVertexSpec(const std::vector<float>& buffer, const VertexBufferLayout& layout);
-    static VertexBuffer vbInitArrayVertexSpecIndexed(const std::vector<float>& buffer, const std::vector<unsigned int>& indexBuffer, const VertexBufferLayout& layout);
-
-    static VertexBuffer vbInitDefault();
+    // static std::unique_ptr<VertexBuffer> vbInitVertexDataInstanced(const std::vector<float>& buffer, const Buffer& instance_buffer, const VertexBufferLayout& layout);
 
     // buffer accessors
     std::map<AttributeLabel, VertexBufferAccessor> accessors;

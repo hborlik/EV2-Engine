@@ -11,7 +11,8 @@
 
 #include "evpch.hpp"
 
-#include "renderer/buffer.hpp"
+#include "core/assert.hpp"
+#include "renderer/shader_data_type.hpp"
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
@@ -486,6 +487,54 @@ namespace ev2 {
                 EV_CORE_CRITICAL("getGLDataType unsupported type!");
                 return DataType::UNKNOWN;
         };
+    }
+
+    struct VertexAttribPointer {
+        int size;
+        DataType type;
+    };
+
+    /**
+     * @brief AttrPtrSize: convert renderer::ShaderDataType (by index) to arguments for
+     * glVertexAttribPointer
+     * 
+     */
+    constexpr VertexAttribPointer AttrPtrSize[(std::size_t)renderer::ShaderDataType::COUNT] = {
+        {1, DataType::SHORT} // Short
+        ,{1, DataType::UNSIGNED_SHORT } // UnsignedShort
+        ,{1, DataType::INT } // Int
+        ,{2, DataType::INT } // Int2
+        ,{3, DataType::INT } // Int3
+        ,{4, DataType::INT } // Int4
+        ,{1, DataType::UNSIGNED_INT } // Uint
+        ,{2, DataType::UNSIGNED_INT } // Uint2
+        ,{3, DataType::UNSIGNED_INT } // Uint3
+        ,{4, DataType::UNSIGNED_INT } // Uint4
+        ,{1, DataType::HALF_FLOAT } // HalfFloat
+        ,{1, DataType::FLOAT } // Float
+        ,{2, DataType::FLOAT } // Vec2f
+        ,{3, DataType::FLOAT } // Vec3f
+        ,{4, DataType::FLOAT } // Vec4f
+        ,{-1,DataType::FLOAT } // Mat2f
+        ,{-1,DataType::FLOAT } // Mat3f
+        ,{-1,DataType::FLOAT } // Mat4f
+        ,{1, DataType::DOUBLE } // Double
+        ,{2, DataType::DOUBLE } // Vec2d
+        ,{3, DataType::DOUBLE } // Vec3d
+        ,{4, DataType::DOUBLE } // Vec4d
+        ,{-1,DataType::DOUBLE } // Mat2d
+        ,{-1,DataType::DOUBLE } // Mat3d
+        ,{-1,DataType::DOUBLE } // Mat4d
+    };
+
+    inline VertexAttribPointer getGLAttrPtrSize(renderer::ShaderDataType type) {
+        VertexAttribPointer out{};
+        EV_CORE_ASSERT((int)type < (sizeof(AttrPtrSize) / sizeof(VertexAttribPointer)), "out of range!");
+
+        out = AttrPtrSize[(int)type];
+
+        EV_CORE_ASSERT(out.size != -1, "getGLAttrPtrSize unsupported type!");
+        return out;
     }
 
     }

@@ -9,6 +9,10 @@
 
 #include "evpch.hpp"
 
+#include "core/ev.hpp"
+
+#include "renderer/buffer.hpp"
+
 namespace ev2::renderer {
 
 struct ShaderTypeFlag {
@@ -104,12 +108,84 @@ struct ProgramBlockLayout
 
     bool is_valid() const noexcept {return location_index != -1;}
 
+    /**
+     * @brief Set a Shader parameter in the target uniform block buffer.
+     * 
+     * @tparam T 
+     * @param paramName 
+     * @param data 
+     * @param shaderBuffer 
+     * @return true 
+     * @return false 
+     */
+    template <typename T>
+    bool set_parameter(const std::string &paramName, const T &data, Buffer &shaderBuffer)
+    {
+        if (is_valid()) {
+            int uoff = get_offset(paramName);
+            shaderBuffer.sub_bytes(data, uoff);
+            return true;
+        }
+        Log::error_core<ProgramBlockLayout>("Failed to set shader parameter {}", paramName);
+        return false;
+    }
+
+    /**
+     * @brief Set a Shader parameter in the target uniform block buffer.
+     * 
+     * @tparam T 
+     * @param paramName 
+     * @param data 
+     * @param shaderBuffer 
+     * @return true 
+     * @return false 
+     */
+    template <typename T>
+    bool set_parameter(int paramIndex, const T &data, Buffer &shaderBuffer)
+    {
+        if (is_valid())
+        {
+            int uoff = get_offset(paramIndex);
+            shaderBuffer.sub_bytes(data, (uint32_t)uoff);
+            return true;
+        }
+        Log::error_core<ProgramBlockLayout>("Failed to set shader parameter {}", paramIndex);
+        return false;
+    }
+
+    /**
+     * @brief Set the Shader Parameter in a buffer using ProgramBlockLayout
+     * 
+     * @tparam T 
+     * @param paramName 
+     * @param data 
+     * @param shaderBuffer 
+     * @return true 
+     * @return false 
+     */
+    template <typename T>
+    bool set_parameter(const std::string &paramName, const std::vector<T> &data, Buffer &shaderBuffer)
+    {
+        if (is_valid())
+        {
+            ProgramBlockLayout::Layout l = get_layout(paramName);
+            int uoff = l.Offset;
+            int stride = l.ArrayStride;
+            if (uoff != -1 && l.ArraySize >= data.size())
+            {
+                shaderBuffer.sub_bytes(data, uoff, stride);
+                return true;
+            }
+        }
+        Log::error_core<ProgramBlockLayout>("Failed to set shader parameter {}", paramName);
+        return false;
+    }
+
 };
 
 
 class Shader {
 public:
-    explicit Shader(ShaderType type);
     virtual ~Shader() = default;
 
     static std::unique_ptr<Shader> make_shader(const ShaderSource& source);

@@ -9,23 +9,43 @@ std::unique_ptr<Buffer> Buffer::make_buffer(BufferUsage usage, BufferAccess acce
     switch(RenderAPI::get_api()) {
         case RenderAPI::API::OpenGL: {
             // convert usage into a binding target for GL buffer modification and usage
-            gl::BindingTarget target = gl::BindingTarget::ARRAY;
+            // there is a bit of a naming conflict between the Vulkan and OpenGL idea of "usage".
+            // OpenGL usage specifies how frequently memory will be accessed by CPU
+            // Vulkan usage specifies what the buffer may be bound to.
+            // In this rendering API, BufferUsage follows the Vulkan definition of usage 
+            gl::BindingTarget gl_target = gl::BindingTarget::ARRAY;
+            gl::Usage gl_usage = gl::Usage::STATIC_DRAW;
+
             switch(usage) {
                 case BufferUsage::Index:
-                    target = gl::BindingTarget::ELEMENT_ARRAY;
+                    gl_target = gl::BindingTarget::ELEMENT_ARRAY;
+                    break;
                 case BufferUsage::Vertex:
-                    target = gl::BindingTarget::ARRAY;
-                default: break;
+                    gl_target = gl::BindingTarget::ARRAY;
+                    break;
+                default: 
+                    EV_CORE_CRITICAL("BufferUsage value {} not implemented for OpenGL", usage);
+                    return {};
             }
 
-            auto shader = std::make_unique<GLBuffer>(target, usage);
+            switch(access) {
+                case BufferAccess::Static:
+                    gl_usage = gl::Usage::STATIC_DRAW;
+                case BufferAccess::Dynamic:
+                    gl_usage = gl::Usage::DYNAMIC_DRAW;
+                default:
+                    EV_CORE_CRITICAL("BufferAccess value {} not implemented for OpenGL", access);
+                    return {};
+            }
+
+            auto shader = std::make_unique<GLBuffer>(gl_target, gl_usage);
             return shader;
         }
         default: 
             EV_CORE_ASSERT(false, "RendererAPI is currently not supported!");
             break;
     }
-    return nullptr;
+    return {};
 }
 
 }

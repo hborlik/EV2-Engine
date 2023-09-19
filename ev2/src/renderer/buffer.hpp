@@ -12,72 +12,10 @@
 #include "evpch.hpp"
 
 #include "core/assert.hpp"
+#include <fmt/core.h>
+#include <fmt/format.h>
 
 namespace ev2::renderer {
-
-enum class ShaderDataType : int {
-    Short               ,
-    UnsignedShort       ,
-    Int                 ,
-    Int2                ,
-    Int3                ,
-    Int4                ,
-    Uint                ,
-    Uint2               ,
-    Uint3               ,
-    Uint4               ,
-    HalfFloat           ,
-    Float               ,
-    Vec2f               ,
-    Vec3f               ,
-    Vec4f               ,
-    Mat2f               ,
-    Mat3f               ,
-    Mat4f               ,
-    Double              ,
-    Vec2d               ,
-    Vec3d               ,
-    Vec4d               ,
-    Mat2d               ,
-    Mat3d               ,
-    Mat4d               
-};
-
-static uint32_t ShaderDataTypeSize(ShaderDataType type) {
-    switch (type)
-    {
-        case ShaderDataType::Short:         return 2;
-        case ShaderDataType::UnsignedShort: return 2;
-        case ShaderDataType::Int:           return 4;
-        case ShaderDataType::Int2:          return 4 * 2;
-        case ShaderDataType::Int3:          return 4 * 3;
-        case ShaderDataType::Int4:          return 4 * 4;
-        case ShaderDataType::Uint:          return 4;
-        case ShaderDataType::Uint2:         return 4 * 2;
-        case ShaderDataType::Uint3:         return 4 * 3;
-        case ShaderDataType::Uint4:         return 4 * 4;
-        case ShaderDataType::HalfFloat:     return 2;
-        case ShaderDataType::Float:         return 4;
-        case ShaderDataType::Vec2f:         return 4 * 2;
-        case ShaderDataType::Vec3f:         return 4 * 3;
-        case ShaderDataType::Vec4f:         return 4 * 4; 
-        case ShaderDataType::Mat2f:         return 4 * 2 * 2; 
-        case ShaderDataType::Mat3f:         return 4 * 3 * 3;
-        case ShaderDataType::Mat4f:         return 4 * 4 * 4;
-        case ShaderDataType::Double:        return 8;
-        case ShaderDataType::Vec2d:         return 8 * 2;
-        case ShaderDataType::Vec3d:         return 8 * 3;
-        case ShaderDataType::Vec4d:         return 8 * 4;
-        case ShaderDataType::Mat2d:         return 8 * 2 * 2;
-        case ShaderDataType::Mat3d:         return 8 * 3 * 3;
-        case ShaderDataType::Mat4d:         return 8 * 4 * 4;
-        default: break;
-    }
-
-    EV_CORE_ASSERT(false, "Unknown ShaderDataType!");
-    return 0;
-}
-
 
 /**
  * @brief frequency of access (modification and usage)
@@ -89,7 +27,7 @@ enum class BufferAccess {
 };
 
 /**
- * @brief the nature of that memory access
+ * @brief the nature of that memory access.
  * 
  */
 enum class BufferUsage {
@@ -101,7 +39,8 @@ class Buffer {
 public:
     virtual ~Buffer() = default;
 
-    virtual void allocate(std::size_t bytes) = 0;
+    virtual void allocate_impl(std::size_t size) = 0;
+    virtual void allocate_impl(const void* data, std::size_t size) = 0;
 
     /**
      * @brief write data into buffer starting at offset bytes from beginning of buffer
@@ -110,16 +49,74 @@ public:
      * @param size length in bytes of data to write
      * @param offset offset in bytes from start of buffer to write data
      */
-    virtual void sub_bytes(const void* data, std::size_t size, std::size_t offset) = 0;
+    virtual void sub_bytes_impl(const void* data, std::size_t size, std::size_t offset) = 0;
 
     template<typename T>
-    void sub_data(const T& source, std::size_t offset) {
-        sub_bytes(&source, sizeof(T), offset);
+    void sub_bytes(const T& source, std::size_t offset) {
+        sub_bytes_impl(&source, sizeof(T), offset);
+    }
+
+    /**
+     * @brief Update part of data in buffer. Buffer should have data allocated before call is made to sub data
+     * 
+     * @tparam T 
+     * @param source 
+     * @param offset 
+     */
+    template<typename T>
+    void sub_bytes(const std::vector<T>& source, uint32_t offset, uint32_t stride) {
+        if(!source.empty()) {
+            for(size_t i = 0; i < source.size(); i++) {
+                sub_bytes_impl(&source[i], sizeof(T), offset + i * stride);
+            }
+        }
+    }
+
+    /**
+     * @brief Allocate buffer large enough to contain all data in source and copy data into buffer.
+     * 
+     * @tparam T 
+     * @param source 
+     */
+    template<typename T>
+    void allocate(const std::vector<T>& source) {
+        allocate_impl(source.data(), sizeof(T) * source.size());
+    }
+
+    void allocate(std::size_t size) {
+        allocate_impl(size);
     }
 
     static std::unique_ptr<Buffer> make_buffer(BufferUsage usage, BufferAccess access);
 };
 
 } // namespace ev2::renderer
+
+// Formatters
+template <> struct fmt::formatter<ev2::renderer::BufferAccess>: fmt::formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+
+    auto format(ev2::renderer::BufferAccess c, format_context& ctx) const {
+        string_view name = "unknown";
+        switch (c) {
+            case ev2::renderer::BufferAccess::Static:   name = "Static"; break;
+            case ev2::renderer::BufferAccess::Dynamic:   name = "Dynamic"; break;
+        }
+        return fmt::formatter<string_view>::format(name, ctx);
+    }
+};
+
+template <> struct fmt::formatter<ev2::renderer::BufferUsage>: fmt::formatter<string_view> {
+    // parse is inherited from formatter<string_view>.
+
+    auto format(ev2::renderer::BufferUsage c, format_context& ctx) const {
+        string_view name = "unknown";
+        switch (c) {
+            case ev2::renderer::BufferUsage::Vertex:   name = "Vertex"; break;
+            case ev2::renderer::BufferUsage::Index:   name = "Index"; break;
+        }
+        return fmt::formatter<string_view>::format(name, ctx);
+    }
+};
 
 #endif // EV2_BUFFER_HPP

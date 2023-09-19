@@ -79,7 +79,7 @@ void GLDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
     EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
     m_mesh = gl_mesh;
     
-    gl_vao = VAOFactory::gen_vao_for_attributes(m_mesh->get_vertex_buffer().get(), m_mesh->get_index_buffer().get(), mat_spec::DefaultBindings);
+    gl_vao = VAOFactory::make_vao(m_mesh->get_vertex_buffer(), m_mesh->get_index_buffer(), mat_spec::DefaultBindings);
 }
 
 void GLDrawable::set_material(std::shared_ptr<Material> material) {
@@ -107,7 +107,7 @@ void GLInstancedDrawable::set_mesh(std::shared_ptr<Mesh> mesh) {
     EV_CORE_ASSERT(gl_mesh, "set_mesh requires a non-null GLMesh");
     this->m_mesh = gl_mesh;
 
-    gl_vao = VAOFactory::gen_vao_for_attributes(m_mesh->get_vertex_buffer().get(), m_mesh->get_index_buffer().get(), mat_spec::DefaultBindings, instance_transform_buffer.get());
+    gl_vao = VAOFactory::make_vao(m_mesh->get_vertex_buffer(), m_mesh->get_index_buffer(), mat_spec::DefaultBindings, instance_transform_buffer);
 }
 
 void GLRenderer::draw(GLMesh* dr, const ProgramData& prog, bool use_materials, GLuint gl_vao, int32_t material_override, int32_t n_instances) {
@@ -200,6 +200,7 @@ GLRenderer::GLRenderer(uint32_t width, uint32_t height) :
     bloom_thresh_combine{gl::FBOTarget::RW},
     bloom_blur_swap_fbo{FBO{gl::FBOTarget::RW}, FBO{gl::FBOTarget::RW}},
     sst_vb{VertexBuffer::vbInitSST()},
+    sst_vao{VAOFactory::make_vao(sst_vb, {{AttributeLabel::Vertex, 0}})},
     shader_globals{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     lighting_materials{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
     ssao_kernel_buffer{gl::BindingTarget::UNIFORM, gl::Usage::DYNAMIC_DRAW},
@@ -463,7 +464,7 @@ void GLRenderer::init() {
     post_fx_bloomt_loc          = post_fx_program.program->getUniformInfo("bloomBuffer").Location;
 
     // program block inputs
-    globals_desc = geometry_program.program->getUniformBlockInfo("Globals");
+    globals_desc = geometry_program.program->get_uniform_block_layout("Globals");
     goffsets.P_ind = globals_desc.get_index("P");
     goffsets.PInv_ind = globals_desc.get_index("PInv");
     goffsets.View_ind = globals_desc.get_index("View");
@@ -474,7 +475,7 @@ void GLRenderer::init() {
 
     shader_globals.allocate(globals_desc.block_size);
 
-    lighting_materials_desc = directional_lighting_program.program->getUniformBlockInfo("MaterialsInfo");
+    lighting_materials_desc = directional_lighting_program.program->get_uniform_block_layout("MaterialsInfo");
     lighting_materials.allocate(lighting_materials_desc.block_size);
 
     // extract all offsets for material buffer
@@ -487,7 +488,7 @@ void GLRenderer::init() {
             b_begin++;
             uint32_t index = std::stoi(name.substr(b_begin, b_end - b_begin));
             std::string var_name = name.substr(b_end + 2);
-            MaterialData& data_ref = material_data_buffer[index];
+            GLMaterialData& data_ref = material_data_buffer[index];
             if (var_name == "diffuse") {
                 data_ref.diffuse_offset = lighting_materials_desc.layouts[ind].Offset;
             } else if (var_name == "emissive") {
@@ -518,10 +519,10 @@ void GLRenderer::init() {
         }
     }
 
-    ssao_kernel_desc = ssao_program.program->getUniformBlockInfo("Samples");
+    ssao_kernel_desc = ssao_program.program->get_uniform_block_layout("Samples");
     ssao_kernel_buffer.allocate(ssao_kernel_desc.block_size);
     auto tgt_layout = ssao_kernel_desc.get_layout("samples[0]");
-    ssao_kernel_buffer.sub_data(ssaoKernel, tgt_layout.Offset, tgt_layout.ArrayStride);
+    ssao_kernel_buffer.sub_bytes(ssaoKernel, tgt_layout.Offset, tgt_layout.ArrayStride);
     
     int i = 0;
     for (auto& m : material_data_buffer) {
@@ -543,16 +544,52 @@ void GLRenderer::init() {
 
     point_light_geom_base_scale = scaling.x;
 
-    point_light_gl_vao = point_light_mesh->get_vertex_buffer().gen_vao_for_attributes(point_lighting_program.program.getAttributeMap());
+    point_light_gl_vao = VAOFactory::make_vao(point_light_mesh->get_vertex_buffer(), point_lighting_program.program->getAttributeMap());
 
 }
 
 std::shared_ptr<Mesh> GLRenderer::make_mesh(const Model* model) {
+    EV_CORE_ASSERT(model != nullptr);
+    std::vector<renderer::Primitive> ev_prim(model->draw_objects.size());
+    size_t i = 0;
+    // convert the loaded object to the model format
+    for (auto& dObj : model->draw_objects) {
+        int mat_id = dObj.material_id;
+        if (mat_id == -1)
+            mat_id = 0;
+        // auto& m = loaded_model->materials[mat_id];
 
-}
+        ev_prim[i++] = renderer::Primitive {
+            dObj.start * 3,
+            dObj.numTriangles * 3,
+            mat_id
+        };
+    }
+    // get materials information
+    std::vector<std::shared_ptr<renderer::GLMaterial>> ev_mat;
+    for (auto& mat : model->materials) {
+        auto gl_mat = std::dynamic_pointer_cast<GLMaterial>(make_material(&mat));
+        ev_mat.push_back(gl_mat);
+    }
 
-std::shared_ptr<Material> GLRenderer::make_material() {
+    auto gl_buffer = std::shared_ptr(Buffer::make_buffer(BufferUsage::Vertex, BufferAccess::Static));
+    gl_buffer->allocate(model->buffer);
 
+    auto vb = std::shared_ptr(renderer::VertexBuffer::vbInitArrayVertexSpec(gl_buffer, model->buffer_layout));
+
+    auto mesh = std::make_unique<GLMesh>(
+        vb,
+        nullptr, // index_buffer
+        std::move(ev_prim),
+        std::move(ev_mat),
+        AABB{model->bmin, model->bmax},
+        Sphere{},
+        renderer::FrustumCull::AABB,
+        gl::CullMode::BACK,
+        gl::FrontFacing::CCW
+    );
+
+    return mesh;
 }
 
 std::shared_ptr<PointLight> GLRenderer::make_point_light() {
@@ -571,15 +608,20 @@ std::shared_ptr<DirectionalLight> GLRenderer::make_directional_light() {
         this->destroy_directional_light(light);
     };
     int32_t nlid = next_light_id++;
+    // hack to keep track of the first directional light in scene (this one has the shadow)
     if (shadow_directional_light_id < 0)
         shadow_directional_light_id = nlid;
-    DirectionalLight l{};
-    directional_lights.insert_or_assign(nlid, l);
-    return {LID::Directional, nlid};
+    std::shared_ptr<GLDirectionalLight> light(new GLDirectionalLight{}, light_deleter);
+    directional_lights.insert_or_assign(nlid, DirectionalLightData{});
+    return light;
 }
 
-std::shared_ptr<Texture> GLRenderer::make_texture() {
+std::shared_ptr<Texture> GLRenderer::make_texture(TextureType type, const Image* image) {
+    auto texture = Texture::make_texture(type);
 
+    EV_CORE_ASSERT(false, "NOT IMPLEMENTED!");
+
+    return texture;
 }
 
 std::shared_ptr<Drawable> GLRenderer::make_drawable() {
@@ -588,7 +630,7 @@ std::shared_ptr<Drawable> GLRenderer::make_drawable() {
     };
 
     int32_t id = next_model_instance_id++;
-    ModelInstancePtr model(new GLDrawable(), model_deleter);
+    ModelInstancePtr model(new GLDrawable(this), model_deleter);
     model->id = id;
     auto [mi, inserted] = model_instances.emplace(id, model.get());
 
@@ -605,7 +647,7 @@ std::shared_ptr<InstancedDrawable> GLRenderer::make_instanced_drawable() {
     int32_t id = next_instanced_drawable_id++;
     InstancedDrawablePtr model(new GLInstancedDrawable(), instanced_drawable_deleter);
     model->id = id;
-    model->instance_transform_buffer = std::make_unique<Buffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
+    model->instance_transform_buffer = std::make_unique<GLBuffer>(gl::BindingTarget::ARRAY, gl::Usage::DYNAMIC_DRAW);
 
     auto [mi, inserted] = instanced_drawables.emplace(id, model.get());
     
@@ -621,20 +663,20 @@ void GLRenderer::destroy_model_instance(GLDrawable* model) {
 }
 
 
-void GLRenderer::update_material(mat_slot_t material_slot, const MaterialData& material) {
+void GLRenderer::update_material(mat_slot_t material_slot, const GLMaterialData& material) {
     material_data_buffer[material_slot] = material;
-    lighting_materials.sub_data(material.diffuse,        material.diffuse_offset);
-    lighting_materials.sub_data(material.emissive,       material.emissive_offset);
-    lighting_materials.sub_data(material.metallic,       material.metallic_offset);
-    lighting_materials.sub_data(material.subsurface,     material.subsurface_offset);
-    lighting_materials.sub_data(material.specular,       material.specular_offset);
-    lighting_materials.sub_data(material.roughness,      material.roughness_offset);
-    lighting_materials.sub_data(material.specularTint,   material.specularTint_offset);
-    lighting_materials.sub_data(material.clearcoat,      material.clearcoat_offset);
-    lighting_materials.sub_data(material.clearcoatGloss, material.clearcoatGloss_offset);
-    lighting_materials.sub_data(material.anisotropic,    material.anisotropic_offset);
-    lighting_materials.sub_data(material.sheen,          material.sheen_offset);
-    lighting_materials.sub_data(material.sheenTint,      material.sheenTint_offset);
+    lighting_materials.sub_bytes(material.diffuse,        material.diffuse_offset);
+    lighting_materials.sub_bytes(material.emissive,       material.emissive_offset);
+    lighting_materials.sub_bytes(material.metallic,       material.metallic_offset);
+    lighting_materials.sub_bytes(material.subsurface,     material.subsurface_offset);
+    lighting_materials.sub_bytes(material.specular,       material.specular_offset);
+    lighting_materials.sub_bytes(material.roughness,      material.roughness_offset);
+    lighting_materials.sub_bytes(material.specularTint,   material.specularTint_offset);
+    lighting_materials.sub_bytes(material.clearcoat,      material.clearcoat_offset);
+    lighting_materials.sub_bytes(material.clearcoatGloss, material.clearcoatGloss_offset);
+    lighting_materials.sub_bytes(material.anisotropic,    material.anisotropic_offset);
+    lighting_materials.sub_bytes(material.sheen,          material.sheen_offset);
+    lighting_materials.sub_bytes(material.sheenTint,      material.sheenTint_offset);
 }
 
 void GLRenderer::load_ssao_uniforms() {
@@ -643,21 +685,25 @@ void GLRenderer::load_ssao_uniforms() {
     glProgramUniform1ui(ssao_program.program->getHandle(), ssao_nSamples_loc, ssao_kernel_samples);
 }
 
-std::shared_ptr<Material> GLRenderer::make_material() {
+std::shared_ptr<Material> GLRenderer::make_material(const MaterialData* material) {
 
     const auto mat_deleter = [this](GLMaterial* mat) -> void {
         this->destroy_material(mat);
     };
 
+    std::string name{material ? material->name : "Material"};
+
     int32_t new_mat_slot = alloc_material_slot();
     if (new_mat_slot >= 0) {
         int32_t id = next_material_id++;
+        
+        // update material internals so it knows how to update renderer material buffer
         auto new_material =
-            std::shared_ptr<GLMaterial>(new GLMaterial{}, mat_deleter);
+            std::shared_ptr<GLMaterial>(new GLMaterial{name, material, id, new_mat_slot, this}, mat_deleter);
+
+        // keep reference (through raw pointer) to material
         materials[id] = new_material.get();
-        new_material->material_id = id;
-        new_material->material_slot = new_mat_slot;
-        new_material->m_owner = this;
+
         return new_material;
     }
     return {};
@@ -720,11 +766,8 @@ void GLRenderer::render(const Camera &camera) {
     }
 
     // pre render data updates
-    for (auto& m : materials) {
-        GLMaterial* material = m.second;
-        material_data_buffer.at(material->material_slot).update_from(material);
-    }
 
+    // update buffer for materials that have been marked as changed
     for(mat_slot_t i = 0; i < MAX_N_MATERIALS; i++) {
         if (material_data_buffer[i].changed)
             update_material(i, material_data_buffer[i]);
@@ -942,7 +985,8 @@ void GLRenderer::render(const Camera &camera) {
     // gl::glUniformf(ssao_radius, ssao_radius_loc);
     // gl::glUniformui(ssao_kernel_samples, ssao_nSamples_loc);
 
-    ssao_kernel_desc.bind_buffer(ssao_kernel_buffer);
+    BlockLayoutUtil::bind_buffer(ssao_kernel_desc, ssao_kernel_buffer);
+
 
     draw_screen_space_triangle();
 
@@ -1091,12 +1135,12 @@ void GLRenderer::render(const Camera &camera) {
         point_light_data[index] = light_data;
         index++;
     }
-    point_light_data_buffer->copy_data(point_light_data);
+    point_light_data_buffer->allocate(point_light_data);
 
     // bind the point light data buffer to SSBO
     point_light_data_buffer->bind(plp_ssbo_light_data_location);
 
-    draw(point_light_mesh.get(), point_lighting_program, false, point_light_gl_vao, -1, point_lights.size());
+    draw(point_light_mesh.get(), point_lighting_program, false, point_light_gl_vao.get_handle(), -1, point_lights.size());
 
     point_light_data_buffer->unbind();
 
@@ -1123,7 +1167,7 @@ void GLRenderer::render(const Camera &camera) {
     glProgramUniform1f(sky_program.program->getHandle(), sky_output_mul_loc, sky_brightness);
 
     sky_program.program->use();
-    shader_globals->bind_range(globals_desc.location_index);
+    shader_globals.bind_range(globals_desc.location_index);
     draw_screen_space_triangle();
 
     sky_program.program->unbind();
@@ -1141,7 +1185,7 @@ void GLRenderer::render(const Camera &camera) {
     glDisable(GL_DEPTH_TEST); // sst
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL );
 
-    post_fx_bloom_combine_program.program.use();
+    post_fx_bloom_combine_program.program->use();
 
     if (post_fx_bc_hdrt_loc >= 0) {
         glActiveTexture(GL_TEXTURE0);
@@ -1315,9 +1359,9 @@ void GLRenderer::set_resolution(uint32_t width, uint32_t height) {
 }
 
 void GLRenderer::draw_screen_space_triangle() {
-    glBindVertexArray(sst_vb.second);
+    sst_vao.bind();
     GL_CHECKED_CALL(glDrawArrays(GL_TRIANGLES, 0, 3));
-    glBindVertexArray(0);
+    sst_vao.unbind();
 }
 
 }

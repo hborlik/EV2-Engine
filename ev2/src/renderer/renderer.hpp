@@ -62,10 +62,10 @@ public:
     virtual void init() = 0;
 
     virtual std::shared_ptr<Mesh> make_mesh(const Model* model = nullptr) = 0;
-    virtual std::shared_ptr<Material> make_material() = 0;
+    virtual std::shared_ptr<Material> make_material(const MaterialData* material = nullptr) = 0;
     virtual std::shared_ptr<PointLight> make_point_light() = 0;
     virtual std::shared_ptr<DirectionalLight> make_directional_light() = 0;
-    virtual std::shared_ptr<Texture> make_texture() = 0;
+    virtual std::shared_ptr<Texture> make_texture(TextureType type, const Image* image = nullptr) = 0;
     virtual std::shared_ptr<Drawable> make_drawable() = 0;
     virtual std::shared_ptr<InstancedDrawable> make_instanced_drawable() = 0;
 

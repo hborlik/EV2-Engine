@@ -7,7 +7,9 @@
 #ifndef EV2_VERTEX_BUFFER_LAYOUT_HPP
 #define EV2_VERTEX_BUFFER_LAYOUT_HPP
 
-#include "renderer/buffer.hpp"
+#include "core/assert.hpp"
+
+#include "renderer/shader_data_type.hpp"
 
 namespace ev2::renderer {
 
@@ -23,9 +25,6 @@ enum class AttributeLabel : int {
 struct Attribute {
     AttributeLabel  label       = AttributeLabel::Vertex;
     ShaderDataType  type        = ShaderDataType::Float;
-    size_t          element_size= 0;    // size in bytes of a single element. eg 4 for Float
-    size_t          count       = 0;    // number of elements (not size of array). eg 3 for vec3
-    bool            normalized  = false;
     size_t          stride      = 0;    // bytes between consecutive elements
     size_t          byte_offset = 0;    // offset from beginning of buffer
 };
@@ -39,10 +38,10 @@ struct VertexBufferLayout {
             case AttributeLabel::Vertex:
             case AttributeLabel::Normal:
             case AttributeLabel::Color:
-                elements.push_back(Attribute{ type, ShaderDataType::Float, 3, ShaderDataTypeSize(ShaderDataType::Float), 0 });
+                elements.push_back(Attribute{ type, ShaderDataType::Vec3f, 0, 0 });
                 break;
             case AttributeLabel::Texcoord:
-                elements.push_back(Attribute{type, ShaderDataType::Float, 2, ShaderDataTypeSize(ShaderDataType::Float), 0});
+                elements.push_back(Attribute{type, ShaderDataType::Vec2f, 0, 0});
                 break;
             default:
                 break;
@@ -50,9 +49,9 @@ struct VertexBufferLayout {
         return *this;
     }
 
-    VertexBufferLayout& add_attribute(AttributeLabel label, ShaderDataType data_type, uint32_t count, uint32_t size) {
+    VertexBufferLayout& add_attribute(AttributeLabel label, ShaderDataType data_type) {
         EV_CORE_ASSERT(!finalized(), "Layout should not be finalized!");
-        elements.push_back(Attribute{label, data_type, count, size, 0});
+        elements.push_back(Attribute{label, data_type, 0, 0});
         return *this;
     }
 
@@ -61,9 +60,14 @@ struct VertexBufferLayout {
         uint32_t total_size = 0;
         for (auto& l : elements) {
             l.byte_offset = total_size;
-            total_size += l.element_size * l.count;
+            total_size += ShaderDataTypeSize(l.type);
         }
         stride = total_size;
+
+        // update all the Attribute stride values too just for sanity
+        for (auto& l : elements) {
+            l.stride = stride;
+        }
         return *this;
     }
 

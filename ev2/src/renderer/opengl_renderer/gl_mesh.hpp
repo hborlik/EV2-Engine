@@ -18,31 +18,30 @@
 
 namespace ev2::renderer {
 
-// struct GLMesh : public Mesh {
-
-//     GLMesh(VertexBuffer &&vb,
-//              std::vector<Primitive> primitives,
-//              std::vector<std::shared_ptr<Material>> materials,
-//              AABB bounding_box,
-//              Sphere bounding_sphere,
-//              FrustumCull frustum_cull,
-//              gl::CullMode cull,
-//              gl::FrontFacing ff) : vertex_buffer{std::move(vb)},
-//                                    primitives{std::move(primitives)},
-//                                    materials{std::move(materials)},
-//                                    bounding_box{bounding_box},
-//                                    bounding_sphere{bounding_sphere},
-//                                    frustum_cull{frustum_cull},
-//                                    cull_mode{cull},
-//                                    front_facing{ff}
-//     {
-//     }
-
-//     VertexBuffer                vertex_buffer;
-// };
-
 class GLMesh : public Mesh {
 public:
+    GLMesh() = default;
+
+    GLMesh(std::shared_ptr<VertexBuffer> vb,
+        std::shared_ptr<GLBuffer> index_buffer,
+        std::vector<Primitive> primitives,
+        std::vector<std::shared_ptr<GLMaterial>> materials,
+        AABB bounding_box,
+        Sphere bounding_sphere,
+        FrustumCull frustum_cull,
+        gl::CullMode cull,
+        gl::FrontFacing ff) : 
+        bounding_box{ bounding_box },
+        bounding_sphere{ bounding_sphere },
+        frustum_cull{ frustum_cull },
+        cull_mode{ cull },
+        front_facing{ ff },
+        m_vertex_buffer{ std::move(vb) },
+        m_index_buffer{std::move(index_buffer)},
+        m_primitives{ std::move(primitives) },
+        m_materials{ std::move(materials) }
+         {}
+
     void set_vertex_buffer(std::shared_ptr<VertexBuffer> vBuffer) override;
     void set_index_buffer(std::shared_ptr<Buffer> buffer) override;
     void set_primitives(const std::vector<Primitive>& primitives) override;
@@ -50,6 +49,7 @@ public:
 
     std::shared_ptr<VertexBuffer> get_vertex_buffer() const override;
     std::shared_ptr<Buffer> get_index_buffer() const override;
+    std::vector<Primitive> get_primitives() const override;
 
 public:
     AABB            bounding_box{};
@@ -63,8 +63,8 @@ public:
     std::shared_ptr<VertexBuffer>   m_vertex_buffer{};
     std::shared_ptr<GLBuffer>       m_index_buffer{};
 
-    std::vector<Primitive>          m_primitives;
-    std::vector<std::shared_ptr<GLMaterial>>  m_materials;
+    std::vector<Primitive>          m_primitives{};
+    std::vector<std::shared_ptr<GLMaterial>>  m_materials{};
 };
 
 }

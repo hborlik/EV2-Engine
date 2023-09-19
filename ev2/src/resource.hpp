@@ -36,7 +36,7 @@ public:
      * @brief Get the model object reference id, or load object if not available
      * 
      * @param filename 
-     * @return std::shared_ptr<renderer::Drawable> 
+     * @return std::shared_ptr<renderer::Mesh>
      */
     std::shared_ptr<renderer::Mesh> get_model(const std::filesystem::path& filename, bool cache = true, bool load_materials = true);
 
@@ -46,7 +46,7 @@ public:
      * @param filename 
      * @param cache 
      * @param load_materials 
-     * @return std::shared_ptr<renderer::Drawable> 
+     * @return std::shared_ptr<renderer::Mesh>
      */
     std::shared_ptr<renderer::Mesh> get_model_relative_path(const std::filesystem::path& filename, bool cache = true, bool load_materials = true);
 

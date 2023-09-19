@@ -51,9 +51,11 @@ public:
         current_camera = camera;
     }
 
+#ifdef ENABLE_TERRAIN
     renderer::TerrainRenderer& get_terrain() {
         return *m_terrain_renderer.get();
     }
+#endif // ENABLE_TERRAIN
 
     SceneTree& get_scene_tree() noexcept {return scene_tree;}
 
@@ -69,7 +71,9 @@ private:
     Ref<Node> current_scene = nullptr;
     Ref<CameraNode> current_camera = nullptr;
 
+#ifdef ENABLE_TERRAIN
     std::unique_ptr<renderer::TerrainRenderer> m_terrain_renderer{};
+#endif // ENABLE_TERRAIN
 };
 
 }

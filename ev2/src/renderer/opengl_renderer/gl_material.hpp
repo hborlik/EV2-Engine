@@ -10,16 +10,28 @@
 #include "core/assert.hpp"
 
 #include "renderer/material.hpp"
+#include "io/material.hpp"
 #include "gl_texture.hpp"
 
 namespace ev2::renderer {
 
 struct GLMaterial : public Material {
 
-    GLMaterial() = default;
-    GLMaterial(std::string name, class GLRenderer* owner) : Material{ std::move(name) }, m_owner{owner} {
-        EV_CORE_ASSERT(owner, "GLRenderer* owner cannot be null for material");
-    }
+    /**
+     * @brief Construct a new GLMaterial object
+     * 
+     * @param name 
+     * @param id 
+     * @param slot 
+     * @param owner required owner pointer
+     * @param material_data optional material data pointer used to initialize internal material data
+     */
+    GLMaterial(std::string name,
+        const MaterialData* material_data,
+        int32_t id,
+        int32_t slot,
+        class GLRenderer* owner
+        );
 
     GLMaterial(const GLMaterial&) = delete;
     GLMaterial& operator=(const GLMaterial&) = delete;
@@ -102,8 +114,6 @@ private:
 
     int32_t material_id = -1;
     int32_t material_slot = -1;
-
-    struct MaterialData* m_material_data = nullptr;
 };
 
 }

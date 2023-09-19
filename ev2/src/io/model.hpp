@@ -10,7 +10,8 @@
 
 #include "evpch.hpp"
 
-#include "material.hpp"
+#include "io/material.hpp"
+#include "renderer/vertex_buffer_layout.hpp"
 
 namespace ev2 {
 
@@ -27,9 +28,11 @@ public:
           std::vector<MaterialData> materials,
           glm::vec3 bmin,
           glm::vec3 bmax,
+          renderer::VertexBufferLayout layout,
           std::vector<float> vb) : name{name},
                                    draw_objects{std::move(draw_objects)},
                                    materials{std::move(materials)},
+                                   buffer_layout{std::move(layout)},
                                    buffer{std::move(vb)},
                                    bmin{bmin},
                                    bmax{bmax}
@@ -38,6 +41,7 @@ public:
     std::string             name;
     std::vector<DrawObject> draw_objects;
     std::vector<MaterialData>materials;
+    renderer::VertexBufferLayout buffer_layout;
     std::vector<float>      buffer;
 
     glm::vec3 bmin, bmax;

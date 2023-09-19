@@ -38,15 +38,15 @@ std::ostream& operator<<(std::ostream& os, const GLProgram& input) {
             os << "       U: " << l_name << " offset " << desc.layouts[l_desc].Offset << " len " << desc.layouts[l_desc].ArraySize << " stride " << desc.layouts[l_desc].ArrayStride << "\n";
         }
     }
-    os << "    shader " << (input.isLinked() ? "linked" : "not linked") << "\n";
+    os << "    shader " << (input.is_linked() ? "linked" : "not linked") << "\n";
     os << "=== ShaderProgram ===" << "\n";
     return os;
 }
 
 //// SHADER ////
 
-GLShader::GLShader(ShaderType type) : Shader(type), m_type{glShaderType(type)} {
-    gl_reference = glCreateShader((GLenum)type);
+GLShader::GLShader(gl::GLSLShaderType type) : Shader{}, m_type{type} {
+    gl_reference = glCreateShader((GLenum)m_type);
     EV_CHECK_THROW(gl_reference != 0, "Failed to create shader");
 }
 
@@ -111,8 +111,10 @@ GLProgram::~GLProgram() {
         glDeleteProgram(gl_reference);
 }
 
-void GLProgram::attachShader(const GLShader* shader) {
-    if (!(shader && shader->IsCompiled() && attach_shader(shader->getHandle())))
+void GLProgram::attach_shader(std::shared_ptr<Shader> shader) {
+    auto gl_shader = std::dynamic_pointer_cast<GLShader>(shader);
+    EV_CORE_ASSERT(gl_shader, "shader must be non null and of type GLShader!");
+    if (!(gl_shader && gl_shader->IsCompiled() && gl_attach_shader(gl_shader->getHandle())))
         throw shader_error{ProgramName, "GLShader could not be attached"};
 }
 
@@ -130,7 +132,7 @@ void GLProgram::loadShader(ShaderType type, const std::filesystem::path& path, c
     std::shared_ptr<GLShader> s = std::make_shared<GLShader>(glShaderType(type));
     s->compile(source);
 
-    auto suc = attach_shader(s->getHandle());
+    auto suc = gl_attach_shader(s->getHandle());
     if (!suc)
         throw shader_error{ProgramName, "Loaded shader could not be attached " + path.generic_string()};
 }
@@ -140,7 +142,7 @@ void GLProgram::link() {
 
     glLinkProgram(gl_reference);
     // get status
-    if(isLinked()) {
+    if(is_linked()) {
         // initialize lists of attributes and uniform variables
         updateProgramInputInfo();
         updateProgramUniformBlockInfo();
@@ -174,14 +176,14 @@ void GLProgram::use() const {
     glUseProgram(gl_reference);
 }
 
-bool GLProgram::isLinked() const {
+bool GLProgram::is_linked() const {
     GLint status;
     glGetProgramiv(gl_reference, GL_LINK_STATUS, &status);
     return status == GL_TRUE;
 }
 
 bool GLProgram::setUniformBlockBinding(const std::string& uniformName, uint32_t location) {
-    int loc = getUniformBlockInfo(uniformName).location_index;
+    int loc = get_uniform_block_layout(uniformName).location_index;
     if(loc != -1) {
         glUniformBlockBinding(gl_reference, loc, location);
         return true;
@@ -294,7 +296,7 @@ void GLProgram::updateProgramUniformBlockInfo() {
         std::string blockName{namebuffer.begin(), namebuffer.end()};
         blockName.erase(std::find(blockName.begin(), blockName.end(), '\0'), blockName.end());
 
-        ProgramUniformBlockDescription& pubd = uniformBlocks[blockName];
+        ProgramBlockLayout& pubd = uniformBlocks[blockName];
         pubd.location_index = binding;
         pubd.block_size = blockSize;
         pubd.layouts = {};
@@ -328,7 +330,7 @@ void GLProgram::updateProgramUniformBlockInfo() {
 
             //std::cout << "UB: " << name << ", GL_UNIFORM_BLOCK " << unifIndices[unifIx] << ", Location " << values[2] << std::endl;
 
-            pubd.layouts.emplace_back(ProgramUniformBlockDescription::Layout{offsets[unifIx], sizes[unifIx], strides[unifIx]});
+            pubd.layouts.emplace_back(ProgramBlockLayout::Layout{offsets[unifIx], sizes[unifIx], strides[unifIx]});
             pubd.layout_map[name] = pubd.layouts.size() - 1;
 
         }
@@ -336,7 +338,7 @@ void GLProgram::updateProgramUniformBlockInfo() {
     }
 }
 
-bool GLProgram::attach_shader(GLuint shader_name) {
+bool GLProgram::gl_attach_shader(GLuint shader_name) {
     bool error = false;
     GL_ERROR_CHECK(glAttachShader(gl_reference, shader_name), error);
     return !error;

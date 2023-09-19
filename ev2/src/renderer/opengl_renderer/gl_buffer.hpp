@@ -29,12 +29,12 @@ public:
     template<typename T>
     GLBuffer(gl::BindingTarget target, gl::Usage usage, const std::vector<T>& data) : target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
-        copy_data(data);
+        allocate(data);
     }
 
     GLBuffer(gl::BindingTarget target, gl::Usage usage, const void* data, std::size_t size) : target{target}, usage{usage} {
         glCreateBuffers(1, &gl_reference.v);
-        copy_data(size, data);
+        allocate_impl(data, size);
     }
 
     virtual ~GLBuffer() {
@@ -47,25 +47,15 @@ public:
     GLBuffer(GLBuffer&& o) = default;
     GLBuffer& operator=(GLBuffer&& o) = default;
 
-    void sub_bytes(const void* data, std::size_t size, std::size_t offset) override;
-
-    /**
-     * @brief Allocate buffer large enough to contain all data in source and copy data into buffer.
-     * 
-     * @tparam T 
-     * @param source 
-     */
-    template<typename T>
-    void copy_data(const std::vector<T>& source);
-
-    void copy_data(std::size_t size, const void* data);
+    void sub_bytes_impl(const void* data, std::size_t size, std::size_t offset) override;
 
     /**
      * @brief Allocate buffer data
      * 
-     * @param bytes number of bytes to allocate
+     * @param size number of bytes to allocate
      */
-    void allocate(std::size_t bytes) override;
+    void allocate_impl(std::size_t size) override;
+    void allocate_impl(const void* data, std::size_t size) override;
 
     /**
      * @brief Bind this buffer to its target
@@ -130,21 +120,6 @@ private:
      */
     gl::Usage usage;
 };
-
-template<typename T>
-void GLBuffer::copy_data(const std::vector<T>& source) {
-    if(!source.empty()) {
-        bool error = false;
-        GL_ERROR_CHECK(glNamedBufferData((GLuint)gl_reference, sizeof(T) * source.size(), source.data(), (GLenum)usage), error);
-        if (!error) capacity = sizeof(T) * source.size();
-    }
-}
-
-void GLBuffer::sub_bytes(const void* data, std::size_t size, std::size_t offset) {
-    if(data && size > 0) {
-        GL_CHECKED_CALL(glNamedBufferSubData((GLuint)gl_reference, offset, size, data));
-    }
-}
 
 } // ev2
 

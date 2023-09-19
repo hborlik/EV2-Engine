@@ -7,6 +7,8 @@
 #ifndef EV2_RENDERER_TERRAIN_H
 #define EV2_RENDERER_TERRAIN_H
 
+#ifdef ENABLE_TERRAIN
+
 #include "evpch.hpp"
 
 #include "renderer/renderer.hpp"
@@ -54,5 +56,7 @@ private:
 };
 
 } // namespace ev2::renderer
+
+#endif // ENABLE_TERRAIN
 
 #endif // EV2_RENDERER_TERRAIN_H

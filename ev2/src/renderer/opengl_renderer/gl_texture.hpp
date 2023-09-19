@@ -15,7 +15,7 @@
 
 namespace ev2::renderer {
 
-class GLTexture : public Texture {
+class GLTexture {
 public:
     GLTexture(gl::TextureType texture_type, gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR);
 
@@ -148,6 +148,18 @@ protected:
 
     GLuint handle = 0;
     int width = -1, height = -1;
+};
+
+class GLTexture1D : public GLTexture, public Texture1D {
+public:
+    GLTexture1D(gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR) :
+        GLTexture{ gl::TextureType::TEXTURE_1D, filterModeMin, filterModeMag } {}
+};
+
+class GLTexture2D : public GLTexture, public Texture2D {
+public:
+    GLTexture2D(gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR) :
+        GLTexture{ gl::TextureType::TEXTURE_2D, filterModeMin, filterModeMag } {}
 };
 
 class RenderBuffer {

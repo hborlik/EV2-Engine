@@ -27,6 +27,13 @@ public:
     virtual ~Mesh() = default;
 
     virtual void set_vertex_buffer(std::shared_ptr<VertexBuffer> vBuffer) = 0;
+
+    /**
+     * @brief Set the index buffer object. If an index buffer is set, the indices in Primitives 
+     * will refer to index of the index buffer, rather than the vertex buffers 
+     * 
+     * @param buffer 
+     */
     virtual void set_index_buffer(std::shared_ptr<Buffer> buffer) = 0;
     virtual void set_primitives(const std::vector<Primitive>& primitives) = 0;
     virtual void set_materials(const std::vector<std::shared_ptr<Material>>& materials) = 0;
