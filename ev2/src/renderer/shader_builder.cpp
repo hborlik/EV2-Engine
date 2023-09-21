@@ -1,6 +1,6 @@
 #include "renderer/shader_builder.hpp"
 
-#include "io/serializers.hpp"
+#include "core/filesystem.hpp"
 
 namespace ev2::renderer {
 
@@ -10,7 +10,7 @@ void ShaderBuilder::push_source_file(const std::filesystem::path &path) {
     last_shader_begin = m_source.length();
     auto shader_path = shader_asset_path / path;
     m_source += "\n//" + shader_path.generic_string() + "\n";
-    m_source += io::read_file(shader_path);
+    m_source += read_file(shader_path);
 }
 
 void ShaderBuilder::push_source_string(const std::string& source_string) {
@@ -51,7 +51,7 @@ void ShaderBuilder::preprocess(const PreprocessorSettings& settings) {
             filename = settings.get_shader_dir() / filename;
 
             // do not process any includes in the header files
-            result << io::read_file(filename);
+            result << read_file(filename);
         } else {
             result << line << std::endl;
         }

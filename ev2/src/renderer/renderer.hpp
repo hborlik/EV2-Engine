@@ -15,12 +15,6 @@
 
 namespace ev2::renderer {
 
-enum class FrustumCull {
-    None,
-    Sphere,
-    AABB
-};
-
 class PointLight {
 public:
     virtual ~PointLight() = default;
@@ -59,6 +53,8 @@ public:
 
 class Renderer : public Singleton<Renderer> {
 public:
+    virtual ~Renderer() = default;
+
     virtual void init() = 0;
 
     virtual std::shared_ptr<Mesh> make_mesh(const Model* model = nullptr) = 0;

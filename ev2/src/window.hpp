@@ -18,6 +18,9 @@
 #include "core/singleton.hpp"
 #include "application.hpp"
 
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 namespace ev2::window {
 
 void init(const Args& args);

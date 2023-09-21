@@ -27,7 +27,7 @@ public:
 
     void pre_render() override;
 
-    void set_model(std::shared_ptr<renderer::Drawable> model);
+    void set_mesh(std::shared_ptr<renderer::Mesh> mesh);
     void set_material_override(std::shared_ptr<renderer::Material> material_override);
 
 private:
@@ -51,7 +51,7 @@ protected:
     std::vector<glm::mat4> instance_transforms{};
     bool m_transforms_modified = false;
 
-    std::shared_ptr<renderer::Drawable> geometry = nullptr;
+    std::shared_ptr<renderer::Mesh> geometry = nullptr;
     std::shared_ptr<renderer::InstancedDrawable> instance = nullptr;
 };
 
@@ -122,7 +122,7 @@ public:
     void set_ambient(const glm::vec3& color);
 
 private:
-    std::shared_ptr<renderer::PointLight> lid{};
+    std::shared_ptr<renderer::DirectionalLight> lid{};
 };
 
 }

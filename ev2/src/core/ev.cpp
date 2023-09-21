@@ -18,6 +18,7 @@
 #include "core/engine.hpp"
 
 #include "renderer/opengl_renderer/gl_renderer.hpp"
+#include "renderer/opengl_renderer/gl_render_api.hpp"
 
 #include "ui/imgui.hpp"
 #include "ui/imgui_impl_glfw.hpp"
@@ -58,6 +59,9 @@ void EV2_init(const Args& args, const std::filesystem::path& asset_path, const s
 #endif
 
     window::init(args);
+
+    auto render_api = renderer::RenderAPI::make_api();
+    render_api->init();
     
     GLFWwindow* window = ev2::window::getContextWindow();
     if (window == nullptr)

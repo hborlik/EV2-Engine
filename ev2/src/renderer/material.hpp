@@ -37,6 +37,20 @@ public:
     virtual void set_sheen(float s) = 0;
     virtual void set_sheenTint(float st) = 0;
 
+    virtual glm::vec3 get_diffuse() = 0;
+    virtual glm::vec3 get_emissive() = 0;
+    
+    virtual float get_metallic() = 0;
+    virtual float get_subsurface() = 0;
+    virtual float get_specular() = 0;
+    virtual float get_roughness() = 0;
+    virtual float get_specularTint() = 0;
+    virtual float get_clearcoat() = 0;
+    virtual float get_clearcoatGloss() = 0;
+    virtual float get_anisotropic() = 0;
+    virtual float get_sheen() = 0;
+    virtual float get_sheenTint() = 0;
+
     virtual void set_ambient_tex(std::shared_ptr<Texture> tex) = 0;             // map_Ka
     virtual void set_diffuse_tex(std::shared_ptr<Texture> tex) = 0;             // map_Kd
     virtual void set_specular_tex(std::shared_ptr<Texture> tex) = 0;            // map_Ks

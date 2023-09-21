@@ -109,5 +109,54 @@ void GLMaterial::set_sheenTint(float st) {
     m_owner->material_data_buffer[material_slot].changed = true;
 }
 
+glm::vec3 GLMaterial::get_diffuse() {
+    return m_owner->material_data_buffer[material_slot].diffuse;
+}
+
+glm::vec3 GLMaterial::get_emissive() {
+    return m_owner->material_data_buffer[material_slot].emissive;
+}
+
+float GLMaterial::get_metallic() {
+    return m_owner->material_data_buffer[material_slot].metallic;
+}
+
+float GLMaterial::get_subsurface() {
+    return m_owner->material_data_buffer[material_slot].subsurface;
+}
+
+float GLMaterial::get_specular() {
+    return m_owner->material_data_buffer[material_slot].specular;
+}
+
+float GLMaterial::get_roughness() {
+    return m_owner->material_data_buffer[material_slot].roughness;
+}
+
+float GLMaterial::get_specularTint() {
+    return m_owner->material_data_buffer[material_slot].specularTint;
+}
+
+float GLMaterial::get_clearcoat() {
+    return m_owner->material_data_buffer[material_slot].clearcoat;
+}
+
+float GLMaterial::get_clearcoatGloss() {
+    return m_owner->material_data_buffer[material_slot].clearcoatGloss;
+}
+
+float GLMaterial::get_anisotropic() {
+    return m_owner->material_data_buffer[material_slot].anisotropic;
+}
+
+float GLMaterial::get_sheen() {
+    return m_owner->material_data_buffer[material_slot].sheen;
+}
+
+float GLMaterial::get_sheenTint() {
+    return m_owner->material_data_buffer[material_slot].sheenTint;
+}
+
+
 
 }

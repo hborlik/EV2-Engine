@@ -17,54 +17,54 @@ namespace ev2 {
 void show_material_editor_window(bool* p_open) {
     ImGui::Begin("Material Editor", p_open);
     for (auto [name, mat] : ev2::ResourceManager::get_singleton().get_materials()) {
-        if (ImGui::CollapsingHeader(("Material " + mat->name + " " + name).c_str())) {
+        if (ImGui::CollapsingHeader(("Material " + mat->get_name() + " " + name).c_str())) {
             
             if (ImGui::TreeNode("Color")) {
-                ImGui::ColorPicker3("diffuse", glm::value_ptr(mat->diffuse), ImGuiColorEditFlags_InputRGB);
-                ImGui::ColorPicker3("emissive", glm::value_ptr(mat->emissive), ImGuiColorEditFlags_InputRGB);
+                if (glm::vec3 diffuse = mat->get_diffuse(); ImGui::ColorPicker3("diffuse", glm::value_ptr(diffuse), ImGuiColorEditFlags_InputRGB)) mat->set_diffuse(diffuse);
+                if (glm::vec3 emissive = mat->get_emissive(); ImGui::ColorPicker3("emissive", glm::value_ptr(emissive), ImGuiColorEditFlags_InputRGB)) mat->set_emissive(emissive);
                 ImGui::TreePop();
             }
-            ImGui::DragFloat("metallic",    &mat->metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("subsurface",  &mat->subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specular",    &mat->specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("roughness",   &mat->roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("specularTint",&mat->specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoat",   &mat->clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("clearcoatGloss", &mat->clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("anisotropic", &mat->anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheen",       &mat->sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
-            ImGui::DragFloat("sheenTint",   &mat->sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f);
+            if (float metallic = mat->get_metallic(); ImGui::DragFloat("metallic",    &metallic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_metallic(metallic);
+            if (float subsurface = mat->get_subsurface(); ImGui::DragFloat("subsurface",  &subsurface, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_subsurface(subsurface);
+            if (float specular = mat->get_specular(); ImGui::DragFloat("specular",    &specular, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_specular(specular);
+            if (float roughness = mat->get_roughness(); ImGui::DragFloat("roughness",   &roughness, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_roughness(roughness);
+            if (float specularTint = mat->get_specularTint(); ImGui::DragFloat("specularTint",&specularTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_specularTint(specularTint);
+            if (float clearcoat = mat->get_clearcoat(); ImGui::DragFloat("clearcoat",   &clearcoat, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_clearcoat(clearcoat);
+            if (float clearcoatGloss = mat->get_clearcoatGloss(); ImGui::DragFloat("clearcoatGloss", &clearcoatGloss, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_clearcoatGloss(clearcoatGloss);
+            if (float anisotropic = mat->get_anisotropic(); ImGui::DragFloat("anisotropic", &anisotropic, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_anisotropic(anisotropic);
+            if (float sheen = mat->get_sheen(); ImGui::DragFloat("sheen",       &sheen, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_sheen(sheen);
+            if (float sheenTint = mat->get_sheenTint(); ImGui::DragFloat("sheenTint",   &sheenTint, 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) mat->set_sheenTint(sheenTint);
         }
     }
     ImGui::End();
 }
 
 void show_settings_window(bool* p_open) {
-    auto& renderer = ev2::renderer::GLRenderer::get_singleton();
+    auto& renderer = ev2::renderer::Renderer::get_singleton();
     if (ImGui::Begin("Render Settings", p_open)) {
         ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::Text("N Lights %i", renderer.get_n_pointlights());
-        float ssao_radius = renderer.get_ssao_radius();
-        if (ImGui::DragFloat("SSAO radius", &(ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f)) {
-            renderer.set_ssao_radius(ssao_radius);
-        }
-        int ssao_samples = renderer.get_ssao_kernel_samples();
-        if (ImGui::DragInt("SSAO samples", &ssao_samples, 1, 1, 64)) {
-            renderer.set_ssao_kernel_samples(ssao_samples);
-        }
-        float ssao_bias = renderer.get_ssao_bias();
-        if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
-            renderer.set_ssao_bias(ssao_bias);
-        }
-        ImGui::DragFloat("Sky Brightness", &(renderer.sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
-        ImGui::DragFloat("Exposure", &(renderer.exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
-        ImGui::DragFloat("Gamma", &(renderer.gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
-        ImGui::DragInt("Bloom Quality", &(renderer.bloom_iterations), 1, 1, 6);
-        ImGui::DragFloat("Bloom Threshold", &(renderer.bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
-        ImGui::DragFloat("Bloom Falloff", &(renderer.bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
-        ImGui::DragFloat("Shadow Bias World", &(renderer.shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
-        ImGui::Checkbox("Culling Enabled", &(renderer.culling_enabled));
-        ImGui::Checkbox("Pause Culling", &(renderer.pause_cull));
+        // ImGui::Text("N Lights %i", renderer.get_n_pointlights());
+        // float ssao_radius = renderer.get_ssao_radius();
+        // if (ImGui::DragFloat("SSAO radius", &(ssao_radius), 0.01f, 0.0f, 3.0f, "%.3f", 1.0f)) {
+        //     renderer.set_ssao_radius(ssao_radius);
+        // }
+        // int ssao_samples = renderer.get_ssao_kernel_samples();
+        // if (ImGui::DragInt("SSAO samples", &ssao_samples, 1, 1, 64)) {
+        //     renderer.set_ssao_kernel_samples(ssao_samples);
+        // }
+        // float ssao_bias = renderer.get_ssao_bias();
+        // if (ImGui::DragFloat("SSAO Bias", &(ssao_bias), 0.01f, 0.0f, 1.0f, "%.3f", 1.0f)) {
+        //     renderer.set_ssao_bias(ssao_bias);
+        // }
+        // ImGui::DragFloat("Sky Brightness", &(renderer.sky_brightness), 0.01f, 0.01f, 2.f, "%.3f", 1.0f);
+        // ImGui::DragFloat("Exposure", &(renderer.exposure), 0.01f, 0.05f, 1.0f, "%.3f", 1.0f);
+        // ImGui::DragFloat("Gamma", &(renderer.gamma), 0.01f, 0.8f, 2.8f, "%.1f", 1.0f);
+        // ImGui::DragInt("Bloom Quality", &(renderer.bloom_iterations), 1, 1, 6);
+        // ImGui::DragFloat("Bloom Threshold", &(renderer.bloom_threshold), 0.005f, 0.01f, 5.0f, "%.5f", 1.0f);
+        // ImGui::DragFloat("Bloom Falloff", &(renderer.bloom_falloff), 0.005f, 0.1f, 3.0f, "%.5f", 1.0f);
+        // ImGui::DragFloat("Shadow Bias World", &(renderer.shadow_bias_world), 0.005f, 0.0001f, 1.0f, "%.5f", 1.0f);
+        // ImGui::Checkbox("Culling Enabled", &(renderer.culling_enabled));
+        // ImGui::Checkbox("Pause Culling", &(renderer.pause_cull));
         ImGui::Separator();
         ImGui::Text("World");
 
@@ -76,7 +76,7 @@ void show_settings_window(bool* p_open) {
         
         static bool idfr = false;
         if (ImGui::Checkbox("Enable ID Frame Recording", &idfr)) {
-            renderer.set_recording(idfr);
+            // renderer.set_recording(idfr);
         }
     }
     ImGui::End();

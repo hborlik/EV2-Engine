@@ -3,6 +3,7 @@
 #include "renderer/opengl_renderer/ev_gl.hpp"
 #include "renderer/material.hpp"
 #include "resource.hpp"
+#include "window.hpp"
 #include "core/engine.hpp"
 
 namespace ev2::renderer {

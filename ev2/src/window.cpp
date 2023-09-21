@@ -12,9 +12,6 @@
 #include "application.hpp"
 #include "core/engine.hpp"
 
-#define EV_GL_MIN_SEVERITY GL_DEBUG_SEVERITY_LOW
-#define EV_GL_ALLOW_NOTIFICATIONS false
-
 using namespace ev2;
 
 namespace {
@@ -24,100 +21,6 @@ void glfw_error_callback(int error, const char *description)
 {
 	std::cerr << "GLFW ERROR: " << description << std::endl;
 }
-
-// gl error callback
-__attribute__ ((stdcall))
-void gl_debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
-        GLsizei length, const GLchar *message, const void *userParam) {
-    std::string output_severity{};
-    std::string output_source{};
-    std::string output_type{};
-    std::string output_message{message};
-    spdlog::level::level_enum level = spdlog::level::info;
-
-    if (severity >= EV_GL_MIN_SEVERITY || (severity == GL_DEBUG_SEVERITY_NOTIFICATION && !EV_GL_ALLOW_NOTIFICATIONS))
-        return;
-
-    switch (severity)
-    {
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        output_severity = "NOTIFICATION";
-        level = spdlog::level::info;
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-        output_severity = "LOW";
-        level = spdlog::level::warn;
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        output_severity = "MEDIUM";
-        level = spdlog::level::warn;
-        break;
-    case GL_DEBUG_SEVERITY_HIGH:
-        output_severity = "HIGH";
-        level = spdlog::level::err;
-        break;
-    default:
-        break;
-    }
-
-    switch (source)
-    {
-    case GL_DEBUG_SOURCE_API:
-        output_source = "API";
-        break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        output_source = "WINDOW_SYSTEM";
-        break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-        output_source = "THIRD_PARTY";
-        break;
-    case GL_DEBUG_SOURCE_APPLICATION:
-        output_source = "APPLICATION";
-        break;
-    case GL_DEBUG_SOURCE_OTHER:
-        output_source = "OTHER";
-        break;
-    default:
-        break;
-    }
-
-    switch (type)
-    {
-    case GL_DEBUG_TYPE_ERROR:
-        output_type = "ERROR";
-        break;
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        output_type = "DEPRECATED_BEHAVIOR";
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        output_type = "UNDEFINED_BEHAVIOR";
-        break;
-    //case GL_DEBUG_TYPE_PORTABILITIY:
-    //    break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        output_type = "PERFORMANCE";
-        break;
-    case GL_DEBUG_TYPE_MARKER:
-        output_type = "MARKER";
-        break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:
-        // output_type = "PUSH_GROUP";
-        return;
-        break;
-    case GL_DEBUG_TYPE_POP_GROUP:
-        // output_type = "POP_GROUP";
-        return;
-        break;
-    case GL_DEBUG_TYPE_OTHER:
-        output_type = "OTHER";
-        break;
-    default:
-        break;
-    }
-
-    Log::log_core(level, "OpenGL[{}:{}:{}] {}", output_source, output_severity, output_type, output_message);
-}
-
 
 input::Modifier translateKeyModifiers(int glfw_modifier)
 {
@@ -273,13 +176,13 @@ public:
         }
 
         //request the highest possible version of OpenGL
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         // for debugging in 4.3 and later
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 
         window_ptr = glfwCreateWindow(
             width
@@ -307,38 +210,11 @@ public:
         // make the given window context the current glfw context. required for below
         glfwMakeContextCurrent(window_ptr);
 
-        // load gl functions
-        if(!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
-            std::clog << "Failed to initialize GLAD" << std::endl;
-            throw engine_exception{"Failed to initialize GLAD"};
-        }
-
         if(glfwRawMouseMotionSupported())
             glfwSetInputMode(window_ptr, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
         // Set vsync interval
         glfwSwapInterval(1);
-
-        // only for core version 4.3 and later
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback(gl_debug_callback, nullptr);
-        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-
-        const GLubyte *renderer = glGetString( GL_RENDERER );
-        const GLubyte *vendor = glGetString( GL_VENDOR );
-        const GLubyte *version = glGetString( GL_VERSION );
-        const GLubyte *glslVersion = glGetString( GL_SHADING_LANGUAGE_VERSION );
-
-        GLint major, minor;
-        glGetIntegerv(GL_MAJOR_VERSION, &major);
-        glGetIntegerv(GL_MINOR_VERSION, &minor);
-        
-        printf("GL: %s %s\n", vendor, renderer);
-        printf("GL Version: %s (%d.%d)\n", version, major, minor);
-        printf("GLSL Version : %s\n", glslVersion);
-
-        // push a test message
-        glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_OTHER, 0, GL_DEBUG_SEVERITY_NOTIFICATION, 25, "TEST DEBUG MESSAGE");
     }
 
     bool frame() {

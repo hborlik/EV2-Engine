@@ -1,6 +1,6 @@
 /**
- * @file ssre_gl.h
- * @brief gl includes for ssre
+ * @file ev_gl.h
+ * @brief gl includes for ev GL
  * @version 0.2
  * @date 2019-09-09
  * 
@@ -15,7 +15,6 @@
 #include "renderer/shader_data_type.hpp"
 
 #include <glad/gl.h>
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 

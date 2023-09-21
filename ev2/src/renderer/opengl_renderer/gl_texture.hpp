@@ -160,6 +160,10 @@ class GLTexture2D : public GLTexture, public Texture2D {
 public:
     GLTexture2D(gl::TextureFilterMode filterModeMin = gl::TextureFilterMode::NEAREST_MIPMAP_LINEAR, gl::TextureFilterMode filterModeMag = gl::TextureFilterMode::LINEAR) :
         GLTexture{ gl::TextureType::TEXTURE_2D, filterModeMin, filterModeMag } {}
+
+    void generate_mips() override {
+        GLTexture::generate_mips();
+    }
 };
 
 class RenderBuffer {

@@ -6,12 +6,12 @@
 namespace ev2 {
 
 void VisualInstance::on_init() {
-    iid = renderer::GLRenderer::get_singleton().create_model_instance();
+    iid = renderer::Renderer::get_singleton().make_drawable();
     iid->set_picking_id(uuid_hash);
 }
 
 void VisualInstance::on_ready() {
-    iid->transform = get_world_transform();
+    iid->set_transform(get_world_transform());
 }
 
 void VisualInstance::on_destroy() {
@@ -19,55 +19,61 @@ void VisualInstance::on_destroy() {
 }
 
 void VisualInstance::pre_render() {
-    iid->transform = get_world_transform();
+    iid->set_transform(get_world_transform());
 }
 
-void VisualInstance::set_model(std::shared_ptr<renderer::Drawable> model) {
-    iid->set_drawable(model);
+void VisualInstance::set_mesh(std::shared_ptr<renderer::Mesh> mesh) {
+    iid->set_mesh(mesh);
 }
 
 void VisualInstance::set_material_override(std::shared_ptr<renderer::Material> material_override) {
-    iid->set_material_override(material_override);
+    iid->set_material(material_override);
 }
 
 void InstancedGeometry::on_init() {
-    renderer::BufferLayout quad_layout;
+    renderer::VertexBufferLayout quad_layout;
     quad_layout .add_attribute(renderer::AttributeLabel::Vertex)
                 .add_attribute(renderer::AttributeLabel::Normal)
                 .add_attribute(renderer::AttributeLabel::Texcoord)
                 .finalize();
-    geometry = std::make_shared<renderer::Drawable>(
-        renderer::VertexBuffer::vbInitArrayVertexSpec(
-            {
-                // positions         normals         texcoords
-                -0.05f,  0.05f, .0f, .0f, .0f, -1.f, 1.f, 1.f,
-                 0.05f, -0.05f, .0f, .0f, .0f, -1.f, 0.f, 0.f,
-                -0.05f, -0.05f, .0f, .0f, .0f, -1.f, 1.f, 0.f,
+    auto buffer = std::shared_ptr(
+        renderer::Buffer::make_buffer(renderer::BufferUsage::Vertex, renderer::BufferAccess::Static));
+    buffer->allocate(std::vector<float>{
+            // positions         normals         texcoords
+            -0.05f,  0.05f, .0f, .0f, .0f, -1.f, 1.f, 1.f,
+            0.05f, -0.05f, .0f, .0f, .0f, -1.f, 0.f, 0.f,
+            -0.05f, -0.05f, .0f, .0f, .0f, -1.f, 1.f, 0.f,
 
-                -0.05f,  0.05f, .0f, .0f, .0f, -1.f, 1.f, 1.f,
-                 0.05f,  0.05f, .0f, .0f, .0f, -1.f, 0.f, 1.f,
-                 0.05f, -0.05f, .0f, .0f, .0f, -1.f, 0.f, 0.f,
-                
-                // back
-                -0.05f,  0.05f, .0f, .0f, .0f, 1.f, 1.f, 1.f,
-                -0.05f, -0.05f, .0f, .0f, .0f, 1.f, 1.f, 0.f,
-                 0.05f, -0.05f, .0f, .0f, .0f, 1.f, 0.f, 0.f,
+            -0.05f,  0.05f, .0f, .0f, .0f, -1.f, 1.f, 1.f,
+            0.05f,  0.05f, .0f, .0f, .0f, -1.f, 0.f, 1.f,
+            0.05f, -0.05f, .0f, .0f, .0f, -1.f, 0.f, 0.f,
+            
+            // back
+            -0.05f,  0.05f, .0f, .0f, .0f, 1.f, 1.f, 1.f,
+            -0.05f, -0.05f, .0f, .0f, .0f, 1.f, 1.f, 0.f,
+            0.05f, -0.05f, .0f, .0f, .0f, 1.f, 0.f, 0.f,
 
-                -0.05f,  0.05f, .0f, .0f, .0f, 1.f, 1.f, 1.f,
-                 0.05f, -0.05f, .0f, .0f, .0f, 1.f, 0.f, 0.f,
-                 0.05f,  0.05f, .0f, .0f, .0f, 1.f, 0.f, 1.f,
-            },
-            quad_layout),
+            -0.05f,  0.05f, .0f, .0f, .0f, 1.f, 1.f, 1.f,
+            0.05f, -0.05f, .0f, .0f, .0f, 1.f, 0.f, 0.f,
+            0.05f,  0.05f, .0f, .0f, .0f, 1.f, 0.f, 1.f,
+        });
+    auto vb = std::shared_ptr(renderer::VertexBuffer::vbInitArrayVertexSpec(
+        buffer,
+        quad_layout));
+    
+    geometry = renderer::Mesh::make_mesh(
+        vb,
+        {}, // index buffer unused
         std::vector<renderer::Primitive>{renderer::Primitive{0, 12, -1}},
         std::vector<std::shared_ptr<renderer::Material>>{},
         AABB{},
         Sphere{glm::vec3{0.f}, 0.05f},
         renderer::FrustumCull::Sphere,
-        gl::CullMode::BACK,
-        gl::FrontFacing::CCW
+        renderer::CullMode::Back,
+        renderer::FrontFacing::CCW
     );
-    instance = ev2::renderer::GLRenderer::get_singleton().create_instanced_drawable();
-    instance->set_drawable(geometry);
+    instance = ev2::renderer::Renderer::get_singleton().make_instanced_drawable();
+    instance->set_mesh(geometry);
 }
 
 void InstancedGeometry::on_destroy() {
@@ -83,7 +89,7 @@ void InstancedGeometry::pre_render() {
 }
 
 void InstancedGeometry::set_material_override(std::shared_ptr<renderer::Material> material_override) {
-    assert(geometry);
+    EV_CORE_ASSERT(geometry != nullptr);
     if (material_override) {
         geometry->materials.resize(1);
         geometry->materials[0] = material_override;
@@ -96,7 +102,7 @@ void InstancedGeometry::set_material_override(std::shared_ptr<renderer::Material
 void InstancedGeometry::on_transform_changed(Ref<Node> origin) {
     Node::on_transform_changed(origin);
 
-    instance->instance_world_transform = get_world_transform();
+    instance->set_transform(get_world_transform());
 }
 
 void InstancedGeometry::set_instance_transforms(std::vector<glm::mat4> tr) {
@@ -133,7 +139,7 @@ void CameraNode::update_internal() {
 }
 
 void DirectionalLightNode::on_init() {
-    lid = ev2::renderer::GLRenderer::get_singleton().create_directional_light();
+    lid = ev2::renderer::Renderer::get_singleton().make_directional_light();
 }
 
 void DirectionalLightNode::on_ready() {
@@ -145,25 +151,28 @@ void DirectionalLightNode::on_process(float delta) {
 }
 
 void DirectionalLightNode::on_destroy() {
-    ev2::renderer::GLRenderer::get_singleton().destroy_light(lid);
+    // ev2::renderer::Renderer::get_singleton().destroy_light(lid);
 }
 
 void DirectionalLightNode::pre_render() {
-    ev2::renderer::GLRenderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    // ev2::renderer::Renderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    lid->set_position(glm::vec3(get_world_transform()[3]));
 }
 
 void DirectionalLightNode::set_color(const glm::vec3& color) {
-    ev2::renderer::GLRenderer::get_singleton().set_light_color(lid, color);
+    // ev2::renderer::Renderer::get_singleton().set_light_color(lid, color);
+    lid->set_color(color);
 }
 
 void DirectionalLightNode::set_ambient(const glm::vec3& color) {
-    ev2::renderer::GLRenderer::get_singleton().set_light_ambient(lid, color);
+    // ev2::renderer::Renderer::get_singleton().set_light_ambient(lid, color);
+    lid->set_color(color);
 }
 
 // point
 
 void PointLightNode::on_init() {
-    lid = ev2::renderer::GLRenderer::get_singleton().create_point_light();
+    lid = ev2::renderer::Renderer::get_singleton().make_point_light();
 }
 
 void PointLightNode::on_ready() {
@@ -175,15 +184,17 @@ void PointLightNode::on_process(float delta) {
 }
 
 void PointLightNode::on_destroy() {
-    ev2::renderer::GLRenderer::get_singleton().destroy_light(lid);
+    // ev2::renderer::Renderer::get_singleton().destroy_light(lid);
 }
 
 void PointLightNode::pre_render() {
-    ev2::renderer::GLRenderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    // ev2::renderer::GLRenderer::get_singleton().set_light_position(lid, glm::vec3(get_world_transform()[3]));
+    lid->set_position(glm::vec3(get_world_transform()[3]));
 }
 
 void PointLightNode::set_color(const glm::vec3& color) {
-    ev2::renderer::GLRenderer::get_singleton().set_light_color(lid, color);
+    // ev2::renderer::GLRenderer::get_singleton().set_light_color(lid, color);
+    lid->set_color(color);
 }
 
 }

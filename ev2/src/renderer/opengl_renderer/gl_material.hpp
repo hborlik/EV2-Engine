@@ -52,6 +52,19 @@ struct GLMaterial : public Material {
     void set_sheen(float s) override;
     void set_sheenTint(float st) override;
 
+    glm::vec3 get_diffuse() override;
+    glm::vec3 get_emissive() override;
+    float get_metallic() override;
+    float get_subsurface() override;
+    float get_specular() override;
+    float get_roughness() override;
+    float get_specularTint() override;
+    float get_clearcoat() override;
+    float get_clearcoatGloss() override;
+    float get_anisotropic() override;
+    float get_sheen() override;
+    float get_sheenTint() override;
+
     void set_ambient_tex(std::shared_ptr<Texture> tex) override {
         auto gl_tex = std::dynamic_pointer_cast<GLTexture>(tex);
         ambient_tex = gl_tex;

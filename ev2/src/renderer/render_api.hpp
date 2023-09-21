@@ -17,9 +17,13 @@ namespace ev2::renderer {
  */
 class RenderAPI {
 public:
+    virtual ~RenderAPI() = default;
+
     enum class API {
         None = 0, OpenGL = 1
     };
+
+    virtual void init() = 0;
 
     static API get_api() noexcept {return s_api;}
     static std::unique_ptr<RenderAPI> make_api();

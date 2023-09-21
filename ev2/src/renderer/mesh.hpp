@@ -9,12 +9,38 @@
 
 #include "evpch.hpp"
 
+#include "geometry.hpp"
 #include "renderer/vertex_buffer.hpp"
 #include "renderer/buffer.hpp"
 #include "renderer/material.hpp"
 
 
 namespace ev2::renderer {
+
+/**
+ * @brief Frustum Culling shape used by mesh
+ * 
+ */
+enum class FrustumCull {
+    None,
+    Sphere,
+    AABB
+};
+
+/**
+ * @brief Face culling mode
+ * 
+ */
+enum class CullMode {
+    None = 0,
+    Back,
+    Front
+};
+
+enum class FrontFacing {
+    CCW = 0,
+    CW
+};
 
 struct Primitive {
     size_t      start_index = 0;
@@ -41,6 +67,28 @@ public:
     virtual std::shared_ptr<VertexBuffer> get_vertex_buffer() const = 0;
     virtual std::shared_ptr<Buffer> get_index_buffer() const = 0;
     virtual std::vector<Primitive> get_primitives() const = 0;
+
+    /**
+     * @brief 
+     * 
+     * @param vBuffer required vertex buffer
+     * @param index_buffer optional 
+     * @param primitives 
+     * @param face_cull 
+     * @param front 
+     * @return std::unique_ptr<Mesh> 
+     */
+    static std::unique_ptr<Mesh> make_mesh(
+        
+    std::shared_ptr<VertexBuffer> vBuffer,
+        std::shared_ptr<Buffer> index_buffer,
+        const std::vector<Primitive>& primitives,
+        const std::vector<std::shared_ptr<Material>>& materials,
+        const AABB& aabb,
+        const Sphere& sphere,
+        FrustumCull mode,
+        CullMode face_cull = CullMode::Back,
+        FrontFacing front = FrontFacing::CCW);
 };
 
 } // namespace ev2::renderer

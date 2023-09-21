@@ -34,6 +34,8 @@ public:
 
 class Texture2D : public Texture {
 public:
+    virtual void generate_mips() = 0;
+
     TextureType get_type() const override {return TextureType::Tex_2D;}
 
     static std::unique_ptr<Texture2D> make_texture();
